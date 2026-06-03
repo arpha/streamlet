@@ -30,8 +30,8 @@ const item = {
 const LEVELS = [
   { name: 'Bronze',   minXp: 0,       maxXp: 1000,    color: 'from-amber-700 to-amber-500',   textColor: 'text-amber-400',   borderColor: 'border-amber-500/30',  bgColor: 'bg-amber-500',   icon: Shield },
   { name: 'Silver',   minXp: 1000,    maxXp: 10000,   color: 'from-slate-400 to-slate-300',    textColor: 'text-slate-300',   borderColor: 'border-slate-400/30',  bgColor: 'bg-slate-400',   icon: Award },
-  { name: 'Platinum', minXp: 10000,   maxXp: 100000,  color: 'from-cyan-400 to-sky-300',       textColor: 'text-cyan-300',    borderColor: 'border-cyan-400/30',   bgColor: 'bg-cyan-400',    icon: Crown },
-  { name: 'Legend',   minXp: 100000,  maxXp: 1000000, color: 'from-yellow-400 to-amber-300',   textColor: 'text-yellow-300',  borderColor: 'border-yellow-400/30', bgColor: 'bg-yellow-400',  icon: Gem },
+  { name: 'Platinum', minXp: 10000,   maxXp: 100000,  color: 'from-indigo-300 to-slate-200',   textColor: 'text-indigo-200',  borderColor: 'border-indigo-300/30', bgColor: 'bg-indigo-300',  icon: Crown },
+  { name: 'Diamond',  minXp: 100000,  maxXp: 1000000, color: 'from-cyan-400 to-blue-500',      textColor: 'text-cyan-300',    borderColor: 'border-cyan-400/30',   bgColor: 'bg-cyan-400',    icon: Gem },
 ]
 
 function getLevelInfo(xp: number) {

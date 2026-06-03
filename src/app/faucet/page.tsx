@@ -10,7 +10,9 @@ import {
   Loader2, 
   Sparkles, 
   ShieldCheck,
-  Award
+  Award,
+  Crown,
+  Gem
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -58,6 +60,20 @@ function FaucetContent() {
   const router = useRouter()
 
   const cooldownMinutes = 5
+
+  const getFaucetBonus = (baseReward: number, userXp: number) => {
+    if (userXp >= 100000) return Math.ceil(baseReward * 0.15)
+    if (userXp >= 10000) return Math.ceil(baseReward * 0.10)
+    if (userXp >= 1000) return Math.ceil(baseReward * 0.05)
+    return 0
+  }
+
+  const getLevelBadgeInfo = (userXp: number) => {
+    if (userXp >= 100000) return { name: "Diamond", bonus: "+15%", color: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20", icon: Gem }
+    if (userXp >= 10000) return { name: "Platinum", bonus: "+10%", color: "text-indigo-200 bg-indigo-300/10 border-indigo-300/20", icon: Crown }
+    if (userXp >= 1000) return { name: "Silver", bonus: "+5%", color: "text-slate-300 bg-slate-300/10 border-slate-300/20", icon: Award }
+    return null
+  }
 
   // Check if window global captcha objects are already loaded
   useEffect(() => {
@@ -341,20 +357,25 @@ function FaucetContent() {
                 
                 <div className="flex items-center gap-3">
                   <span className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-fuchsia-400">
-                    {loadingReward ? "..." : `${rewardAmount + (xp >= 1000 ? Math.ceil(rewardAmount * 0.05) : 0)} Points`}
+                    {loadingReward ? "..." : `${rewardAmount + getFaucetBonus(rewardAmount, xp)} Points`}
                   </span>
                 </div>
 
-                {xp >= 1000 && !loadingReward && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-300/10 border border-slate-300/20"
-                  >
-                    <Award className="w-3 h-3 text-slate-300" />
-                    <span className="text-[10px] font-bold text-slate-300 uppercase">Silver Bonus +5%</span>
-                  </motion.div>
-                )}
+                {!loadingReward && (() => {
+                  const badge = getLevelBadgeInfo(xp)
+                  if (!badge) return null
+                  const BadgeIcon = badge.icon
+                  return (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full border ${badge.color}`}
+                    >
+                      <BadgeIcon className="w-3 h-3" />
+                      <span className="text-[10px] font-bold uppercase">{badge.name} Bonus {badge.bonus}</span>
+                    </motion.div>
+                  )
+                })()}
               </div>
 
               {/* CHALLENGE AREA */}

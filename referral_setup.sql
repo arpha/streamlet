@@ -81,6 +81,7 @@ DECLARE
   ref_id UUID;
   ref_commission INT;
   new_bal NUMERIC;
+  user_xp INT;
 BEGIN
   -- 1. Periksa batas cooldown klaim
   SELECT claimed_at INTO last_claim
@@ -103,10 +104,18 @@ BEGIN
     reward_amount := 10; -- fallback default
   END IF;
 
-  -- 2b. Bonus Level Silver (+5% reward)
-  -- Jika user memiliki >= 1000 XP (Silver atau di atasnya), tambahkan bonus 5%
-  IF (SELECT xp FROM public.profiles WHERE id = u_id LIMIT 1) >= 1000 THEN
-    -- Menggunakan CEIL agar bonus 5% dari 10 tetap bernilai 1 (bukan 0)
+  -- 2b. Bonus Faucet Berdasarkan Level
+  -- Ambil XP saat ini dari profiles
+  SELECT xp INTO user_xp FROM public.profiles WHERE id = u_id LIMIT 1;
+  
+  IF user_xp >= 100000 THEN
+    -- Diamond (+15%)
+    reward_amount := reward_amount + CEIL(reward_amount * 0.15);
+  ELSIF user_xp >= 10000 THEN
+    -- Platinum (+10%)
+    reward_amount := reward_amount + CEIL(reward_amount * 0.10);
+  ELSIF user_xp >= 1000 THEN
+    -- Silver (+5%)
     reward_amount := reward_amount + CEIL(reward_amount * 0.05);
   END IF;
 
