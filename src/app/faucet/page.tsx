@@ -9,7 +9,8 @@ import {
   CheckCircle2, 
   Loader2, 
   Sparkles, 
-  ShieldCheck
+  ShieldCheck,
+  Award
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -52,7 +53,7 @@ function FaucetContent() {
   const turnstileWidgetId = useRef<string | null>(null)
   const hcaptchaWidgetId = useRef<string | null>(null)
 
-  const { id: userId, setBalance } = useStore()
+  const { id: userId, setBalance, xp } = useStore()
   const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -394,11 +395,25 @@ function FaucetContent() {
             
             <CardContent className="p-10 pt-0 space-y-8 relative z-10">
               {/* REWARD AMOUNT DISPLAY */}
-              <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2">
+              <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 relative overflow-hidden">
                 <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Reward Amount</span>
-                <span className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-fuchsia-400">
-                  {loadingReward ? "..." : `${rewardAmount} Points`}
-                </span>
+                
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-fuchsia-400">
+                    {loadingReward ? "..." : `${rewardAmount + (xp >= 1000 ? Math.ceil(rewardAmount * 0.05) : 0)} Points`}
+                  </span>
+                </div>
+
+                {xp >= 1000 && !loadingReward && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-300/10 border border-slate-300/20"
+                  >
+                    <Award className="w-3 h-3 text-slate-300" />
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">Silver Bonus +5%</span>
+                  </motion.div>
+                )}
               </div>
 
               {/* CHALLENGE AREA */}

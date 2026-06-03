@@ -103,6 +103,13 @@ BEGIN
     reward_amount := 10; -- fallback default
   END IF;
 
+  -- 2b. Bonus Level Silver (+5% reward)
+  -- Jika user memiliki >= 1000 XP (Silver atau di atasnya), tambahkan bonus 5%
+  IF (SELECT xp FROM public.profiles WHERE id = u_id LIMIT 1) >= 1000 THEN
+    -- Menggunakan CEIL agar bonus 5% dari 10 tetap bernilai 1 (bukan 0)
+    reward_amount := reward_amount + CEIL(reward_amount * 0.05);
+  END IF;
+
   -- 3. Masukkan catatan klaim baru
   INSERT INTO public.faucet_claims (user_id, amount, claimed_at)
   VALUES (u_id, reward_amount, now());
