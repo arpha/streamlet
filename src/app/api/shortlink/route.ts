@@ -8,12 +8,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing destination URL" }, { status: 400 })
     }
 
-    const apiKey = process.env.EXE_IO_API_KEY
+    const apiKey = process.env.SHRINKME_IO_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: "Shortlink API not configured" }, { status: 500 })
     }
 
-    const apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(destinationUrl)}&format=json`
+    const apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(destinationUrl)}&format=json`
 
     const response = await fetch(apiUrl)
     const result = await response.json()
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (result.status === "success" && result.shortenedUrl) {
       return NextResponse.json({ shortenedUrl: result.shortenedUrl })
     } else {
-      console.error("exe.io API error:", result)
+      console.error("shrinkme.io API error:", result)
       return NextResponse.json({ error: result.message || "Failed to create shortlink" }, { status: 500 })
     }
   } catch (error: any) {
