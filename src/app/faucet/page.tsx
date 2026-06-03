@@ -103,7 +103,7 @@ function FaucetContent() {
         } catch (e) {}
       }
     }
-  }, [turnstileLoaded])
+  }, [turnstileLoaded, loadingCooldown, timeLeft])
 
   // Initialize hCaptcha
   useEffect(() => {
@@ -141,7 +141,7 @@ function FaucetContent() {
         } catch (e) {}
       }
     }
-  }, [hcaptchaLoaded])
+  }, [hcaptchaLoaded, loadingCooldown, timeLeft])
 
   const resetCaptchas = () => {
     setTurnstileToken(null)
