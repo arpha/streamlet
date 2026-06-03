@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
@@ -13,6 +14,34 @@ import {
 } from "lucide-react"
 
 export function LandingPage() {
+  const [stats, setStats] = useState({ total_users: 0, total_earned: 0, website_age_days: 0 })
+  const [loadingStats, setLoadingStats] = useState(true)
+  const statsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/stats")
+        const data = await res.json()
+        if (data.success) {
+          setStats({
+            total_users: data.total_users,
+            total_earned: data.total_earned,
+            website_age_days: data.website_age_days
+          })
+        }
+      } catch (err) {
+        console.error("Failed to fetch landing stats:", err)
+      } finally {
+        setLoadingStats(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  const scrollToStats = () => {
+    statsRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
   return (
     <div className="min-h-screen bg-[#020617] text-white relative overflow-hidden">
       {/* Background Orbs */}
@@ -72,7 +101,11 @@ export function LandingPage() {
                   GET STARTED <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Button variant="outline" className="h-16 px-10 rounded-2xl glass border-white/20 text-white font-black text-xl hover:bg-white/10">
+              <Button 
+                onClick={scrollToStats}
+                variant="outline" 
+                className="h-16 px-10 rounded-2xl glass border-white/20 text-white font-black text-xl hover:bg-white/10"
+              >
                 VIEW STATS
               </Button>
             </div>
@@ -85,6 +118,49 @@ export function LandingPage() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section ref={statsRef} id="stats" className="py-16 px-6 relative z-10 border-t border-white/5 bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Stat 1: Users */}
+            <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-purple-500/20 transition-all">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+                <Users className="w-32 h-32 text-white" />
+              </div>
+              <Users className="w-8 h-8 text-purple-400 mb-4" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-2">Total Users</span>
+              <h2 className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white">
+                {loadingStats ? "..." : stats.total_users.toLocaleString()}
+              </h2>
+            </div>
+
+            {/* Stat 2: Earned */}
+            <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-fuchsia-500/20 transition-all">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+                <Coins className="w-32 h-32 text-white" />
+              </div>
+              <Coins className="w-8 h-8 text-fuchsia-400 mb-4" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-2">Total Points Earned</span>
+              <h2 className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white">
+                {loadingStats ? "..." : `${stats.total_earned.toLocaleString()} pts`}
+              </h2>
+            </div>
+
+            {/* Stat 3: Age */}
+            <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-cyan-500/20 transition-all">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+                <Zap className="w-32 h-32 text-white" />
+              </div>
+              <Zap className="w-8 h-8 text-cyan-400 mb-4" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-2">Days Online</span>
+              <h2 className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white">
+                {loadingStats ? "..." : `${stats.website_age_days.toLocaleString()} Days`}
+              </h2>
+            </div>
+          </div>
         </div>
       </section>
 

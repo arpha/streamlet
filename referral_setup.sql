@@ -213,3 +213,33 @@ BEGIN
   );
 END;
 $$;
+
+
+-- 6. Fungsi RPC untuk mengambil statistik publik website (jumlah user, total earned)
+CREATE OR REPLACE FUNCTION public.get_public_stats()
+RETURNS JSON
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_total_users INT;
+  v_total_earned NUMERIC;
+BEGIN
+  -- 1. Hitung total user
+  SELECT COUNT(*) INTO v_total_users FROM public.profiles;
+
+  -- 2. Hitung total earned (dari faucet_claims + komisi referal)
+  -- Kita hitung total koin yang sudah didistribusikan melalui Faucet Claims
+  -- plus komisi referral (25% dari klaim yang memiliki referrer)
+  SELECT COALESCE(SUM(amount), 0) + COALESCE(SUM(CASE WHEN p.referred_by_id IS NOT NULL THEN FLOOR(c.amount * 0.25) ELSE 0 END), 0)
+  INTO v_total_earned
+  FROM public.faucet_claims c
+  LEFT JOIN public.profiles p ON c.user_id = p.id;
+
+  RETURN json_build_object(
+    'total_users', v_total_users,
+    'total_earned', v_total_earned
+  );
+END;
+$$;
