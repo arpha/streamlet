@@ -7,7 +7,7 @@ const POINTS_TO_USD_RATE = 0.000005 // 1 poin = $0.000005
 // CoinGecko API IDs mapping
 const COINGECKO_IDS: Record<string, string> = {
   DOGE: "dogecoin",
-  POL: "matic-network",
+  POL: "polygon-ecosystem-token",
   BNB: "binancecoin",
 }
 
