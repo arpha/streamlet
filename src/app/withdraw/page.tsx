@@ -58,12 +58,47 @@ export default function WithdrawPage() {
   const [submitting, setSubmitting] = useState(false)
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({})
+  const [loadingPrices, setLoadingPrices] = useState(true)
+
+  // CoinGecko ID mapping
+  const COINGECKO_IDS: Record<string, string> = {
+    DOGE: "dogecoin",
+    POL: "matic-network",
+    BNB: "binancecoin",
+  }
 
   useEffect(() => {
     if (user?.email) {
       setEmail(user.email)
     }
   }, [user])
+
+  // Fetch crypto prices from CoinGecko
+  useEffect(() => {
+    async function fetchPrices() {
+      try {
+        const ids = Object.values(COINGECKO_IDS).join(",")
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
+        )
+        const data = await res.json()
+
+        const prices: Record<string, number> = {}
+        for (const [symbol, geckoId] of Object.entries(COINGECKO_IDS)) {
+          if (data[geckoId]?.usd) {
+            prices[symbol] = data[geckoId].usd
+          }
+        }
+        setCryptoPrices(prices)
+      } catch (err) {
+        console.error("Failed to fetch crypto prices:", err)
+      } finally {
+        setLoadingPrices(false)
+      }
+    }
+    fetchPrices()
+  }, [])
 
   const minWithdrawal = 3000
   const pointsAmount = parseInt(pointsInput) || 0
@@ -288,7 +323,11 @@ export default function WithdrawPage() {
                     <p className="text-[10px] text-white/50 uppercase">USD</p>
                   </div>
                   <div>
-                    <p className="text-lg font-black text-cyan-400">≈ ?</p>
+                    <p className="text-lg font-black text-cyan-400">
+                      {selectedCoin && cryptoPrices[selectedCoin]
+                        ? `≈ ${(usdValue / cryptoPrices[selectedCoin]).toFixed(8)}`
+                        : loadingPrices ? "..." : "≈ ?"}
+                    </p>
                     <p className="text-[10px] text-white/50 uppercase">{selectedCoin}</p>
                   </div>
                 </div>
