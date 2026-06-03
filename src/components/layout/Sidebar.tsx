@@ -38,6 +38,26 @@ export function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen, toggleSidebar, id: userId, balance } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
+  const [exeApiKey, setExeApiKey] = useState("")
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function fetchApiKey() {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'exe_io_api_key')
+          .limit(1)
+        if (data && data.length > 0) {
+          setExeApiKey(data[0].value)
+        }
+      } catch (err) {
+        console.error("Error fetching exe.io API key in sidebar:", err)
+      }
+    }
+    fetchApiKey()
+  }, [])
 
   useEffect(() => {
     if (!userId) {
@@ -129,11 +149,28 @@ export function Sidebar() {
       <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname === item.href
+          const isFaucetDisabled = item.name === "Faucet" && faucetCooldown > 0
           
           const handleClick = (e: React.MouseEvent) => {
             if (item.comingSoon) {
               e.preventDefault()
               toast.info(`Fitur ${item.name} segera hadir!`)
+              return
+            }
+            if (item.name === "Faucet") {
+              if (faucetCooldown > 0) {
+                e.preventDefault()
+                toast.warning(`Faucet is cooling down. Please wait!`)
+                return
+              }
+              // Redirect to shortlink instead of normal navigation
+              e.preventDefault()
+              const apiKey = exeApiKey || process.env.NEXT_PUBLIC_EXE_IO_API_KEY || "YOUR_API_KEY"
+              const origin = window.location.origin
+              const destination = `${origin}/faucet?sl=1`
+              const shortlinkUrl = `https://exe.io/st?api=${apiKey}&url=${encodeURIComponent(destination)}`
+              
+              window.location.href = shortlinkUrl
             }
           }
 
@@ -146,9 +183,10 @@ export function Sidebar() {
               <div className={cn(
                 "group flex items-center rounded-2xl transition-all duration-200",
                 isSidebarOpen ? "gap-4 px-4 py-3.5 w-full" : "justify-center w-12 h-12 mx-auto",
-                 isActive 
+                isActive 
                   ? "bg-primary text-white shadow-lg shadow-primary/30 active-glow" 
-                  : "text-white/40 hover:text-white hover:bg-white/5"
+                  : "text-white/40 hover:text-white hover:bg-white/5",
+                isFaucetDisabled && "opacity-30 pointer-events-none cursor-not-allowed hover:bg-transparent text-white/20"
               )}>
                 <div className="relative flex-shrink-0">
                   <item.icon className={cn(
