@@ -117,11 +117,13 @@ export default function WithdrawPage() {
         .order("created_at", { ascending: false })
         .limit(10)
 
-      if (!error && data) {
+      if (error) {
+        console.error("Error loading withdrawal history:", error)
+      } else if (data) {
         setWithdrawals(data)
       }
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("Exception loading withdrawal history:", err)
     } finally {
       setLoadingHistory(false)
     }

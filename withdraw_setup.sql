@@ -32,7 +32,10 @@ CREATE INDEX IF NOT EXISTS idx_withdrawals_created_at ON public.withdrawals(crea
 -- 4. Aktifkan Row Level Security (RLS)
 ALTER TABLE public.withdrawals ENABLE ROW LEVEL SECURITY;
 
--- 5. Buat kebijakan akses RLS
+-- 5. Berikan hak akses (GRANT) ke role authenticated (user yang login)
+GRANT SELECT, INSERT, UPDATE ON public.withdrawals TO authenticated;
+
+-- 6. Buat kebijakan akses RLS
 DROP POLICY IF EXISTS "Users can view their own withdrawals" ON public.withdrawals;
 CREATE POLICY "Users can view their own withdrawals" ON public.withdrawals
   FOR SELECT USING (auth.uid() = user_id);
