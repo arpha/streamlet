@@ -1,0 +1,140 @@
+"use client"
+
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
+import { 
+  Coins, 
+  Gamepad2, 
+  ChevronRight, 
+  ShieldCheck, 
+  Zap, 
+  Users
+} from "lucide-react"
+
+export function LandingPage() {
+  return (
+    <div className="min-h-screen bg-[#020617] text-white relative overflow-hidden">
+      {/* Background Orbs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-fuchsia-600/10 rounded-full blur-[150px]" />
+      </div>
+
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass-header h-20">
+        <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
+              <Coins className="w-6 h-6" />
+            </div>
+            <span className="text-xl font-black tracking-tighter gradient-text">STREAMLET</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="#features" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Features</Link>
+            <Link href="#rewards" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Rewards</Link>
+            <Link href="#community" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Community</Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/auth/login">
+              <Button variant="ghost" className="font-bold text-white/80 hover:text-white">Sign In</Button>
+            </Link>
+            <Link href="/auth/register">
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-6 font-black shadow-lg shadow-purple-500/20">JOIN NOW</Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-40 pb-20 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-black tracking-widest uppercase text-white/60">Fastest Faucet Platform 2026</span>
+            </div>
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 uppercase">
+              PLAY GAMES,<br />
+              <span className="gradient-text">EARN CRYPTO.</span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-white/60 font-medium mb-12">
+              Collect Bitcoin and other popular crypto assets in the most fun way. 
+              Claim faucets, watch ads, and withdraw your rewards instantly.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/auth/register">
+                <Button className="h-16 px-10 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xl shadow-[0_20px_40px_-10px_rgba(147,51,234,0.5)] group transition-all">
+                  GET STARTED <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Button variant="outline" className="h-16 px-10 rounded-2xl glass border-white/20 text-white font-black text-xl hover:bg-white/10">
+                VIEW STATS
+              </Button>
+            </div>
+
+            {/* Trusted By */}
+            <div className="mt-24 pt-12 border-t border-white/5">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-8">INSTANT PAYMENT INTEGRATION</p>
+              <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
+                <div className="text-3xl font-black tracking-tighter flex items-center gap-2">FAUCET<span>PAY</span></div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-10 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all group">
+              <div className="w-16 h-16 rounded-2xl bg-purple-600/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <Zap className="w-8 h-8 text-purple-400" />
+              </div>
+              <h3 className="text-2xl font-black mb-4">Lightning Withdrawals</h3>
+              <p className="text-white/40 font-medium">Don't wait weeks. Withdraw your coins to FaucetPay in seconds after meeting the minimum threshold.</p>
+            </div>
+
+            <div className="p-10 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-fuchsia-500/30 transition-all group">
+              <div className="w-16 h-16 rounded-2xl bg-fuchsia-600/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <Gamepad2 className="w-8 h-8 text-fuchsia-400" />
+              </div>
+              <h3 className="text-2xl font-black mb-4">Interactive Games</h3>
+              <p className="text-white/40 font-medium">Bored with regular faucets? Play exciting mini-games and daily challenges to multiply your earnings.</p>
+            </div>
+
+            <div className="p-10 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all group">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-600/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-8 h-8 text-cyan-400" />
+              </div>
+              <h3 className="text-2xl font-black mb-4">Multi-layer Security</h3>
+              <p className="text-white/40 font-medium">We use blockchain-based security and Supabase to ensure your balance is 100% safe and vault-secured.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-20 border-t border-white/5 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-fuchsia-600 flex items-center justify-center">
+              <Coins className="w-5 h-5" />
+            </div>
+            <span className="text-lg font-black tracking-tighter uppercase">STREAMLET</span>
+          </div>
+          <p className="text-sm font-bold text-white/20 uppercase tracking-widest">© 2026 Streamlet Development. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="text-xs font-bold text-white/40 hover:text-white uppercase transition-colors">Term of Service</Link>
+            <Link href="/privacy" className="text-xs font-bold text-white/40 hover:text-white uppercase transition-colors">Privacy Policy</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
