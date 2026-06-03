@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 export function Navbar() {
-  const { username } = useStore()
+  const { username, toggleSidebar } = useStore()
   const supabase = createClient()
   const router = useRouter()
 
@@ -28,6 +28,14 @@ export function Navbar() {
   return (
     <header className="h-20 bg-transparent sticky top-0 z-30 flex items-center justify-between px-8 gap-4 border-b border-white/[0.05] backdrop-blur-md">
       <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar}
+          className="md:hidden text-white/70 hover:text-white glass border-white/10 h-10 w-10 rounded-xl"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
         <Badge variant="outline" className="hidden md:flex bg-emerald-500/10 text-emerald-400 border-emerald-500/30 px-3 py-1.5 rounded-full gap-2 font-bold animate-pulse">
           <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
           Network Status: Online

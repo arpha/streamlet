@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/Navbar"
 import { useAuth } from "@/components/providers/AuthProvider"
 
 export function MainContent({ children }: { children: React.ReactNode }) {
-  const { isSidebarOpen } = useStore()
+  const { isSidebarOpen, toggleSidebar } = useStore()
   const { user, loading } = useAuth()
 
   // If not logged in, just show children (LandingPage) without Sidebar/Navbar
@@ -16,8 +16,17 @@ export function MainContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#020617]">
+    <div className="flex min-h-screen bg-[#020617] relative">
       <Sidebar />
+      
+      {/* Backdrop overlay for mobile when sidebar is open */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-all duration-300"
+          onClick={toggleSidebar}
+        />
+      )}
+
       <div className={cn(
         "flex-1 flex flex-col transition-all duration-300",
         isSidebarOpen ? "md:ml-72" : "md:ml-20"

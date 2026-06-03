@@ -104,8 +104,9 @@ export function Sidebar() {
       initial={false}
       animate={{ width: isSidebarOpen ? 288 : 80 }}
       className={cn(
-        "fixed left-0 top-0 h-screen glass-sidebar z-40 transition-all duration-300 border-r border-white/5",
-        "flex flex-col overflow-hidden"
+        "fixed left-0 top-0 h-screen glass-sidebar z-50 border-r border-white/5",
+        "flex flex-col overflow-hidden transition-all duration-300",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}
     >
       {/* Brand Logo */}
