@@ -38,7 +38,6 @@ export function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen, toggleSidebar, id: userId, balance } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
-  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     if (!userId) {
@@ -100,36 +99,6 @@ export function Sidebar() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleShortlinkRedirect = async () => {
-    if (isRedirecting) return
-    setIsRedirecting(true)
-    toast.loading("Generating shortlink...", { id: "shortlink" })
-
-    try {
-      const origin = window.location.origin
-      const destination = `${origin}/faucet?sl=1`
-
-      const res = await fetch("/api/shortlink", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinationUrl: destination }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok && data.shortenedUrl) {
-        toast.dismiss("shortlink")
-        window.location.href = data.shortenedUrl
-      } else {
-        toast.error(data.error || "Failed to create shortlink", { id: "shortlink" })
-        setIsRedirecting(false)
-      }
-    } catch (err) {
-      toast.error("Network error. Please try again.", { id: "shortlink" })
-      setIsRedirecting(false)
-    }
-  }
-
   return (
     <motion.aside 
       initial={false}
@@ -174,9 +143,6 @@ export function Sidebar() {
                 toast.warning(`Faucet is cooling down. Please wait!`)
                 return
               }
-              // Redirect via server-side shortlink API
-              e.preventDefault()
-              handleShortlinkRedirect()
             }
           }
 

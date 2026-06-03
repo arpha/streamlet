@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Script from "next/script"
 import { Suspense } from "react"
@@ -56,29 +56,6 @@ function FaucetContent() {
   const { id: userId, setBalance, xp } = useStore()
   const supabase = createClient()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const sl = searchParams.get("sl")
-  const [isSlVerified, setIsSlVerified] = useState(false)
-  const [isRedirecting, setIsRedirecting] = useState(false)
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const verified = sessionStorage.getItem("faucet_sl_verified") === "true"
-      
-      if (sl === "1") {
-        sessionStorage.setItem("faucet_sl_verified", "true")
-        setIsSlVerified(true)
-        // Clean the query parameters
-        const url = new URL(window.location.href)
-        url.searchParams.delete("sl")
-        window.history.replaceState({}, "", url.pathname)
-      } else if (verified) {
-        setIsSlVerified(true)
-      } else {
-        setIsSlVerified(false)
-      }
-    }
-  }, [sl])
 
   const cooldownMinutes = 5
 
@@ -245,35 +222,7 @@ function FaucetContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const handleShortlinkRedirect = async () => {
-    if (isRedirecting) return
-    setIsRedirecting(true)
-    toast.loading("Generating shortlink...", { id: "shortlink" })
 
-    try {
-      const origin = window.location.origin
-      const destination = `${origin}/faucet?sl=1`
-
-      const res = await fetch("/api/shortlink", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinationUrl: destination }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok && data.shortenedUrl) {
-        toast.dismiss("shortlink")
-        window.location.href = data.shortenedUrl
-      } else {
-        toast.error(data.error || "Failed to create shortlink", { id: "shortlink" })
-        setIsRedirecting(false)
-      }
-    } catch (err) {
-      toast.error("Network error. Please try again.", { id: "shortlink" })
-      setIsRedirecting(false)
-    }
-  }
 
   const handleClaim = async () => {
     if (!userId) {
@@ -282,13 +231,7 @@ function FaucetContent() {
       return
     }
 
-    // Double check shortlink verification
-    const verified = sessionStorage.getItem("faucet_sl_verified") === "true"
-    if (!verified) {
-      toast.error("Shortlink verification required. Please verify first.")
-      setIsSlVerified(false)
-      return
-    }
+
 
     setIsClaiming(true)
     
@@ -316,9 +259,7 @@ function FaucetContent() {
         setBalance(result.new_balance)
       }
       
-      // Clear verification upon successful claim
-      sessionStorage.removeItem("faucet_sl_verified")
-      setIsSlVerified(false)
+
       
       setTimeLeft(cooldownMinutes * 60)
       resetCaptchas()
@@ -423,27 +364,7 @@ function FaucetContent() {
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
                     <span className="text-white/40 font-bold uppercase tracking-widest text-xs">Authenticating...</span>
                   </div>
-                ) : !isSlVerified && timeLeft === 0 ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center gap-6 p-10 rounded-[3rem] bg-primary/5 border border-primary/10 w-full text-center"
-                  >
-                    <div className="p-4 rounded-3xl bg-primary/10 border border-primary/20">
-                      <ShieldCheck className="w-12 h-12 text-primary" />
-                    </div>
-                    <h3 className="text-2xl font-black text-white uppercase italic">Verification Required</h3>
-                    <p className="text-white/50 text-sm font-medium italic max-w-md">
-                      To prevent bot abuse and keep our faucet rewards active, you must complete a shortlink verification first.
-                    </p>
-                    <Button 
-                      className="w-full h-16 text-lg font-black rounded-2xl bg-primary hover:bg-primary/90 text-white neon-glow uppercase tracking-wider mt-2"
-                      onClick={handleShortlinkRedirect}
-                      disabled={isRedirecting}
-                    >
-                      {isRedirecting ? "Redirecting..." : "Verify via Shortlink"}
-                    </Button>
-                  </motion.div>
+
                 ) : timeLeft > 0 ? (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
