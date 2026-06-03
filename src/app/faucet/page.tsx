@@ -58,7 +58,7 @@ function FaucetContent() {
   const searchParams = useSearchParams()
   const sl = searchParams.get("sl")
   const [isSlVerified, setIsSlVerified] = useState(false)
-  const [exeApiKey, setExeApiKey] = useState("")
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -178,7 +178,7 @@ function FaucetContent() {
 
   const captchaVerified = !!turnstileToken && !!hcaptchaToken
 
-  // Fetch reward amount and exe.io API key from database
+  // Fetch reward amount from database
   useEffect(() => {
     async function fetchSettings() {
       try {
@@ -190,16 +190,6 @@ function FaucetContent() {
         
         if (rewardData && rewardData.length > 0) {
           setRewardAmount(Number(rewardData[0].value))
-        }
-
-        const { data: keyData } = await supabase
-          .from('site_settings')
-          .select('value')
-          .eq('key', 'exe_io_api_key')
-          .limit(1)
-
-        if (keyData && keyData.length > 0) {
-          setExeApiKey(keyData[0].value)
         }
       } catch (err) {
         console.error("Error fetching settings:", err)
@@ -252,6 +242,36 @@ function FaucetContent() {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleShortlinkRedirect = async () => {
+    if (isRedirecting) return
+    setIsRedirecting(true)
+    toast.loading("Generating shortlink...", { id: "shortlink" })
+
+    try {
+      const origin = window.location.origin
+      const destination = `${origin}/faucet?sl=1`
+
+      const res = await fetch("/api/shortlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationUrl: destination }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.shortenedUrl) {
+        toast.dismiss("shortlink")
+        window.location.href = data.shortenedUrl
+      } else {
+        toast.error(data.error || "Failed to create shortlink", { id: "shortlink" })
+        setIsRedirecting(false)
+      }
+    } catch (err) {
+      toast.error("Network error. Please try again.", { id: "shortlink" })
+      setIsRedirecting(false)
+    }
   }
 
   const handleClaim = async () => {
@@ -403,15 +423,10 @@ function FaucetContent() {
                     </p>
                     <Button 
                       className="w-full h-16 text-lg font-black rounded-2xl bg-primary hover:bg-primary/90 text-white neon-glow uppercase tracking-wider mt-2"
-                      onClick={() => {
-                        const apiKey = exeApiKey || process.env.NEXT_PUBLIC_EXE_IO_API_KEY || "YOUR_API_KEY"
-                        const origin = window.location.origin
-                        const destination = `${origin}/faucet?sl=1`
-                        const shortlinkUrl = `https://exe.io/st?api=${apiKey}&url=${encodeURIComponent(destination)}`
-                        window.location.href = shortlinkUrl
-                      }}
+                      onClick={handleShortlinkRedirect}
+                      disabled={isRedirecting}
                     >
-                      Verify via Shortlink
+                      {isRedirecting ? "Redirecting..." : "Verify via Shortlink"}
                     </Button>
                   </motion.div>
                 ) : timeLeft > 0 ? (

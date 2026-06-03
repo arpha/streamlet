@@ -38,26 +38,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen, toggleSidebar, id: userId, balance } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
-  const [exeApiKey, setExeApiKey] = useState("")
-
-  useEffect(() => {
-    const supabase = createClient()
-    async function fetchApiKey() {
-      try {
-        const { data } = await supabase
-          .from('site_settings')
-          .select('value')
-          .eq('key', 'exe_io_api_key')
-          .limit(1)
-        if (data && data.length > 0) {
-          setExeApiKey(data[0].value)
-        }
-      } catch (err) {
-        console.error("Error fetching exe.io API key in sidebar:", err)
-      }
-    }
-    fetchApiKey()
-  }, [])
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
     if (!userId) {
@@ -119,6 +100,36 @@ export function Sidebar() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const handleShortlinkRedirect = async () => {
+    if (isRedirecting) return
+    setIsRedirecting(true)
+    toast.loading("Generating shortlink...", { id: "shortlink" })
+
+    try {
+      const origin = window.location.origin
+      const destination = `${origin}/faucet?sl=1`
+
+      const res = await fetch("/api/shortlink", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationUrl: destination }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.shortenedUrl) {
+        toast.dismiss("shortlink")
+        window.location.href = data.shortenedUrl
+      } else {
+        toast.error(data.error || "Failed to create shortlink", { id: "shortlink" })
+        setIsRedirecting(false)
+      }
+    } catch (err) {
+      toast.error("Network error. Please try again.", { id: "shortlink" })
+      setIsRedirecting(false)
+    }
+  }
+
   return (
     <motion.aside 
       initial={false}
@@ -163,14 +174,9 @@ export function Sidebar() {
                 toast.warning(`Faucet is cooling down. Please wait!`)
                 return
               }
-              // Redirect to shortlink instead of normal navigation
+              // Redirect via server-side shortlink API
               e.preventDefault()
-              const apiKey = exeApiKey || process.env.NEXT_PUBLIC_EXE_IO_API_KEY || "YOUR_API_KEY"
-              const origin = window.location.origin
-              const destination = `${origin}/faucet?sl=1`
-              const shortlinkUrl = `https://exe.io/st?api=${apiKey}&url=${encodeURIComponent(destination)}`
-              
-              window.location.href = shortlinkUrl
+              handleShortlinkRedirect()
             }
           }
 
