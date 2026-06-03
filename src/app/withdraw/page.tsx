@@ -64,7 +64,7 @@ export default function WithdrawPage() {
   // CoinGecko ID mapping
   const COINGECKO_IDS: Record<string, string> = {
     DOGE: "dogecoin",
-    POL: "matic-network",
+    POL: "polygon-ecosystem-token",
     BNB: "binancecoin",
   }
 
