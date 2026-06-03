@@ -183,8 +183,17 @@ export default function TermsPage() {
         </motion.div>
       </main>
 
+      {/* Ad Banner */}
+      <div className="w-full max-w-4xl mx-auto px-6 mb-8 relative z-10 flex justify-center">
+        <iframe 
+          data-aa="2440986" 
+          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+        />
+      </div>
+
       {/* Footer */}
-      <footer className="w-full py-8 border-t border-white/5 px-6 mt-12 relative z-10">
+      <footer className="w-full py-8 border-t border-white/5 px-6 mt-6 relative z-10">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-white/30 font-bold uppercase tracking-wider">
           <p>© 2026 Streamlet Development. All rights reserved.</p>
           <div className="flex gap-4">
