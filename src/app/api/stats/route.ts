@@ -29,11 +29,11 @@ export async function GET() {
     }
 
     // Hitung umur website
-    // Diatur peluncuran pada tanggal 15 Mei 2026
-    const launchDate = new Date("2026-05-15T00:00:00Z")
+    // Diatur peluncuran mulai dari hari ini (4 Juni 2026)
+    const launchDate = new Date("2026-06-04T00:00:00Z")
     const now = new Date()
-    const diffTime = Math.abs(now.getTime() - launchDate.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffTime = Math.max(0, now.getTime() - launchDate.getTime())
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
 
     return NextResponse.json({
       success: true,
