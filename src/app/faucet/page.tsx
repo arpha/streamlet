@@ -283,9 +283,13 @@ export default function FaucetPage() {
 
       {/* TOP BANNER */}
       <div className="w-full flex justify-center">
-        <Card className="glass w-full max-w-4xl h-32 flex items-center justify-center p-6 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-50" />
-          <p className="relative z-10 text-white/10 font-bold text-sm tracking-tighter uppercase">Horizontal Advertisement Area</p>
+        <Card className="glass w-full max-w-4xl h-32 flex flex-col items-center justify-center p-4 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden relative group">
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-2">Sponsored Advertisement</span>
+          <iframe 
+            data-aa="2440986" 
+            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
         </Card>
       </div>
 
@@ -301,8 +305,13 @@ export default function FaucetPage() {
       <div className="grid gap-8 lg:grid-cols-12 items-start">
         {/* LEFT BANNER */}
         <div className="hidden lg:block lg:col-span-2">
-          <Card className="glass h-full flex flex-col items-center justify-center p-6 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
-            <span className="text-white/10 font-bold text-[10px] text-center uppercase vertical-text tracking-[0.3em]">Advertisement</span>
+          <Card className="glass h-full flex flex-col items-center justify-start p-4 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-3 text-center">Ad</span>
+            <iframe 
+              data-aa="2440986" 
+              src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+              style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+            />
           </Card>
         </div>
 
@@ -405,17 +414,26 @@ export default function FaucetPage() {
 
         {/* RIGHT BANNER */}
         <div className="hidden lg:block lg:col-span-2">
-          <Card className="glass h-full flex flex-col items-center justify-center p-6 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
-            <span className="text-white/10 font-bold text-[10px] text-center uppercase vertical-text tracking-[0.3em]">Advertisement</span>
+          <Card className="glass h-full flex flex-col items-center justify-start p-4 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-3 text-center">Ad</span>
+            <iframe 
+              data-aa="2440986" 
+              src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+              style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+            />
           </Card>
         </div>
       </div>
 
       {/* BOTTOM BANNER */}
       <div className="w-full flex justify-center">
-        <Card className="glass w-full max-w-4xl h-32 flex items-center justify-center p-6 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-cyan-500/5 opacity-50" />
-          <p className="relative z-10 text-white/10 font-bold text-sm tracking-tighter uppercase">Footer Advertisement Area</p>
+        <Card className="glass w-full max-w-4xl h-32 flex flex-col items-center justify-center p-4 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden relative group">
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-2">Sponsored Advertisement</span>
+          <iframe 
+            data-aa="2440986" 
+            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
         </Card>
       </div>
     </div>
