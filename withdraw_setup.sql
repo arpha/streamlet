@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.withdrawals (
 );
 
 -- 2. Pastikan kolom tambahan ada (jika tabel sudah ada sebelumnya)
+ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS coin TEXT NOT NULL DEFAULT 'DOGE';
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS usd_value NUMERIC(12,8);
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS crypto_amount BIGINT;
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS tx_hash TEXT;
