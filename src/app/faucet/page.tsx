@@ -283,14 +283,11 @@ export default function FaucetPage() {
 
       {/* TOP BANNER */}
       <div className="w-full flex justify-center">
-        <Card className="glass w-full max-w-4xl h-32 flex flex-col items-center justify-center p-4 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden relative group">
-          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-2">Sponsored Advertisement</span>
-          <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </Card>
+        <iframe 
+          data-aa="2440986" 
+          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+        />
       </div>
 
       <div className="text-center">
@@ -304,15 +301,12 @@ export default function FaucetPage() {
 
       <div className="grid gap-8 lg:grid-cols-12 items-start">
         {/* LEFT BANNER */}
-        <div className="hidden lg:block lg:col-span-2">
-          <Card className="glass h-full flex flex-col items-center justify-start p-4 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
-            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-3 text-center">Ad</span>
-            <iframe 
-              data-aa="2440986" 
-              src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-              style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-            />
-          </Card>
+        <div className="hidden lg:block lg:col-span-2 sticky top-24">
+          <iframe 
+            data-aa="2440986" 
+            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
         </div>
 
         {/* MAIN CONTENT */}
@@ -413,28 +407,22 @@ export default function FaucetPage() {
         </div>
 
         {/* RIGHT BANNER */}
-        <div className="hidden lg:block lg:col-span-2">
-          <Card className="glass h-full flex flex-col items-center justify-start p-4 border-white/5 bg-white/[0.02] min-h-[600px] rounded-[2rem] sticky top-24">
-            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-3 text-center">Ad</span>
-            <iframe 
-              data-aa="2440986" 
-              src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-              style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-            />
-          </Card>
+        <div className="hidden lg:block lg:col-span-2 sticky top-24">
+          <iframe 
+            data-aa="2440986" 
+            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
         </div>
       </div>
 
       {/* BOTTOM BANNER */}
       <div className="w-full flex justify-center">
-        <Card className="glass w-full max-w-4xl h-32 flex flex-col items-center justify-center p-4 border-white/5 bg-white/[0.02] rounded-[2rem] overflow-hidden relative group">
-          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 mb-2">Sponsored Advertisement</span>
-          <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </Card>
+        <iframe 
+          data-aa="2440986" 
+          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+        />
       </div>
     </div>
   )
