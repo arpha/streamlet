@@ -432,18 +432,33 @@ export default function WithdrawPage() {
                       {COINS.find((c) => c.id === w.coin)?.icon || "?"}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">
-                        {w.amount?.toLocaleString()} Points → {w.coin}
+                      <p className="text-sm font-bold text-white flex items-center flex-wrap gap-x-2">
+                        <span>{w.amount?.toLocaleString()} Points → {w.coin}</span>
+                        {w.crypto_amount && (
+                          <span className="text-xs text-cyan-400 font-medium">
+                            (≈ {(Number(w.crypto_amount) / 1e8).toFixed(8)} {w.coin})
+                          </span>
+                        )}
                       </p>
-                      <p className="text-[10px] text-white/40">
-                        {new Date(w.created_at).toLocaleString("en-US", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        {w.usd_value ? ` • $${Number(w.usd_value).toFixed(6)}` : ""}
+                      <p className="text-[10px] text-white/40 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
+                        <span>
+                          {new Date(w.created_at).toLocaleString("en-US", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {w.usd_value && <span>• ${Number(w.usd_value).toFixed(6)}</span>}
+                        {w.tx_hash && (
+                          <>
+                            <span>•</span>
+                            <span className="bg-white/5 px-1.5 py-0.5 rounded text-[9px] font-mono text-white/60">
+                              Payout ID: #{w.tx_hash}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
