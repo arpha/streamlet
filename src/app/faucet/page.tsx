@@ -18,6 +18,8 @@ import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
+import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
+import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { motion, AnimatePresence } from "framer-motion"
 import Script from "next/script"
 import { Suspense } from "react"
@@ -43,6 +45,7 @@ function FaucetContent() {
   const [loadingCooldown, setLoadingCooldown] = useState(true)
   const [rewardAmount, setRewardAmount] = useState<number>(10)
   const [loadingReward, setLoadingReward] = useState(true)
+  const [adBlockActive, setAdBlockActive] = useState(false)
 
   // CAPTCHA STATES
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
@@ -278,6 +281,11 @@ function FaucetContent() {
 
 
   const handleClaim = async () => {
+    if (adBlockActive) {
+      toast.error("Please disable your ad blocker to claim faucet rewards.")
+      return
+    }
+
     if (!userId) {
       toast.error("Please login to claim points")
       router.push("/auth/login")
@@ -332,6 +340,10 @@ function FaucetContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-10 px-4">
+      {/* ADBLOCK DETECTOR */}
+      <AdBlockDetector onDetect={setAdBlockActive} />
+      {adBlockActive && <AntiAdBlockModal />}
+
       {/* CAPTCHA SCRIPTS */}
       <Script 
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" 

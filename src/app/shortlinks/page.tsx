@@ -19,6 +19,8 @@ import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
+import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
+import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 
 function ShortlinksContent() {
   const router = useRouter()
@@ -32,6 +34,7 @@ function ShortlinksContent() {
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
+  const [adBlockActive, setAdBlockActive] = useState<boolean>(false)
 
   // Parse callback status from query parameters
   useEffect(() => {
@@ -123,6 +126,11 @@ function ShortlinksContent() {
   }
 
   const handleVisit = async () => {
+    if (adBlockActive) {
+      toast.error("Please disable your ad blocker to visit shortlinks.")
+      return
+    }
+
     if (!userId) {
       toast.error("Please login to visit shortlinks")
       router.push("/auth/login")
@@ -167,6 +175,10 @@ function ShortlinksContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      {/* ADBLOCK DETECTOR */}
+      <AdBlockDetector onDetect={setAdBlockActive} />
+      {adBlockActive && <AntiAdBlockModal />}
+
       {/* HEADER */}
       <div className="text-center md:text-left relative z-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black uppercase tracking-widest mb-4">
