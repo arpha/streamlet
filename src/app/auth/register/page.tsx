@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserPlus, Loader2, ShieldCheck, CheckCircle2, User, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
-import { createClient } from "@/lib/supabase"
 import { toast } from "sonner"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
+import Script from "next/script"
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -34,14 +34,73 @@ type RegisterValues = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+  // Turnstile states
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRef = useRef<HTMLDivElement>(null)
+  const turnstileWidgetId = useRef<string | null>(null)
+
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema)
   })
+
+  // Check if window global captcha objects are already loaded
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.turnstile) {
+      setTurnstileLoaded(true)
+    }
+  }, [])
+
+  // Initialize Turnstile
+  useEffect(() => {
+    if (!turnstileLoaded || !turnstileRef.current || !window.turnstile) return
+
+    const sitekey = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"
+
+    try {
+      if (turnstileWidgetId.current) {
+        window.turnstile.remove(turnstileWidgetId.current)
+      }
+
+      const widgetId = window.turnstile.render(turnstileRef.current, {
+        sitekey,
+        theme: "dark",
+        callback: (token: string) => {
+          setTurnstileToken(token)
+        },
+        "expired-callback": () => {
+          setTurnstileToken(null)
+        },
+        "error-callback": () => {
+          setTurnstileToken(null)
+        },
+      })
+      turnstileWidgetId.current = widgetId
+    } catch (err) {
+      console.error("Turnstile render error:", err)
+    }
+
+    return () => {
+      if (turnstileWidgetId.current && window.turnstile) {
+        try {
+          window.turnstile.remove(turnstileWidgetId.current)
+        } catch (e) {}
+      }
+    }
+  }, [turnstileLoaded])
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null)
+    if (window.turnstile && turnstileWidgetId.current) {
+      try {
+        window.turnstile.reset(turnstileWidgetId.current)
+      } catch (e) {}
+    }
+  }
 
   // Utility to read a cookie client-side
   const getCookie = (name: string) => {
@@ -53,6 +112,11 @@ export default function RegisterPage() {
   }
 
   const onSubmit = async (values: RegisterValues) => {
+    if (!turnstileToken) {
+      toast.error("Please complete the security check.")
+      return
+    }
+
     setLoading(true)
     try {
       // Read referral code from cookie or fallback to localStorage
@@ -63,21 +127,24 @@ export default function RegisterPage() {
         } catch (e) {}
       }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            username: values.username,
-            referred_by_code: referralCode || undefined,
-          },
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          username: values.username,
+          referralCode: referralCode || undefined,
+          turnstileToken,
+        }),
       })
 
-      if (error) throw error
+      const result = await response.json()
 
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        throw new Error("User already registered")
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to register")
       }
 
       // Clean up cookies and localStorage upon successful signup
@@ -86,16 +153,17 @@ export default function RegisterPage() {
         localStorage.removeItem("referred_by_code")
       } catch (e) {}
 
-      toast.success("Registration successful! Please check your email for verification.")
+      toast.success(result.message || "Registration successful! Please check your email for verification.")
       router.push("/auth/login")
     } catch (error: any) {
       if (error.message?.includes("Database error saving new user")) {
         toast.error("Username is already taken. Please choose another one.")
-      } else if (error.message?.includes("User already registered") || error.message?.includes("already registered")) {
+      } else if (error.message?.includes("Email is already registered") || error.message?.includes("already registered")) {
         toast.error("Email is already registered. Please login or use a different email.")
       } else {
         toast.error(error.message || "Failed to register")
       }
+      resetTurnstile()
     } finally {
       setLoading(false)
     }
@@ -103,6 +171,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-[#020617] relative overflow-hidden">
+      {/* CAPTCHA SCRIPT */}
+      <Script 
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" 
+        onLoad={() => setTurnstileLoaded(true)}
+        strategy="afterInteractive"
+      />
+
       {/* Back to Home link */}
       <Link 
         href="/" 
@@ -224,15 +299,29 @@ export default function RegisterPage() {
                 {errors.confirmPassword && <p className="text-[10px] text-rose-400 font-bold ml-2">{errors.confirmPassword.message}</p>}
               </div>
 
+              {/* Turnstile Verification */}
+              <div className="w-full p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2">
+                 <div className="flex items-center justify-between w-full px-1">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Security Check
+                    </span>
+                    {turnstileToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                 </div>
+                 <div className="w-full flex items-center justify-center py-1">
+                   <div ref={turnstileRef} className="min-w-[300px] min-h-[65px] flex items-center justify-center" />
+                 </div>
+              </div>
+
               <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-emerald-400/80 font-bold leading-relaxed uppercase">By signing up, you agree to our terms and conditions.</p>
               </div>
 
               <Button 
-                className="w-full h-14 bg-gradient-to-r from-primary to-fuchsia-600 hover:from-primary/90 hover:to-fuchsia-600/90 text-white rounded-2xl font-black text-lg neon-glow transition-all active:scale-95 gap-3 mt-4 uppercase" 
+                className={`w-full h-14 text-white rounded-2xl font-black text-lg neon-glow transition-all active:scale-95 gap-3 mt-4 uppercase ${turnstileToken ? 'bg-gradient-to-r from-primary to-fuchsia-600 hover:from-primary/90 hover:to-fuchsia-600/90' : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'}`} 
                 type="submit" 
-                disabled={loading}
+                disabled={loading || !turnstileToken}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
                 Register Now
