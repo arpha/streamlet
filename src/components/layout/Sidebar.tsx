@@ -27,7 +27,7 @@ const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, href: "/" },
   { name: "Faucet", icon: Coins, href: "/faucet" },
   { name: "PTC Ads", icon: MousePointer2, href: "/ptc", comingSoon: true },
-  { name: "Shortlinks", icon: Link2, href: "/shortlinks", comingSoon: true },
+  { name: "Shortlinks", icon: Link2, href: "/shortlinks" },
   { name: "Offerwalls", icon: Gamepad2, href: "/offerwalls", comingSoon: true },
   { name: "Leaderboard", icon: Trophy, href: "/leaderboard", comingSoon: true },
   { name: "Referrals", icon: Users, href: "/referral" },
