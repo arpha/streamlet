@@ -309,7 +309,7 @@ function ShortlinksContent() {
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 text-xs text-white/40 font-medium flex gap-3">
               <Info className="w-5 h-5 text-purple-400 flex-shrink-0" />
               <p>
-                Untuk mencegah kecurangan, setiap link dibuat unik dan hanya dapat diklaim satu kali per kunjungan. Dilarang menggunakan VPN, proxy, atau bot otomatis saat menyelesaikan shortlink, jika terdeteksi akun Anda dapat ditangguhkan secara permanen.
+                To prevent fraud, each link is generated uniquely and can only be claimed once per visit. Using VPNs, proxies, or automated bots when completing shortlinks is strictly prohibited; if detected, your account may be permanently suspended.
               </p>
             </div>
           </CardContent>

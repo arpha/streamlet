@@ -451,7 +451,7 @@ function FaucetContent() {
                          <div className="flex items-center justify-between w-full px-2">
                             <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verifikasi Keamanan (Turnstile)
+                              Security Verification (Turnstile)
                             </span>
                             {turnstileToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                          </div>
@@ -465,7 +465,7 @@ function FaucetContent() {
                          <div className="flex items-center justify-between w-full px-2">
                             <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verifikasi Keamanan (hCaptcha)
+                              Security Verification (hCaptcha)
                             </span>
                             {hcaptchaToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                          </div>

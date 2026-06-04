@@ -131,9 +131,9 @@ export default function WithdrawPage() {
     const hours = Math.floor((ms / (1000 * 60 * 60)) % 24)
     
     const parts = []
-    if (hours > 0) parts.push(`${hours}j`)
+    if (hours > 0) parts.push(`${hours}h`)
     if (minutes > 0 || hours > 0) parts.push(`${minutes}m`)
-    parts.push(`${seconds}d`)
+    parts.push(`${seconds}s`)
     
     return parts.join(" ")
   }
@@ -283,8 +283,8 @@ export default function WithdrawPage() {
               <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex gap-3 items-start">
                 <Clock className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
                 <div className="text-xs text-rose-200/80">
-                  <p className="font-bold text-rose-500 mb-1">Cooldown Penarikan Aktif (1x Sehari)</p>
-                  Anda telah melakukan penarikan. Silakan tunggu <span className="text-white font-bold">{formatCooldown(cooldownLeft)}</span> lagi sebelum dapat melakukan penarikan berikutnya.
+                  <p className="font-bold text-rose-500 mb-1">Withdrawal Cooldown Active (1x Daily)</p>
+                  You have recently completed a withdrawal. Please wait <span className="text-white font-bold">{formatCooldown(cooldownLeft)}</span> before requesting another withdrawal.
                 </div>
               </div>
             )}
