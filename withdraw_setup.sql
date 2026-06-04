@@ -64,8 +64,7 @@ DECLARE
   v_withdrawal_id UUID;
   v_recent_count INT;
 BEGIN
-  -- 0. Pengecekan limit 1x per 24 jam (TEMPORARILY DISABLED FOR TESTING)
-  /*
+  -- 0. Pengecekan limit 1x per 24 jam
   SELECT COUNT(*) INTO v_recent_count
   FROM public.withdrawals
   WHERE user_id = p_user_id
@@ -75,7 +74,6 @@ BEGIN
   IF v_recent_count > 0 THEN
     RETURN json_build_object('success', false, 'message', 'Anda hanya dapat melakukan penarikan 1 kali dalam 24 jam.');
   END IF;
-  */
 
   -- A. Validasi batas minimum
   IF p_amount < 3000 THEN
