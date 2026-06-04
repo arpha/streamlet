@@ -348,8 +348,8 @@ function FaucetContent() {
       <div className="w-full">
         <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
           <iframe 
-            data-aa='2441211' 
-            src='//acceptable.a-ads.com/2441211/?size=Adaptive'
+            data-aa='2441223' 
+            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
             style={{ border: 0, padding: 0, width: '70%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
@@ -368,8 +368,8 @@ function FaucetContent() {
         {/* LEFT BANNER */}
         <div className="hidden lg:block lg:col-span-2 sticky top-24">
           <iframe 
-            data-aa="2441211" 
-            src="//acceptable.a-ads.com/2441211/?size=Adaptive"
+            data-aa="2441223" 
+            src="//acceptable.a-ads.com/2441223/?size=Adaptive"
             style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
@@ -494,8 +494,8 @@ function FaucetContent() {
         {/* RIGHT BANNER */}
         <div className="hidden lg:block lg:col-span-2 sticky top-24">
           <iframe 
-            data-aa="2441211" 
-            src="//acceptable.a-ads.com/2441211/?size=Adaptive"
+            data-aa="2441223" 
+            src="//acceptable.a-ads.com/2441223/?size=Adaptive"
             style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
@@ -505,8 +505,8 @@ function FaucetContent() {
       <div className="w-full">
         <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
           <iframe 
-            data-aa='2441211' 
-            src='//acceptable.a-ads.com/2441211/?size=Adaptive'
+            data-aa='2441223' 
+            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
             style={{ border: 0, padding: 0, width: '70%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>

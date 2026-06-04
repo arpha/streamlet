@@ -187,8 +187,8 @@ export default function TermsPage() {
       <div className="w-full max-w-4xl mx-auto px-6 mb-8 relative z-10">
         <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
           <iframe 
-            data-aa='2441211' 
-            src='//acceptable.a-ads.com/2441211/?size=Adaptive'
+            data-aa='2441223' 
+            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
             style={{ border: 0, padding: 0, width: '70%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
