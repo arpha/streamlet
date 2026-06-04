@@ -23,7 +23,6 @@ ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS usd_value NUMERIC(12,8);
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS crypto_amount BIGINT;
 ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS tx_hash TEXT;
-ALTER TABLE public.withdrawals ALTER COLUMN faucetpay_email DROP NOT NULL;
 
 -- 3. Indeks untuk performa query
 CREATE INDEX IF NOT EXISTS idx_withdrawals_user_id ON public.withdrawals(user_id);
