@@ -65,7 +65,7 @@ function FaucetContent() {
   const supabase = createClient()
   const router = useRouter()
 
-  const cooldownMinutes = 5
+  const cooldownMinutes = 30
 
   const getFaucetBonus = (baseReward: number, userXp: number) => {
     if (userXp >= 100000) return Math.ceil(baseReward * 0.15)

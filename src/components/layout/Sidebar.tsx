@@ -60,7 +60,7 @@ export function Sidebar() {
           const lastClaim = new Date(data[0].claimed_at).getTime()
           const now = new Date().getTime()
           const diffInSeconds = Math.floor((now - lastClaim) / 1000)
-          const cooldownInSeconds = 5 * 60 // 5 menit
+          const cooldownInSeconds = 30 * 60 // 30 menit
 
           if (diffInSeconds < cooldownInSeconds) {
             setFaucetCooldown(cooldownInSeconds - diffInSeconds)
