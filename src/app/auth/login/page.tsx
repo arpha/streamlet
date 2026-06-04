@@ -118,8 +118,7 @@ export default function LoginPage() {
       }
 
       toast.success("Login successful! Welcome back.")
-      router.push("/")
-      router.refresh()
+      window.location.href = "/"
     } catch (error: any) {
       toast.error(error.message || "Invalid email or password")
       resetTurnstile()
