@@ -170,6 +170,8 @@ DECLARE
   v_referral_code TEXT;
   v_total_referrals INT;
   v_active_today INT;
+  v_faucet_commissions NUMERIC;
+  v_shortlink_commissions NUMERIC;
   v_total_commissions NUMERIC;
   v_referred_ids UUID[];
 BEGIN
@@ -194,16 +196,31 @@ BEGIN
     );
   END IF;
 
-  -- 3. Hitung referral yang aktif hari ini (klaim dalam 24 jam terakhir)
+  -- 3. Hitung referral yang aktif hari ini (klaim faucet atau shortlink dalam 24 jam terakhir)
   SELECT COUNT(DISTINCT user_id) INTO v_active_today
-  FROM public.faucet_claims
-  WHERE user_id = ANY(v_referred_ids)
-    AND claimed_at >= (now() - interval '24 hours');
+  FROM (
+    SELECT user_id FROM public.faucet_claims
+    WHERE user_id = ANY(v_referred_ids)
+      AND claimed_at >= (now() - interval '24 hours')
+    UNION
+    SELECT user_id FROM public.shortlink_claims
+    WHERE user_id = ANY(v_referred_ids)
+      AND status = 'completed'
+      AND completed_at >= (now() - interval '24 hours')
+  ) active_users;
 
-  -- 4. Hitung total komisi (25% dari semua klaim faucet referral)
-  SELECT COALESCE(FLOOR(SUM(amount) * 0.25), 0) INTO v_total_commissions
+  -- 4. Hitung komisi faucet (25%)
+  SELECT COALESCE(FLOOR(SUM(amount) * 0.25), 0) INTO v_faucet_commissions
   FROM public.faucet_claims
   WHERE user_id = ANY(v_referred_ids);
+
+  -- 5. Hitung komisi shortlink (10%)
+  SELECT COALESCE(FLOOR(SUM(points_reward) * 0.10), 0) INTO v_shortlink_commissions
+  FROM public.shortlink_claims
+  WHERE user_id = ANY(v_referred_ids)
+    AND status = 'completed';
+
+  v_total_commissions := v_faucet_commissions + v_shortlink_commissions;
 
   RETURN json_build_object(
     'referral_code', COALESCE(v_referral_code, ''),
