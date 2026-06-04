@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -66,6 +66,7 @@ export default function Home() {
       if (!userId) return
 
       try {
+        // 1. Fetch Faucet claims
         const { count: faucetCount } = await supabase
           .from('faucet_claims')
           .select('*', { count: 'exact', head: true })
@@ -78,7 +79,22 @@ export default function Home() {
         
         const faucetTotal = faucetData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0
 
-        // Ambil statistik referral via RPC (melewati RLS)
+        // 2. Fetch Shortlink claims
+        const { count: shortlinkCount } = await supabase
+          .from('shortlink_claims')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+
+        const { data: shortlinkData } = await supabase
+          .from('shortlink_claims')
+          .select('points_reward')
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+        
+        const shortlinkTotal = shortlinkData?.reduce((acc, curr) => acc + Number(curr.points_reward), 0) || 0
+
+        // 3. Fetch Referral statistics
         const { data: refStats } = await supabase.rpc('get_referral_stats', {
           p_user_id: userId,
         })
@@ -86,6 +102,7 @@ export default function Home() {
         const referralCount = refStats?.total_referrals || 0
         const referralCommissions = refStats?.total_commissions || 0
 
+        // 4. Fetch recent faucet claims
         const { data: recentClaims } = await supabase
           .from('faucet_claims')
           .select('*')
@@ -93,23 +110,53 @@ export default function Home() {
           .order('claimed_at', { ascending: false })
           .limit(5)
 
+        // 5. Fetch recent shortlink claims
+        const { data: recentShortlinks } = await supabase
+          .from('shortlink_claims')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(5)
+
         setStatsData({
-          totalClaims: faucetCount || 0,
+          totalClaims: (faucetCount || 0) + (shortlinkCount || 0),
           referrals: referralCount,
           activeToday: refStats?.active_today || 0,
-          totalEarned: faucetTotal + referralCommissions
+          totalEarned: faucetTotal + shortlinkTotal + referralCommissions
         })
 
+        const activities: any[] = []
+
         if (recentClaims) {
-          const formattedActivity = recentClaims.map(claim => ({
-            type: 'Faucet Claim',
-            amount: `+${Number(claim.amount)} Points`,
-            time: formatDistanceToNow(new Date(claim.claimed_at), { addSuffix: true }),
-            icon: Coins,
-            color: 'text-purple-400'
-          }))
-          setRecentActivity(formattedActivity)
+          recentClaims.forEach(claim => {
+            activities.push({
+              type: 'Faucet Claim',
+              amount: `+${Number(claim.amount)} Points`,
+              time: formatDistanceToNow(new Date(claim.claimed_at), { addSuffix: true }),
+              date: new Date(claim.claimed_at),
+              icon: Coins,
+              color: 'text-purple-400'
+            })
+          })
         }
+
+        if (recentShortlinks) {
+          recentShortlinks.forEach(sl => {
+            activities.push({
+              type: `Shortlink (${sl.provider === 'shrinkme' ? 'ShrinkMe' : sl.provider})`,
+              amount: `+${Number(sl.points_reward)} Points`,
+              time: formatDistanceToNow(new Date(sl.completed_at), { addSuffix: true }),
+              date: new Date(sl.completed_at),
+              icon: Link2,
+              color: 'text-cyan-400'
+            })
+          })
+        }
+
+        // Sort combined activities by date descending, limit to 5
+        activities.sort((a, b) => b.date.getTime() - a.date.getTime())
+        setRecentActivity(activities.slice(0, 5))
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
