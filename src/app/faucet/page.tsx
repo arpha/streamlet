@@ -50,6 +50,12 @@ function FaucetContent() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null)
 
+  // NEW CAPTCHA ROTATION STATES
+  const [captchaType, setCaptchaType] = useState<'turnstile' | 'hcaptcha' | null>(null)
+  const [captchaTimestamp, setCaptchaTimestamp] = useState<number | null>(null)
+  const [captchaSignature, setCaptchaSignature] = useState<string | null>(null)
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false)
+
   const turnstileRef = useRef<HTMLDivElement>(null)
   const hcaptchaRef = useRef<HTMLDivElement>(null)
   const turnstileWidgetId = useRef<string | null>(null)
@@ -83,9 +89,37 @@ function FaucetContent() {
     }
   }, [])
 
+  // Fetch captcha assignment from server
+  const fetchCaptchaAssignment = async () => {
+    if (!userId) return
+    setLoadingCaptcha(true)
+    try {
+      const response = await fetch("/api/faucet/captcha")
+      const data = await response.json()
+      if (data.success) {
+        setCaptchaType(data.captchaType)
+        setCaptchaTimestamp(data.timestamp)
+        setCaptchaSignature(data.signature)
+      } else {
+        console.error("Failed to load captcha assignment:", data.message)
+      }
+    } catch (err) {
+      console.error("Error fetching captcha assignment:", err)
+    } finally {
+      setLoadingCaptcha(false)
+    }
+  }
+
+  // Fetch captcha assignment when ready to claim
+  useEffect(() => {
+    if (!loadingCooldown && timeLeft === 0 && !captchaType && userId) {
+      fetchCaptchaAssignment()
+    }
+  }, [loadingCooldown, timeLeft, captchaType, userId])
+
   // Initialize Turnstile
   useEffect(() => {
-    if (!turnstileLoaded || !turnstileRef.current || !window.turnstile) return
+    if (captchaType !== 'turnstile' || !turnstileLoaded || !turnstileRef.current || !window.turnstile) return
 
     const sitekey = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"
 
@@ -119,11 +153,11 @@ function FaucetContent() {
         } catch (e) {}
       }
     }
-  }, [turnstileLoaded, loadingCooldown, timeLeft])
+  }, [turnstileLoaded, loadingCooldown, timeLeft, captchaType])
 
   // Initialize hCaptcha
   useEffect(() => {
-    if (!hcaptchaLoaded || !hcaptchaRef.current || !window.hcaptcha) return
+    if (captchaType !== 'hcaptcha' || !hcaptchaLoaded || !hcaptchaRef.current || !window.hcaptcha) return
 
     const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"
 
@@ -157,20 +191,23 @@ function FaucetContent() {
         } catch (e) {}
       }
     }
-  }, [hcaptchaLoaded, loadingCooldown, timeLeft])
+  }, [hcaptchaLoaded, loadingCooldown, timeLeft, captchaType])
 
   const resetCaptchas = () => {
     setTurnstileToken(null)
     setHcaptchaToken(null)
     if (window.turnstile && turnstileWidgetId.current) {
-      window.turnstile.reset(turnstileWidgetId.current)
+      try { window.turnstile.reset(turnstileWidgetId.current) } catch (e) {}
     }
     if (window.hcaptcha && hcaptchaWidgetId.current) {
-      window.hcaptcha.reset(hcaptchaWidgetId.current)
+      try { window.hcaptcha.reset(hcaptchaWidgetId.current) } catch (e) {}
     }
+    setCaptchaType(null)
+    setCaptchaTimestamp(null)
+    setCaptchaSignature(null)
   }
 
-  const captchaVerified = !!turnstileToken && !!hcaptchaToken
+  const captchaVerified = captchaType === 'turnstile' ? !!turnstileToken : (captchaType === 'hcaptcha' ? !!hcaptchaToken : false)
 
   // Fetch reward amount from database
   useEffect(() => {
@@ -258,8 +295,10 @@ function FaucetContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          turnstileToken,
-          hcaptchaToken,
+          captchaType,
+          captchaToken: captchaType === 'turnstile' ? turnstileToken : hcaptchaToken,
+          captchaTimestamp,
+          captchaSignature,
         }),
       })
 
@@ -380,10 +419,10 @@ function FaucetContent() {
 
               {/* CHALLENGE AREA */}
               <AnimatePresence mode="wait">
-                {loadingCooldown ? (
+                {loadingCooldown || (timeLeft === 0 && (!captchaType || loadingCaptcha)) ? (
                   <div className="flex flex-col items-center py-10 gap-4">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <span className="text-white/40 font-bold uppercase tracking-widest text-xs">Authenticating...</span>
+                    <span className="text-white/40 font-bold uppercase tracking-widest text-xs">Preparing Security Challenge...</span>
                   </div>
 
                 ) : timeLeft > 0 ? (
@@ -405,12 +444,12 @@ function FaucetContent() {
                     className="space-y-6"
                   >
                     <div className="flex flex-col items-center justify-center gap-6 max-w-md mx-auto w-full">
-                      {/* Security Check 1 */}
-                      <div className="w-full p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
+                      {/* Security Check 1: Turnstile */}
+                      <div className={`w-full p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3 ${captchaType === 'turnstile' ? '' : 'hidden'}`}>
                          <div className="flex items-center justify-between w-full px-2">
                             <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verifikasi Keamanan 1
+                              Verifikasi Keamanan (Turnstile)
                             </span>
                             {turnstileToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                          </div>
@@ -419,12 +458,12 @@ function FaucetContent() {
                          </div>
                       </div>
 
-                      {/* Security Check 2 */}
-                      <div className="w-full p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
+                      {/* Security Check 2: hCaptcha */}
+                      <div className={`w-full p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3 ${captchaType === 'hcaptcha' ? '' : 'hidden'}`}>
                          <div className="flex items-center justify-between w-full px-2">
                             <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                               <ShieldCheck className="w-3.5 h-3.5" />
-                              Verifikasi Keamanan 2
+                              Verifikasi Keamanan (hCaptcha)
                             </span>
                             {hcaptchaToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                          </div>
