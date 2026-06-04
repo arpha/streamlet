@@ -60,6 +60,7 @@ export default function WithdrawPage() {
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({})
   const [loadingPrices, setLoadingPrices] = useState(true)
+  const [cooldownLeft, setCooldownLeft] = useState<number>(0)
 
   // CoinGecko ID mapping
   const COINGECKO_IDS: Record<string, string> = {
@@ -100,11 +101,53 @@ export default function WithdrawPage() {
     fetchPrices()
   }, [])
 
+  // Hitung sisa waktu cooldown penarikan (24 jam)
+  useEffect(() => {
+    const lastWithdraw = withdrawals.find((w) => w.status !== "failed")
+    if (!lastWithdraw) {
+      setCooldownLeft(0)
+      return
+    }
+
+    const lastWithdrawTime = new Date(lastWithdraw.created_at).getTime()
+    const cooldownDuration = 24 * 60 * 60 * 1000 // 24 jam
+
+    const updateCooldown = () => {
+      const now = Date.now()
+      const timeSinceLast = now - lastWithdrawTime
+      const remaining = Math.max(0, cooldownDuration - timeSinceLast)
+      setCooldownLeft(remaining)
+    }
+
+    updateCooldown()
+    const interval = setInterval(updateCooldown, 1000)
+
+    return () => clearInterval(interval)
+  }, [withdrawals])
+
+  const formatCooldown = (ms: number) => {
+    const seconds = Math.floor((ms / 1000) % 60)
+    const minutes = Math.floor((ms / (1000 * 60)) % 60)
+    const hours = Math.floor((ms / (1000 * 60 * 60)) % 24)
+    
+    const parts = []
+    if (hours > 0) parts.push(`${hours}j`)
+    if (minutes > 0 || hours > 0) parts.push(`${minutes}m`)
+    parts.push(`${seconds}d`)
+    
+    return parts.join(" ")
+  }
+
   const minWithdrawal = 3000
   const pointsAmount = parseInt(pointsInput) || 0
   const usdValue = pointsAmount * POINTS_TO_USD
   const progress = Math.min((balance / minWithdrawal) * 100, 100)
-  const canWithdraw = balance >= minWithdrawal && pointsAmount >= minWithdrawal && pointsAmount <= balance && selectedCoin && email.trim()
+  const canWithdraw = balance >= minWithdrawal && 
+                      pointsAmount >= minWithdrawal && 
+                      pointsAmount <= balance && 
+                      selectedCoin && 
+                      email.trim() && 
+                      cooldownLeft === 0
 
   // Load withdrawal history
   const loadHistory = useCallback(async () => {
@@ -236,6 +279,16 @@ export default function WithdrawPage() {
               </div>
             )}
 
+            {cooldownLeft > 0 && (
+              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex gap-3 items-start">
+                <Clock className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-rose-200/80">
+                  <p className="font-bold text-rose-500 mb-1">Cooldown Penarikan Aktif (1x Sehari)</p>
+                  Anda telah melakukan penarikan. Silakan tunggu <span className="text-white font-bold">{formatCooldown(cooldownLeft)}</span> lagi sebelum dapat melakukan penarikan berikutnya.
+                </div>
+              </div>
+            )}
+
             {/* Coin Selection */}
             <div className="space-y-2">
               <Label>Select Currency</Label>
@@ -347,6 +400,8 @@ export default function WithdrawPage() {
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" /> PROCESSING WITHDRAWAL...
                 </>
+              ) : cooldownLeft > 0 ? (
+                `COOLDOWN ACTIVE (${formatCooldown(cooldownLeft)})`
               ) : balance < minWithdrawal ? (
                 "INSUFFICIENT BALANCE"
               ) : (
