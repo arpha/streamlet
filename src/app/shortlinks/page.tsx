@@ -226,113 +226,92 @@ function ShortlinksContent() {
       </div>
 
       {/* SHORTLINKS PROVIDERS SECTION */}
-      <div className="grid gap-8 lg:grid-cols-12 items-start">
-        {/* LEFT BANNER AD */}
-        <div className="hidden lg:block lg:col-span-2 sticky top-24">
-          <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-
-        {/* LIST OF PROVIDERS */}
-        <div className="lg:col-span-8 space-y-6">
-          <Card className="glass border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
-            <CardHeader className="p-8 pb-4">
-              <CardTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Available Shortlinks</CardTitle>
-              <CardDescription className="text-white/50 font-medium">Click Visit & Claim, pass the shortlink challenge, and get redirected back to automatically claim your rewards.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8 pt-0 space-y-6">
-              {/* SHRINKME PROVIDER CARD */}
-              <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all group">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 shadow-lg shadow-purple-500/10 text-white flex-shrink-0">
-                    <Link2 className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-white tracking-tight uppercase group-hover:text-primary transition-colors">ShrinkMe.io</span>
-                      <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider">
-                        High Reward
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/50 font-medium max-w-md">
-                      ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.
-                    </p>
-                    <div className="flex items-center gap-4 text-[10px] text-white/40 font-bold uppercase tracking-wider pt-2">
-                      <span className="flex items-center gap-1">
-                        <Timer className="w-3.5 h-3.5 text-purple-400" /> Cooldown: 30 Mins
-                      </span>
-                      <span>•</span>
-                      <span>Daily: {5 - completedToday} left</span>
-                    </div>
-                  </div>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card className="glass border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
+          <CardHeader className="p-8 pb-4">
+            <CardTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Available Shortlinks</CardTitle>
+            <CardDescription className="text-white/50 font-medium">Click Visit & Claim, pass the shortlink challenge, and get redirected back to automatically claim your rewards.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 pt-0 space-y-6">
+            {/* SHRINKME PROVIDER CARD */}
+            <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all group">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 shadow-lg shadow-purple-500/10 text-white flex-shrink-0">
+                  <Link2 className="w-6 h-6" />
                 </div>
-
-                <div className="flex flex-col items-center md:items-end gap-3 flex-shrink-0 w-full md:w-auto">
-                  <div className="text-center md:text-right">
-                    <span className="text-xs text-white/40 font-bold uppercase block tracking-wider">Reward</span>
-                    <span className="text-2xl font-black font-mono text-fuchsia-400">
-                      +500 Points
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase block">
-                      +10 XP
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black text-white tracking-tight uppercase group-hover:text-primary transition-colors">ShrinkMe.io</span>
+                    <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider">
+                      High Reward
                     </span>
                   </div>
-
-                  <Button
-                    onClick={handleVisit}
-                    disabled={isGenerating || completedToday >= 5 || cooldownRemaining > 0}
-                    className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : completedToday >= 5 ? (
-                      "Limit Reached"
-                    ) : cooldownRemaining > 0 ? (
-                      `Cooldown (${formatTime(cooldownRemaining)})`
-                    ) : (
-                      <>
-                        Visit & Claim
-                        <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </>
-                    )}
-                  </Button>
+                  <p className="text-xs text-white/50 font-medium max-w-md">
+                    ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] text-white/40 font-bold uppercase tracking-wider pt-2">
+                    <span className="flex items-center gap-1">
+                      <Timer className="w-3.5 h-3.5 text-purple-400" /> Cooldown: 30 Mins
+                    </span>
+                    <span>•</span>
+                    <span>Daily: {5 - completedToday} left</span>
+                  </div>
                 </div>
               </div>
 
-              {/* INFO BOX */}
-              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 text-xs text-white/40 font-medium flex gap-3">
-                <Info className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                <p>
-                  Untuk mencegah kecurangan, setiap link dibuat unik dan hanya dapat diklaim satu kali per kunjungan. Dilarang menggunakan VPN, proxy, atau bot otomatis saat menyelesaikan shortlink, jika terdeteksi akun Anda dapat ditangguhkan secara permanen.
-                </p>
+              <div className="flex flex-col items-center md:items-end gap-3 flex-shrink-0 w-full md:w-auto">
+                <div className="text-center md:text-right">
+                  <span className="text-xs text-white/40 font-bold uppercase block tracking-wider">Reward</span>
+                  <span className="text-2xl font-black font-mono text-fuchsia-400">
+                    +500 Points
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase block">
+                    +10 XP
+                  </span>
+                </div>
+
+                <Button
+                  onClick={handleVisit}
+                  disabled={isGenerating || completedToday >= 5 || cooldownRemaining > 0}
+                  className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : completedToday >= 5 ? (
+                    "Limit Reached"
+                  ) : cooldownRemaining > 0 ? (
+                    `Cooldown (${formatTime(cooldownRemaining)})`
+                  ) : (
+                    <>
+                      Visit & Claim
+                      <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </>
+                  )}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        {/* RIGHT BANNER AD */}
-        <div className="hidden lg:block lg:col-span-2 sticky top-24">
-          <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-      </div>
+            {/* AD BANNER MIDDLE */}
+            <div className="w-full flex justify-center py-2">
+              <iframe 
+                data-aa="2440986" 
+                src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+                style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+              />
+            </div>
 
-      {/* BOTTOM AD */}
-      <div className="w-full flex justify-center mt-6">
-        <iframe 
-          data-aa="2440986" 
-          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-        />
+            {/* INFO BOX */}
+            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 text-xs text-white/40 font-medium flex gap-3">
+              <Info className="w-5 h-5 text-purple-400 flex-shrink-0" />
+              <p>
+                Untuk mencegah kecurangan, setiap link dibuat unik dan hanya dapat diklaim satu kali per kunjungan. Dilarang menggunakan VPN, proxy, atau bot otomatis saat menyelesaikan shortlink, jika terdeteksi akun Anda dapat ditangguhkan secara permanen.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
