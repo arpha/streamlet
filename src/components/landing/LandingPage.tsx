@@ -14,7 +14,8 @@ import {
 } from "lucide-react"
 
 export function LandingPage() {
-  const [stats, setStats] = useState({ total_users: 0, total_earned: 0, website_age_days: 0 })
+  const [stats, setStats] = useState({ total_users: 0, total_earned: 0, website_age_days: 0, total_paid_usd: 0 })
+  const [recentWithdrawals, setRecentWithdrawals] = useState<any[]>([])
   const [loadingStats, setLoadingStats] = useState(true)
   const statsRef = useRef<HTMLDivElement>(null)
 
@@ -27,8 +28,10 @@ export function LandingPage() {
           setStats({
             total_users: data.total_users,
             total_earned: data.total_earned,
-            website_age_days: data.website_age_days
+            website_age_days: data.website_age_days,
+            total_paid_usd: data.total_paid_usd || 0
           })
+          setRecentWithdrawals(data.recent_withdrawals || [])
         }
       } catch (err) {
         console.error("Failed to fetch landing stats:", err)
@@ -124,7 +127,7 @@ export function LandingPage() {
       {/* Stats Section */}
       <section ref={statsRef} id="stats" className="py-16 px-6 relative z-10 border-t border-white/5 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Stat 1: Users */}
             <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-purple-500/20 transition-all">
               <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
@@ -159,6 +162,89 @@ export function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white">
                 {loadingStats ? "..." : `${stats.website_age_days.toLocaleString()} Days`}
               </h2>
+            </div>
+
+            {/* Stat 4: Paid Out */}
+            <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-emerald-500/20 transition-all">
+              <div className="absolute top-0 right-0 p-6 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+                <ShieldCheck className="w-32 h-32 text-white" />
+              </div>
+              <ShieldCheck className="w-8 h-8 text-emerald-400 mb-4" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white/40 mb-2">Total Paid Out</span>
+              <h2 className="text-4xl md:text-5xl font-black font-mono tracking-tighter text-white">
+                {loadingStats ? "..." : `$${stats.total_paid_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`}
+              </h2>
+            </div>
+          </div>
+
+          {/* Recent Payouts Table */}
+          <div className="mt-16 space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-black uppercase tracking-tight italic text-white mb-2">Recent Payouts</h3>
+              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Live proof of payments processed through FaucetPay</p>
+            </div>
+            
+            <div className="glass border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Date / Time</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Recipient (Masked)</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Coin</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-right">Amount</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-right">USD Value</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-medium text-sm">
+                    {loadingStats ? (
+                      <tr>
+                        <td colSpan={6} className="p-10 text-center text-white/40 font-bold uppercase tracking-wider">
+                          Loading recent payouts...
+                        </td>
+                      </tr>
+                    ) : recentWithdrawals.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-10 text-center text-white/40 font-bold uppercase tracking-wider">
+                          No recent payouts found.
+                        </td>
+                      </tr>
+                    ) : (
+                      recentWithdrawals.map((w, idx) => (
+                        <tr key={idx} className="hover:bg-white/[0.01] transition-colors">
+                          <td className="p-5 text-white/60 font-mono text-xs">
+                            {new Date(w.created_at).toLocaleString()}
+                          </td>
+                          <td className="p-5 text-white font-mono text-xs">
+                            {w.address}
+                          </td>
+                          <td className="p-5">
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-white/5 border border-white/10 text-purple-400">
+                              {w.coin}
+                            </span>
+                          </td>
+                          <td className="p-5 text-right font-black font-mono text-white/80">
+                            {w.amount.toLocaleString()} pts
+                          </td>
+                          <td className="p-5 text-right font-black font-mono text-emerald-400">
+                            ${parseFloat(w.usd_value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 })}
+                          </td>
+                          <td className="p-5 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider
+                              ${w.status === "completed" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : 
+                                w.status === "failed" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" : 
+                                "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}
+                            >
+                              {w.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
