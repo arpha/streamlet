@@ -345,12 +345,14 @@ function FaucetContent() {
       />
 
       {/* TOP BANNER */}
-      <div className="w-full flex justify-center">
-        <iframe 
-          data-aa="2440986" 
-          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-        />
+      <div className="w-full">
+        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
+          <iframe 
+            data-aa='2441211' 
+            src='//acceptable.a-ads.com/2441211/?size=Adaptive'
+            style={{ border: 0, padding: 0, width: '70%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
+        </div>
       </div>
 
       <div className="text-center">
@@ -366,8 +368,8 @@ function FaucetContent() {
         {/* LEFT BANNER */}
         <div className="hidden lg:block lg:col-span-2 sticky top-24">
           <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            data-aa="2441211" 
+            src="//acceptable.a-ads.com/2441211/?size=Adaptive"
             style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
@@ -492,20 +494,22 @@ function FaucetContent() {
         {/* RIGHT BANNER */}
         <div className="hidden lg:block lg:col-span-2 sticky top-24">
           <iframe 
-            data-aa="2440986" 
-            src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
+            data-aa="2441211" 
+            src="//acceptable.a-ads.com/2441211/?size=Adaptive"
             style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
           />
         </div>
       </div>
 
       {/* BOTTOM BANNER */}
-      <div className="w-full flex justify-center">
-        <iframe 
-          data-aa="2440986" 
-          src="https://acceptable.a-ads.com/2440986/?size=Adaptive"
-          style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-        />
+      <div className="w-full">
+        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
+          <iframe 
+            data-aa='2441211' 
+            src='//acceptable.a-ads.com/2441211/?size=Adaptive'
+            style={{ border: 0, padding: 0, width: '70%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+          />
+        </div>
       </div>
     </div>
   )
