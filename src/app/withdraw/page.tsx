@@ -101,8 +101,11 @@ export default function WithdrawPage() {
     fetchPrices()
   }, [])
 
-  // Hitung sisa waktu cooldown penarikan (24 jam)
+  // Hitung sisa waktu cooldown penarikan (24 jam) (TEMPORARILY DISABLED FOR TESTING)
   useEffect(() => {
+    setCooldownLeft(0)
+    return
+    /*
     const lastWithdraw = withdrawals.find((w) => w.status !== "failed")
     if (!lastWithdraw) {
       setCooldownLeft(0)
@@ -123,6 +126,7 @@ export default function WithdrawPage() {
     const interval = setInterval(updateCooldown, 1000)
 
     return () => clearInterval(interval)
+    */
   }, [withdrawals])
 
   const formatCooldown = (ms: number) => {
