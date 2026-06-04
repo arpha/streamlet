@@ -174,8 +174,8 @@ export default function TermsPage() {
               </h2>
               <p>
                 If you have questions about these Terms and Conditions, you can contact us through community official channels or email at:{" "}
-                <a href="mailto:support@streamlet.com" className="text-purple-400 hover:underline font-bold">
-                  support@streamlet.com
+                <a href="mailto:support@streamlet.fun" className="text-purple-400 hover:underline font-bold">
+                  support@streamlet.fun
                 </a>
               </p>
             </div>

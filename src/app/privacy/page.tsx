@@ -190,8 +190,8 @@ export default function PrivacyPage() {
               <ul className="list-none space-y-1 pl-4">
                 <li>
                   <strong className="text-white">Email:</strong>{" "}
-                  <a href="mailto:support@streamlet.com" className="text-purple-400 hover:underline font-bold">
-                    support@streamlet.com
+                  <a href="mailto:support@streamlet.fun" className="text-purple-400 hover:underline font-bold">
+                    support@streamlet.fun
                   </a>
                 </li>
                 <li>
