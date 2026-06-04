@@ -245,7 +245,7 @@ export default function RegisterPage() {
                     {errors.email && <p className="text-[10px] text-rose-400 font-bold">{errors.email.message}</p>}
                   </div>
                   <a 
-                    href="https://faucetpay.io" 
+                    href="https://faucetpay.io/?r=9971683" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors font-bold uppercase hover:underline ml-auto"
