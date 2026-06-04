@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSupabase } from "@/lib/supabase-server"
+import { normalizeEmail } from "@/lib/email"
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password, turnstileToken } = await req.json()
+    const normalizedEmail = normalizeEmail(email)
 
     // 1. Verify Turnstile Token
     if (!turnstileToken) {
@@ -30,14 +32,23 @@ export async function POST(req: NextRequest) {
 
     // 2. Perform SignIn via Supabase Server Client
     const supabase = await getServerSupabase()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+    let loginRes = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
       password,
     })
 
-    if (error) {
+    // Fallback to original email if normalized email login fails
+    // and it is different from the normalized email.
+    if (loginRes.error && normalizedEmail !== email.trim().toLowerCase()) {
+      loginRes = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+    }
+
+    if (loginRes.error) {
       return NextResponse.json(
-        { success: false, message: error.message || "Invalid email or password" },
+        { success: false, message: loginRes.error.message || "Invalid email or password" },
         { status: 400 }
       )
     }
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Login successful",
-      user: data.user,
+      user: loginRes.data.user,
     })
   } catch (error: any) {
     console.error("Login API error:", error)

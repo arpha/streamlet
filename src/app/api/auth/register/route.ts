@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSupabase } from "@/lib/supabase-server"
+import { normalizeEmail } from "@/lib/email"
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password, username, referralCode, turnstileToken } = await req.json()
+    const normalizedEmail = normalizeEmail(email)
 
     // 1. Verify Turnstile Token
     if (!turnstileToken) {
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
     // 2. Perform SignUp via Supabase Server Client
     const supabase = await getServerSupabase()
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
         data: {
