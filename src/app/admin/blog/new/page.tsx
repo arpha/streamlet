@@ -34,6 +34,38 @@ export default function NewBlogPostPage() {
   const [coverImage, setCoverImage] = useState("")
   const [content, setContent] = useState("")
   const [published, setPublished] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const file = files[0]
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${slug || 'cover'}-${Date.now()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    setUploading(true)
+    try {
+      const { data, error } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file)
+
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-images')
+        .getPublicUrl(filePath)
+
+      setCoverImage(publicUrl)
+      toast.success("Image uploaded successfully!")
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || "Failed to upload image")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // Authorization check
   useEffect(() => {
@@ -181,18 +213,63 @@ export default function NewBlogPostPage() {
           </div>
 
           {/* Cover image input */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Cover Image URL</label>
-            <div className="relative">
-              <Image className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <Input
-                type="url"
-                placeholder="https://images.unsplash.com/photo-..."
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                className="bg-white/5 border-white/10 text-white rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 h-12 pl-12 font-medium"
-              />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Cover Image</label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* File Upload Option */}
+                <div className="p-6 border border-dashed border-white/10 rounded-2xl bg-white/5 flex flex-col items-center justify-center gap-3 relative hover:border-purple-500/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                  {uploading ? (
+                    <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                  ) : (
+                    <Image className="w-8 h-8 text-white/30" />
+                  )}
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-white uppercase tracking-wider">
+                      {uploading ? "Uploading file..." : "Upload Cover Image"}
+                    </p>
+                    <p className="text-[10px] text-white/40 mt-1 uppercase">PNG, JPG, GIF up to 5MB</p>
+                  </div>
+                </div>
+
+                {/* Direct URL Option */}
+                <div className="p-6 border border-white/10 rounded-2xl bg-white/5 flex flex-col justify-center gap-2">
+                  <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Or enter Cover URL directly</label>
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <Input
+                      type="url"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={coverImage}
+                      onChange={(e) => setCoverImage(e.target.value)}
+                      className="bg-white/5 border-white/10 text-white rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 h-10 pl-10 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Preview image */}
+            {coverImage && (
+              <div className="h-40 rounded-2xl overflow-hidden relative border border-white/10 bg-purple-950/20">
+                <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setCoverImage("")}
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Content markdown editor */}

@@ -55,3 +55,39 @@ CREATE POLICY "Admins have full access to posts" ON public.blog_posts
       WHERE profiles.id = auth.uid() AND profiles.is_admin = true
     )
   );
+
+
+-- ====================================================================
+-- SETUP STORAGE BUCKET UNTUK COVER IMAGE BLOG
+-- ====================================================================
+
+-- 1. Buat bucket baru bernama 'blog-images' jika belum ada
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('blog-images', 'blog-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Kebijakan akses untuk storage.objects
+-- Kebijakan A: Semua orang (bahkan anonim) dapat mengunduh/melihat gambar cover
+DROP POLICY IF EXISTS "Public can view blog images" ON storage.objects;
+CREATE POLICY "Public can view blog images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'blog-images');
+
+-- Kebijakan B: Hanya Admin yang dapat mengunggah, memperbarui, dan menghapus gambar
+DROP POLICY IF EXISTS "Admins can manage blog images" ON storage.objects;
+CREATE POLICY "Admins can manage blog images" ON storage.objects
+  FOR ALL TO authenticated
+  USING (
+    bucket_id = 'blog-images' AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.is_admin = true
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'blog-images' AND
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.is_admin = true
+    )
+  );
+
