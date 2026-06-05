@@ -78,7 +78,7 @@ export default function ReferralPage() {
     }
   }, [user, supabase])
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://streamlet.com"
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://streamlet.fun"
   const referralLink = referralCode ? `${origin}/ref/${referralCode}` : "Loading..."
 
   const handleCopy = () => {

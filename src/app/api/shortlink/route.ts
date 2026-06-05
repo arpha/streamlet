@@ -66,7 +66,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Callback points to our callback API route
-    const callbackUrl = `${req.nextUrl.origin}/api/shortlink/callback?visit_id=${result.visit_id}`
+    let origin = req.nextUrl.origin
+    if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      origin = "https://streamlet.fun"
+    }
+    const callbackUrl = `${origin}/api/shortlink/callback?visit_id=${result.visit_id}`
     let apiUrl = ""
     if (provider === "shrinkme") {
       apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
