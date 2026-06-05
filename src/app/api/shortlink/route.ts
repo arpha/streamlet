@@ -40,10 +40,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
+    const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.ip || "127.0.0.1"
     const { data, error: rpcError } = await supabase.rpc("start_shortlink_visit", {
       p_user_id: user.id,
       p_provider: provider,
-      p_reward: reward
+      p_reward: reward,
+      p_ip_address: clientIp
     })
 
     if (rpcError) {

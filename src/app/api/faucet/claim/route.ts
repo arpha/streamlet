@@ -111,11 +111,13 @@ export async function POST(req: NextRequest) {
     // 5. Call Supabase claim_faucet RPC
     const cooldownMinutes = 30
     const rewardXp = 10
+    const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.ip || "127.0.0.1"
 
     const { data, error: rpcError } = await supabase.rpc("claim_faucet", {
       u_id: user.id,
       reward_xp_val: rewardXp,
       cooldown_sec: cooldownMinutes * 60,
+      p_ip_address: clientIp
     })
 
     if (rpcError) {
