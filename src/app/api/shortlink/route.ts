@@ -11,11 +11,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in first." }, { status: 401 })
     }
 
+    // Parse provider from body
+    let provider = "shrinkme"
+    try {
+      const body = await req.json()
+      if (body?.provider && ["shrinkme", "exeio"].includes(body.provider)) {
+        provider = body.provider
+      }
+    } catch (e) {
+      // Ignore if no body provided, fallback to shrinkme
+    }
+
+    let apiKey = ""
+    let reward = 500
+
+    if (provider === "shrinkme") {
+      apiKey = process.env.SHRINKME_IO_API_KEY || ""
+      if (!apiKey) {
+        return NextResponse.json({ error: "ShrinkMe API key not configured on server." }, { status: 500 })
+      }
+      reward = 500
+    } else if (provider === "exeio") {
+      apiKey = process.env.EXEIO_API_KEY || ""
+      if (!apiKey) {
+        return NextResponse.json({ error: "Exe.io API key not configured on server. Please add EXEIO_API_KEY to your environment." }, { status: 500 })
+      }
+      reward = 500 // Set reward to 500 points for Exe.io
+    }
+
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
     const { data, error: rpcError } = await supabase.rpc("start_shortlink_visit", {
       p_user_id: user.id,
-      p_provider: "shrinkme",
-      p_reward: 500 // 500 Points reward
+      p_provider: provider,
+      p_reward: reward
     })
 
     if (rpcError) {
@@ -35,15 +63,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // 3. Shorten the dynamic callback URL using ShrinkMe API
-    const apiKey = process.env.SHRINKME_IO_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ error: "Shortlink API not configured on server." }, { status: 500 })
-    }
-
     // Callback points to our callback API route
     const callbackUrl = `${req.nextUrl.origin}/api/shortlink/callback?visit_id=${result.visit_id}`
-    const apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    let apiUrl = ""
+    if (provider === "shrinkme") {
+      apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "exeio") {
+      apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    }
 
     const response = await fetch(apiUrl)
     const shrinkResult = await response.json()
@@ -51,9 +78,9 @@ export async function POST(req: NextRequest) {
     if (shrinkResult.status === "success" && shrinkResult.shortenedUrl) {
       return NextResponse.json({ shortenedUrl: shrinkResult.shortenedUrl })
     } else {
-      console.error("shrinkme.io API returned error status:", shrinkResult)
+      console.error(`${provider} API returned error status:`, shrinkResult)
       return NextResponse.json(
-        { error: shrinkResult.message || "Failed to shorten URL using ShrinkMe API." },
+        { error: shrinkResult.message || `Failed to shorten URL using ${provider} API.` },
         { status: 500 }
       )
     }
