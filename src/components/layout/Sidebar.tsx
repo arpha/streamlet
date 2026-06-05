@@ -192,7 +192,25 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Group */}
-      <div className="p-4 border-t border-white/5 space-y-4">
+      <div className="p-4 border-t border-white/5 space-y-3">
+        <a 
+          href="https://t.me/streamletfaucet" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="block"
+        >
+          <Button 
+            className="w-full h-12 rounded-2xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 flex items-center justify-center gap-2 group transition-all"
+          >
+            <svg className="w-5 h-5 fill-current transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.24-5.54 3.65-.52.36-1 .53-1.42.52-.47-.01-1.37-.27-2.03-.49-.82-.27-1.47-.41-1.42-.87.03-.24.36-.49.99-.74 3.89-1.69 6.48-2.8 7.77-3.32 3.7-1.5 4.46-1.76 4.96-1.77.11 0 .36.03.52.16.13.11.17.27.18.38 0 .08-.01.27-.02.35z"/>
+            </svg>
+            {isSidebarOpen && (
+              <span className="font-black text-xs uppercase tracking-widest">Join Telegram</span>
+            )}
+          </Button>
+        </a>
+
         <Button 
           variant="ghost" 
           onClick={toggleSidebar}
