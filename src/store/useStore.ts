@@ -5,10 +5,11 @@ interface UserState {
   xp: number
   username: string | null
   id: string | null
+  isAdmin: boolean
   isSidebarOpen: boolean
   setBalance: (balance: number) => void
   setXp: (xp: number) => void
-  setUser: (user: { id: string; username: string | null; balance: number; xp: number }) => void
+  setUser: (user: { id: string; username: string | null; balance: number; xp: number; isAdmin: boolean }) => void
   toggleSidebar: () => void
   reset: () => void
 }
@@ -18,10 +19,11 @@ export const useStore = create<UserState>((set) => ({
   xp: 0,
   username: null,
   id: null,
+  isAdmin: false,
   isSidebarOpen: true,
   setBalance: (balance) => set({ balance }),
   setXp: (xp) => set({ xp }),
-  setUser: (user) => set({ id: user.id, username: user.username, balance: user.balance, xp: user.xp }),
+  setUser: (user) => set({ id: user.id, username: user.username, balance: user.balance, xp: user.xp, isAdmin: user.isAdmin }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  reset: () => set({ balance: 0, xp: 0, username: null, id: null, isSidebarOpen: true }),
+  reset: () => set({ balance: 0, xp: 0, username: null, id: null, isAdmin: false, isSidebarOpen: true }),
 }))

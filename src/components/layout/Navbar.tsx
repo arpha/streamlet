@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
 export function Navbar() {
-  const { username, toggleSidebar } = useStore()
+  const { username, toggleSidebar, isAdmin } = useStore()
   const supabase = createClient()
   const router = useRouter()
 
@@ -100,6 +100,17 @@ export function Navbar() {
               </div>
               <span className="font-bold uppercase text-xs tracking-widest">Settings</span>
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem 
+                onClick={() => router.push("/admin/blog")}
+                className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-purple-500/10 text-purple-400 focus:text-purple-300 transition-all"
+              >
+                <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/20">
+                  <FileText className="w-4 h-4 text-purple-400" />
+                </div>
+                <span className="font-bold uppercase text-xs tracking-widest">Admin Blog</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator className="bg-white/10 mx-2" />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-rose-500/10 text-rose-400 focus:text-rose-400 transition-all">
               <div className="w-9 h-9 rounded-lg bg-rose-400/20 flex items-center justify-center border border-rose-400/20">
