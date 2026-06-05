@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const supabase = await getServerSupabase()
 
     // Call complete_shortlink_visit RPC
-    const callbackIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.ip || "127.0.0.1"
+    const callbackIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1"
     const { data, error: rpcError } = await supabase.rpc("complete_shortlink_visit", {
       p_visit_id: visitId,
       p_callback_ip: callbackIp
