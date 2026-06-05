@@ -328,62 +328,6 @@ export default function Home() {
         </Card>
       </motion.div>
 
-      {/* INFO / BLOG CARDS SECTION */}
-      {blogCards.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
-            <h3 className="text-xs font-black uppercase text-white tracking-[0.2em]">Updates & Announcements</h3>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {blogCards.map((card, i) => (
-              <Link
-                key={card.id}
-                href={`/blog/${card.slug}`}
-                className="glass group cursor-pointer overflow-hidden border-white/10 hover:border-purple-500/40 rounded-[2rem] shadow-lg transition-all duration-300 flex flex-col h-full bg-white/[0.01]"
-              >
-                {card.cover_image && (
-                  <div className="h-40 overflow-hidden relative">
-                    <img 
-                      src={card.cover_image} 
-                      alt={card.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  </div>
-                )}
-                <div className="p-6 flex flex-col flex-1 justify-between gap-4">
-                  <div className="space-y-2">
-                    <h4 className="text-base font-black text-white group-hover:text-purple-400 transition-colors line-clamp-2 uppercase tracking-wide leading-snug">
-                      {card.title}
-                    </h4>
-                    {card.excerpt && (
-                      <p className="text-xs text-white/50 font-medium line-clamp-3 leading-relaxed italic">
-                        {card.excerpt}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">
-                      {new Date(card.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                    <span className="text-[10px] font-black text-purple-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 uppercase tracking-widest">
-                      Read Details <ArrowUpRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
       <motion.div 
         variants={container}
         initial="hidden"
@@ -507,6 +451,62 @@ export default function Home() {
           <Button onClick={() => window.location.href = '/referral'} variant="outline" className="w-full h-12 rounded-2xl font-bold glass border-white/20 hover:bg-white/10 text-white uppercase text-xs tracking-widest">Copy Link</Button>
         </Card>
       </div>
+
+      {/* INFO / BLOG CARDS SECTION */}
+      {blogCards.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+            <h3 className="text-xs font-black uppercase text-white tracking-[0.2em]">Updates & Announcements</h3>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {blogCards.map((card, i) => (
+              <Link
+                key={card.id}
+                href={`/blog/${card.slug}`}
+                className="glass group cursor-pointer overflow-hidden border-white/10 hover:border-purple-500/40 rounded-[2rem] shadow-lg transition-all duration-300 flex flex-col h-full bg-white/[0.01]"
+              >
+                {card.cover_image && (
+                  <div className="h-40 overflow-hidden relative">
+                    <img 
+                      src={card.cover_image} 
+                      alt={card.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  </div>
+                )}
+                <div className="p-6 flex flex-col flex-1 justify-between gap-4">
+                  <div className="space-y-2">
+                    <h4 className="text-base font-black text-white group-hover:text-purple-400 transition-colors line-clamp-2 uppercase tracking-wide leading-snug">
+                      {card.title}
+                    </h4>
+                    {card.excerpt && (
+                      <p className="text-xs text-white/50 font-medium line-clamp-3 leading-relaxed italic">
+                        {card.excerpt}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">
+                      {new Date(card.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <span className="text-[10px] font-black text-purple-400 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 uppercase tracking-widest">
+                      Read Details <ArrowUpRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }
