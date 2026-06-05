@@ -429,29 +429,6 @@ export default function Home() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="glass rounded-[2rem] p-8 border-white/10 group bg-gradient-to-br from-primary/20 to-transparent">
-          <Sparkles className="w-10 h-10 text-purple-400 mb-4" />
-          <h3 className="text-xl font-bold mb-2 text-white italic uppercase">Claim Free Points</h3>
-          <p className="text-sm text-white/50 font-medium mb-6 italic">Your faucet is ready! Claim free points now.</p>
-          <Button onClick={() => window.location.href = '/faucet'} className="w-full h-12 rounded-2xl font-bold bg-primary text-white neon-glow uppercase text-xs tracking-widest">Open Faucet</Button>
-        </Card>
-        
-        <Card className="glass rounded-[2rem] p-8 border-white/10 group bg-gradient-to-br from-cyan-500/20 to-transparent">
-          <MousePointer2 className="w-10 h-10 text-cyan-400 mb-4" />
-          <h3 className="text-xl font-bold mb-2 text-white italic uppercase">PTC Ads Available</h3>
-          <p className="text-sm text-white/50 font-medium mb-6 italic">Watch digital ads and earn passive points automatically.</p>
-          <Button onClick={() => window.location.href = '/ptc'} variant="outline" className="w-full h-12 rounded-2xl font-bold glass border-white/20 hover:bg-white/10 text-white uppercase text-xs tracking-widest">Browse Ads</Button>
-        </Card>
-
-        <Card className="glass rounded-[2rem] p-8 border-white/10 group bg-gradient-to-br from-fuchsia-500/20 to-transparent">
-          <Users className="w-10 h-10 text-fuchsia-400 mb-4" />
-          <h3 className="text-xl font-bold mb-2 text-white italic uppercase">Invite & Earn</h3>
-          <p className="text-sm text-white/50 font-medium mb-6 italic">Share your unique link and get 25% lifetime commission.</p>
-          <Button onClick={() => window.location.href = '/referral'} variant="outline" className="w-full h-12 rounded-2xl font-bold glass border-white/20 hover:bg-white/10 text-white uppercase text-xs tracking-widest">Copy Link</Button>
-        </Card>
-      </div>
-
       {/* INFO / BLOG CARDS SECTION */}
       {blogCards.length > 0 && (
         <motion.div
