@@ -21,6 +21,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
 import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
+import { getDeviceFingerprint } from "@/lib/fingerprint"
 
 function ShortlinksContent() {
   const router = useRouter()
@@ -183,7 +184,10 @@ function ShortlinksContent() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ provider })
+      body: JSON.stringify({ 
+        provider,
+        fingerprint: getDeviceFingerprint()
+      })
     })
 
     toast.promise(promise, {

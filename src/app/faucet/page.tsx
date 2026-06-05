@@ -23,6 +23,7 @@ import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { motion, AnimatePresence } from "framer-motion"
 import Script from "next/script"
 import { Suspense } from "react"
+import { getDeviceFingerprint } from "@/lib/fingerprint"
 
 declare global {
   interface Window {
@@ -307,6 +308,7 @@ function FaucetContent() {
           captchaToken: captchaType === 'turnstile' ? turnstileToken : hcaptchaToken,
           captchaTimestamp,
           captchaSignature,
+          fingerprint: getDeviceFingerprint(),
         }),
       })
 

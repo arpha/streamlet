@@ -6,7 +6,7 @@ const SECRET = process.env.CF_TURNSTILE_SECRET_KEY || "fallback_secret_faucet_ar
 
 export async function POST(req: NextRequest) {
   try {
-    const { captchaType, captchaToken, captchaTimestamp, captchaSignature } = await req.json()
+    const { captchaType, captchaToken, captchaTimestamp, captchaSignature, fingerprint } = await req.json()
 
     // 1. Verify User Session
     const supabase = await getServerSupabase()
@@ -112,12 +112,15 @@ export async function POST(req: NextRequest) {
     const cooldownMinutes = 30
     const rewardXp = 10
     const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1"
+    const userAgent = req.headers.get("user-agent") || ""
 
     const { data, error: rpcError } = await supabase.rpc("claim_faucet", {
       u_id: user.id,
       reward_xp_val: rewardXp,
       cooldown_sec: cooldownMinutes * 60,
-      p_ip_address: clientIp
+      p_ip_address: clientIp,
+      p_user_agent: userAgent,
+      p_device_fingerprint: fingerprint || null
     })
 
     if (rpcError) {

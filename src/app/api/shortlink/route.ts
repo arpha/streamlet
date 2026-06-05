@@ -13,10 +13,14 @@ export async function POST(req: NextRequest) {
 
     // Parse provider from body
     let provider = "shrinkme"
+    let fingerprint: string | null = null
     try {
       const body = await req.json()
       if (body?.provider && ["shrinkme", "exeio"].includes(body.provider)) {
         provider = body.provider
+      }
+      if (body?.fingerprint) {
+        fingerprint = body.fingerprint
       }
     } catch (e) {
       // Ignore if no body provided, fallback to shrinkme
@@ -41,11 +45,14 @@ export async function POST(req: NextRequest) {
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
     const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1"
+    const userAgent = req.headers.get("user-agent") || ""
     const { data, error: rpcError } = await supabase.rpc("start_shortlink_visit", {
       p_user_id: user.id,
       p_provider: provider,
       p_reward: reward,
-      p_ip_address: clientIp
+      p_ip_address: clientIp,
+      p_user_agent: userAgent,
+      p_device_fingerprint: fingerprint || null
     })
 
     if (rpcError) {
