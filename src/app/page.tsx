@@ -367,23 +367,28 @@ export default function Home() {
             <CardTitle className="text-xl font-bold text-white uppercase italic">Earning Performance</CardTitle>
             <Button variant="ghost" size="sm" className="text-xs font-bold hover:bg-white/10 text-white/60 rounded-xl">Weekly View</Button>
           </CardHeader>
-          <CardContent className="h-[300px] flex flex-col items-center justify-center p-8">
-            <div className="w-full flex justify-between gap-2 items-end px-4">
+          <CardContent className="h-[300px] flex flex-col items-center justify-between p-8">
+            <div className="w-full h-44 flex justify-between gap-3 items-end px-4 relative">
               {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
-                <div key={i} className="w-full relative group/bar">
+                <div key={i} className="w-full h-full relative group/bar flex items-end">
+                  {/* Hover Tooltip */}
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-black px-2 py-1 rounded-[0.5rem] opacity-0 group-hover/bar:opacity-100 transition-all duration-300 pointer-events-none shadow-lg shadow-purple-500/20 whitespace-nowrap z-30">
+                    +{h * 10} Pts
+                  </div>
+
                   <motion.div 
                     initial={{ height: 0 }}
                     animate={{ height: `${h}%` }}
                     transition={{ delay: i * 0.1, duration: 1 }}
-                    className="w-full bg-primary/40 hover:bg-primary/80 rounded-t-xl transition-all h-full relative"
+                    className="w-full bg-primary/40 hover:bg-primary/80 rounded-t-xl transition-all relative z-10"
                   />
-                  <div className="absolute inset-0 bg-primary opacity-0 group-hover/bar:opacity-30 blur-2xl transition-opacity" />
+                  <div className="absolute inset-0 bg-primary opacity-0 group-hover/bar:opacity-30 blur-2xl transition-opacity pointer-events-none" />
                 </div>
               ))}
             </div>
             <div className="flex justify-between w-full mt-4 px-4">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                <span key={d} className="text-[10px] font-bold text-white/40 uppercase tracking-tighter">{d}</span>
+                <span key={d} className="text-[10px] font-bold text-white/40 uppercase tracking-tighter w-full text-center">{d}</span>
               ))}
             </div>
           </CardContent>
