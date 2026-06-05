@@ -66,6 +66,7 @@ export function LandingPage() {
             <Link href="#features" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Features</Link>
             <Link href="#rewards" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Rewards</Link>
             <Link href="#community" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Community</Link>
+            <Link href="/blog" className="text-sm font-bold text-white/60 hover:text-white transition-colors">Blog</Link>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/auth/login">
