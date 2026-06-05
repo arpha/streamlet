@@ -1,36 +1,8 @@
 -- ====================================================================
--- SKRIP SETUP DATABASE SHORTLINKS (SHRINKME.IO)
--- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
+-- DATABASE MIGRATION: PROVIDER-SPECIFIC SHORTLINK LIMITS
 -- ====================================================================
 
--- 1. Membuat tabel shortlink_claims jika belum ada
-CREATE TABLE IF NOT EXISTS public.shortlink_claims (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL DEFAULT 'shrinkme',
-  points_reward INTEGER NOT NULL DEFAULT 500,
-  status TEXT NOT NULL DEFAULT 'pending', -- pending, completed
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  completed_at TIMESTAMP WITH TIME ZONE
-);
-
--- 2. Indeks untuk performa query
-CREATE INDEX IF NOT EXISTS idx_shortlink_claims_user_id ON public.shortlink_claims(user_id);
-CREATE INDEX IF NOT EXISTS idx_shortlink_claims_status ON public.shortlink_claims(status);
-CREATE INDEX IF NOT EXISTS idx_shortlink_claims_completed_at ON public.shortlink_claims(completed_at DESC);
-
--- 3. Aktifkan Row Level Security (RLS)
-ALTER TABLE public.shortlink_claims ENABLE ROW LEVEL SECURITY;
-
--- 4. Hak akses (GRANT) ke role authenticated (user yang login)
-GRANT SELECT, INSERT, UPDATE ON public.shortlink_claims TO authenticated;
-
--- 5. Kebijakan RLS
-DROP POLICY IF EXISTS "Users can view their own shortlink claims" ON public.shortlink_claims;
-CREATE POLICY "Users can view their own shortlink claims" ON public.shortlink_claims
-  FOR SELECT USING (auth.uid() = user_id);
-
--- 6. Fungsi RPC start_shortlink_visit
+-- 1. Update start_shortlink_visit RPC to apply separate limits
 CREATE OR REPLACE FUNCTION public.start_shortlink_visit(
   p_user_id UUID,
   p_provider TEXT,
@@ -102,7 +74,7 @@ END;
 $$;
 
 
--- 7. Fungsi RPC complete_shortlink_visit
+-- 2. Update complete_shortlink_visit RPC to apply double-check separate limits
 CREATE OR REPLACE FUNCTION public.complete_shortlink_visit(
   p_visit_id UUID
 )
@@ -207,7 +179,7 @@ END;
 $$;
 
 
--- 8. Fungsi RPC get_user_shortlink_stats
+-- 3. Update get_user_shortlink_stats RPC to return breakdown of completed visits
 CREATE OR REPLACE FUNCTION public.get_user_shortlink_stats(
   p_user_id UUID
 )

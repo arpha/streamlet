@@ -30,6 +30,8 @@ function ShortlinksContent() {
 
   // STATS STATES
   const [completedToday, setCompletedToday] = useState<number>(0)
+  const [completedShrinkme, setCompletedShrinkme] = useState<number>(0)
+  const [completedExeio, setCompletedExeio] = useState<number>(0)
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0) // in seconds
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
@@ -83,6 +85,8 @@ function ShortlinksContent() {
 
       if (data) {
         setCompletedToday(data.completed_today)
+        setCompletedShrinkme(data.completed_shrinkme || 0)
+        setCompletedExeio(data.completed_exeio || 0)
         setCooldownRemaining(data.cooldown_remaining)
         setTotalEarned(data.total_earned)
       }
@@ -160,8 +164,11 @@ function ShortlinksContent() {
       return
     }
 
-    if (completedToday >= 5) {
-      toast.warning("Daily limit reached! Please wait 24 hours.")
+    const providerLimit = provider === "shrinkme" ? 1 : 4
+    const providerCompleted = provider === "shrinkme" ? completedShrinkme : completedExeio
+
+    if (providerCompleted >= providerLimit) {
+      toast.warning(`Daily limit reached for this shortlink! Please wait 24 hours.`)
       return
     }
 
@@ -295,7 +302,7 @@ function ShortlinksContent() {
                           <Timer className="w-3.5 h-3.5 text-purple-400" /> Cooldown: {p.cooldown}
                         </span>
                         <span>•</span>
-                        <span>Daily: {5 - completedToday} left</span>
+                        <span>Daily: {(p.id === 'shrinkme' ? 1 : 4) - (p.id === 'shrinkme' ? completedShrinkme : completedExeio)} left</span>
                       </div>
                     </div>
                   </div>
@@ -313,7 +320,7 @@ function ShortlinksContent() {
 
                     <Button
                       onClick={() => handleVisit(p.id)}
-                      disabled={isGenerating || completedToday >= 5 || cooldownRemaining > 0}
+                      disabled={isGenerating || (p.id === 'shrinkme' ? completedShrinkme >= 1 : completedExeio >= 4) || cooldownRemaining > 0}
                       className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                     >
                       {isGenerating ? (
@@ -321,7 +328,7 @@ function ShortlinksContent() {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Generating...
                         </>
-                      ) : completedToday >= 5 ? (
+                      ) : (p.id === 'shrinkme' ? completedShrinkme >= 1 : completedExeio >= 4) ? (
                         "Limit Reached"
                       ) : cooldownRemaining > 0 ? (
                         `Cooldown (${formatTime(cooldownRemaining)})`
