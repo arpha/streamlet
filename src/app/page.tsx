@@ -61,6 +61,15 @@ export default function Home() {
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [blogCards, setBlogCards] = useState<any[]>([])
+  const [weeklyEarnings, setWeeklyEarnings] = useState<any[]>([
+    { name: 'Mon', points: 0, heightPercent: 5 },
+    { name: 'Tue', points: 0, heightPercent: 5 },
+    { name: 'Wed', points: 0, heightPercent: 5 },
+    { name: 'Thu', points: 0, heightPercent: 5 },
+    { name: 'Fri', points: 0, heightPercent: 5 },
+    { name: 'Sat', points: 0, heightPercent: 5 },
+    { name: 'Sun', points: 0, heightPercent: 5 },
+  ])
 
   // Fetch real-time stats and activity from database
   useEffect(() => {
@@ -172,6 +181,64 @@ export default function Home() {
         if (cardsData) {
           setBlogCards(cardsData)
         }
+
+        // 7. Calculate weekly earnings dynamically from Faucet & Shortlinks
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+        sevenDaysAgo.setHours(0, 0, 0, 0)
+
+        const { data: faucetWeekly } = await supabase
+          .from('faucet_claims')
+          .select('amount, claimed_at')
+          .eq('user_id', userId)
+          .gte('claimed_at', sevenDaysAgo.toISOString())
+
+        const { data: shortlinkWeekly } = await supabase
+          .from('shortlink_claims')
+          .select('points_reward, completed_at')
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+          .gte('completed_at', sevenDaysAgo.toISOString())
+
+        const dailyEarningsMap: { [key: string]: number } = {}
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        const last7Days: { name: string; dateStr: string; points: number }[] = []
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date()
+          d.setDate(d.getDate() - i)
+          const dateStr = d.toDateString()
+          const dayName = daysOfWeek[d.getDay()]
+          last7Days.push({
+            name: dayName,
+            dateStr: dateStr,
+            points: 0
+          })
+        }
+
+        faucetWeekly?.forEach(claim => {
+          const dateStr = new Date(claim.claimed_at).toDateString()
+          dailyEarningsMap[dateStr] = (dailyEarningsMap[dateStr] || 0) + Number(claim.amount)
+        })
+
+        shortlinkWeekly?.forEach(sl => {
+          const dateStr = new Date(sl.completed_at).toDateString()
+          dailyEarningsMap[dateStr] = (dailyEarningsMap[dateStr] || 0) + Number(sl.points_reward)
+        })
+
+        last7Days.forEach(day => {
+          day.points = dailyEarningsMap[day.dateStr] || 0
+        })
+
+        const maxPoints = Math.max(...last7Days.map(d => d.points), 100)
+        
+        const chartData = last7Days.map(day => ({
+          name: day.name,
+          points: day.points,
+          heightPercent: Math.max(Math.min((day.points / maxPoints) * 100, 100), 5)
+        }))
+
+        setWeeklyEarnings(chartData)
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
@@ -369,16 +436,16 @@ export default function Home() {
           </CardHeader>
           <CardContent className="h-[300px] flex flex-col items-center justify-between p-8">
             <div className="w-full h-44 flex justify-between gap-3 items-end px-4 relative">
-              {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
+              {weeklyEarnings.map((item, i) => (
                 <div key={i} className="w-full h-full relative group/bar flex items-end">
                   {/* Hover Tooltip */}
                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-black px-2 py-1 rounded-[0.5rem] opacity-0 group-hover/bar:opacity-100 transition-all duration-300 pointer-events-none shadow-lg shadow-purple-500/20 whitespace-nowrap z-30">
-                    +{h * 10} Pts
+                    +{item.points} Pts
                   </div>
 
                   <motion.div 
                     initial={{ height: 0 }}
-                    animate={{ height: `${h}%` }}
+                    animate={{ height: `${item.heightPercent}%` }}
                     transition={{ delay: i * 0.1, duration: 1 }}
                     className="w-full bg-primary/40 hover:bg-primary/80 rounded-t-xl transition-all relative z-10"
                   />
@@ -387,8 +454,8 @@ export default function Home() {
               ))}
             </div>
             <div className="flex justify-between w-full mt-4 px-4">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                <span key={d} className="text-[10px] font-bold text-white/40 uppercase tracking-tighter w-full text-center">{d}</span>
+              {weeklyEarnings.map((item, idx) => (
+                <span key={idx} className="text-[10px] font-bold text-white/40 uppercase tracking-tighter w-full text-center">{item.name}</span>
               ))}
             </div>
           </CardContent>
