@@ -182,63 +182,20 @@ export default function Home() {
           setBlogCards(cardsData)
         }
 
-        // 7. Calculate weekly earnings dynamically from Faucet & Shortlinks
-        const sevenDaysAgo = new Date()
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-        sevenDaysAgo.setHours(0, 0, 0, 0)
+        // 7. Fetch weekly earnings from RPC (includes Faucet, Shortlinks & Referral Commissions)
+        const { data: weeklyData, error: weeklyError } = await supabase.rpc('get_user_weekly_earnings', {
+          p_user_id: userId
+        })
 
-        const { data: faucetWeekly } = await supabase
-          .from('faucet_claims')
-          .select('amount, claimed_at')
-          .eq('user_id', userId)
-          .gte('claimed_at', sevenDaysAgo.toISOString())
-
-        const { data: shortlinkWeekly } = await supabase
-          .from('shortlink_claims')
-          .select('points_reward, completed_at')
-          .eq('user_id', userId)
-          .eq('status', 'completed')
-          .gte('completed_at', sevenDaysAgo.toISOString())
-
-        const dailyEarningsMap: { [key: string]: number } = {}
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const last7Days: { name: string; dateStr: string; points: number }[] = []
-
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date()
-          d.setDate(d.getDate() - i)
-          const dateStr = d.toDateString()
-          const dayName = daysOfWeek[d.getDay()]
-          last7Days.push({
-            name: dayName,
-            dateStr: dateStr,
-            points: 0
-          })
+        if (!weeklyError && weeklyData) {
+          const maxPoints = Math.max(...weeklyData.map((d: any) => d.points), 100)
+          const chartData = weeklyData.map((day: any) => ({
+            name: day.day_name,
+            points: day.points,
+            heightPercent: Math.max(Math.min((day.points / maxPoints) * 100, 100), 5)
+          }))
+          setWeeklyEarnings(chartData)
         }
-
-        faucetWeekly?.forEach(claim => {
-          const dateStr = new Date(claim.claimed_at).toDateString()
-          dailyEarningsMap[dateStr] = (dailyEarningsMap[dateStr] || 0) + Number(claim.amount)
-        })
-
-        shortlinkWeekly?.forEach(sl => {
-          const dateStr = new Date(sl.completed_at).toDateString()
-          dailyEarningsMap[dateStr] = (dailyEarningsMap[dateStr] || 0) + Number(sl.points_reward)
-        })
-
-        last7Days.forEach(day => {
-          day.points = dailyEarningsMap[day.dateStr] || 0
-        })
-
-        const maxPoints = Math.max(...last7Days.map(d => d.points), 100)
-        
-        const chartData = last7Days.map(day => ({
-          name: day.name,
-          points: day.points,
-          heightPercent: Math.max(Math.min((day.points / maxPoints) * 100, 100), 5)
-        }))
-
-        setWeeklyEarnings(chartData)
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
