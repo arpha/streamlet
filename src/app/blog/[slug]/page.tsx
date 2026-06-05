@@ -87,23 +87,26 @@ export default function SinglePostPage() {
     })
   }
 
-  // Parse **bold** and [link](url)
+  // Parse **bold**, [link](url), and raw URLs
   const parseInlineStyles = (text: string) => {
     const boldRegex = /\*\*(.*?)\*\*/g
     const linkRegex = /\[(.*?)\]\((.*?)\)/g
     
-    let parts: React.ReactNode[] = []
-    let lastIndex = 0
-    
-    // We do a simple inline parser using regex
-    // Let's replace bold text first
-    const renderedText = text.replace(boldRegex, "<strong>$1</strong>")
-    
-    // For simplicity, we can return dangerouslySetInnerHTML for safe styled spans
-    // replacing Markdown bold and link with HTML equivalent:
+    // Replace markdown formatting first
     let html = text
       .replace(boldRegex, '<strong class="text-white font-bold">$1</strong>')
-      .replace(linkRegex, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:underline font-bold">$1</a>')
+      .replace(linkRegex, 'LINK_PLACEHOLDER_START$2LINK_PLACEHOLDER_MIDDLE$1LINK_PLACEHOLDER_END')
+
+    // Find raw URLs (e.g., http/https links)
+    const rawUrlRegex = /(https?:\/\/[^\s<]+)/g
+    html = html.replace(rawUrlRegex, (url) => {
+      if (url.includes('LINK_PLACEHOLDER')) return url
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:underline font-bold">${url}</a>`
+    })
+
+    // Restore markdown links
+    html = html.replace(/LINK_PLACEHOLDER_START(.*?)LINK_PLACEHOLDER_MIDDLE(.*?)LINK_PLACEHOLDER_END/g, 
+      '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:underline font-bold">$2</a>')
 
     return <span dangerouslySetInnerHTML={{ __html: html }} />
   }
