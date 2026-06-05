@@ -15,10 +15,14 @@ CREATE TABLE IF NOT EXISTS public.blog_posts (
   excerpt TEXT,
   cover_image TEXT,
   published BOOLEAN NOT NULL DEFAULT false,
+  is_card BOOLEAN NOT NULL DEFAULT false,
   author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+
+-- Pastikan kolom is_card ada jika tabel sudah terbuat sebelumnya
+ALTER TABLE public.blog_posts ADD COLUMN IF NOT EXISTS is_card BOOLEAN NOT NULL DEFAULT false;
 
 -- 3. Buat indeks untuk performa query
 CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON public.blog_posts(slug);

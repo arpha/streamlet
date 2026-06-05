@@ -35,6 +35,7 @@ export default function NewBlogPostPage() {
   const [content, setContent] = useState("")
   const [published, setPublished] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isCard, setIsCard] = useState(false)
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -113,6 +114,7 @@ export default function NewBlogPostPage() {
           cover_image: coverImage.trim() || null,
           content: content.trim(),
           published,
+          is_card: isCard,
           author_id: userId
         })
 
@@ -285,17 +287,32 @@ export default function NewBlogPostPage() {
           </div>
 
           {/* Status publishing */}
-          <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
-            <input
-              type="checkbox"
-              id="published"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              className="w-4 h-4 rounded text-purple-600 bg-white/5 border-white/10 focus:ring-purple-500 focus:ring-opacity-50"
-            />
-            <label htmlFor="published" className="text-xs font-black text-white uppercase tracking-widest cursor-pointer select-none">
-              Publish Live Immediately
-            </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
+              <input
+                type="checkbox"
+                id="published"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="w-4 h-4 rounded text-purple-600 bg-white/5 border-white/10 focus:ring-purple-500 focus:ring-opacity-50"
+              />
+              <label htmlFor="published" className="text-xs font-black text-white uppercase tracking-widest cursor-pointer select-none">
+                Publish Live Immediately
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
+              <input
+                type="checkbox"
+                id="isCard"
+                checked={isCard}
+                onChange={(e) => setIsCard(e.target.checked)}
+                className="w-4 h-4 rounded text-purple-600 bg-white/5 border-white/10 focus:ring-purple-500 focus:ring-opacity-50"
+              />
+              <label htmlFor="isCard" className="text-xs font-black text-white uppercase tracking-widest cursor-pointer select-none">
+                Show as Card on Dashboard
+              </label>
+            </div>
           </div>
 
           {/* Action buttons */}
