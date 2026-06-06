@@ -245,6 +245,20 @@ export default function WithdrawPage() {
         <p className="text-muted-foreground">Withdraw your points automatically to your FaucetPay account in crypto.</p>
       </div>
 
+      {/* Ad Banner */}
+      <div className="w-full flex flex-col items-center justify-center gap-2">
+        <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Sponsored Advertisement</span>
+        <div className="w-full max-w-4xl mx-auto px-6 relative z-10">
+          <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
+            <iframe 
+              data-aa='2441223' 
+              src='//acceptable.a-ads.com/2441223/?size=Adaptive'
+              style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="glass md:col-span-2">
           <CardHeader>
