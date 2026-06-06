@@ -47,6 +47,8 @@ function FaucetContent() {
   const [rewardAmount, setRewardAmount] = useState<number>(10)
   const [loadingReward, setLoadingReward] = useState(true)
   const [adBlockActive, setAdBlockActive] = useState(false)
+  const [claimProgress, setClaimProgress] = useState<number | null>(null)
+  const [progressText, setProgressText] = useState<string>("Initializing...")
 
   // CAPTCHA STATES
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
@@ -284,7 +286,32 @@ function FaucetContent() {
 
 
 
-  const handleClaim = async () => {
+  // Update claim progress over 10 seconds (100 steps of 100ms)
+  useEffect(() => {
+    if (claimProgress === null) return
+
+    if (claimProgress < 100) {
+      const timer = setTimeout(() => {
+        setClaimProgress(prev => {
+          if (prev === null) return null
+          const next = prev + 1
+          
+          if (next < 20) setProgressText("Securing session...")
+          else if (next < 40) setProgressText("Verifying human check...")
+          else if (next < 60) setProgressText("Validating security keys...")
+          else if (next < 80) setProgressText("Allocating rewards...")
+          else setProgressText("Completing transaction...")
+
+          return next
+        })
+      }, 100)
+      return () => clearTimeout(timer)
+    } else {
+      executeClaim()
+    }
+  }, [claimProgress])
+
+  const startClaimProcess = () => {
     if (adBlockActive) {
       toast.error("Please disable your ad blocker to claim faucet rewards.")
       return
@@ -296,10 +323,12 @@ function FaucetContent() {
       return
     }
 
-
-
     setIsClaiming(true)
-    
+    setClaimProgress(0)
+    setProgressText("Securing session...")
+  }
+
+  const executeClaim = async () => {
     try {
       const response = await fetch("/api/faucet/claim", {
         method: "POST",
@@ -320,14 +349,14 @@ function FaucetContent() {
       if (!response.ok || !result.success) {
         toast.error(result.message || "Failed to claim")
         resetCaptchas()
+        setClaimProgress(null)
+        setIsClaiming(false)
         return
       }
 
       if (result.new_balance !== undefined) {
         setBalance(result.new_balance)
       }
-      
-
       
       setTimeLeft(cooldownMinutes * 60)
       resetCaptchas()
@@ -340,6 +369,7 @@ function FaucetContent() {
       resetCaptchas()
     } finally {
       setIsClaiming(false)
+      setClaimProgress(null)
     }
   }
 
@@ -507,15 +537,32 @@ function FaucetContent() {
                       </div>
                     </div>
 
-                    {/* CLAIM BUTTON */}
-                    <Button 
-                      className={`w-full h-20 text-2xl font-black rounded-2xl transition-all gap-4 uppercase tracking-tighter shadow-2xl ${captchaVerified ? 'bg-primary hover:bg-primary/90 text-white neon-glow' : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'}`}
-                      onClick={handleClaim}
-                      disabled={!captchaVerified || isClaiming}
-                    >
-                      {isClaiming ? <Loader2 className="w-8 h-8 animate-spin" /> : <Coins className="w-8 h-8" />}
-                      {captchaVerified ? "CLAIM NOW" : "Complete Security Verification"}
-                    </Button>
+                    {/* CLAIM BUTTON OR PROGRESS BAR */}
+                    {claimProgress !== null ? (
+                      <div className="w-full space-y-3 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div className="flex justify-between items-center px-1">
+                          <span className="text-sm font-bold text-purple-400 animate-pulse uppercase tracking-wider">{progressText}</span>
+                          <span className="text-sm font-black font-mono text-purple-300">{Math.max(1, Math.ceil(10 - (claimProgress / 10)))}s ({claimProgress}%)</span>
+                        </div>
+                        <div className="w-full h-5 rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden p-1 relative">
+                          <motion.div 
+                            className="h-full rounded-xl bg-gradient-to-r from-purple-500 via-fuchsia-500 to-primary shadow-lg shadow-purple-500/20"
+                            style={{ width: `${claimProgress}%` }}
+                            layoutId="claimProgressBar"
+                            transition={{ ease: "linear" }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        className={`w-full h-20 text-2xl font-black rounded-2xl transition-all gap-4 uppercase tracking-tighter shadow-2xl ${captchaVerified ? 'bg-primary hover:bg-primary/90 text-white neon-glow' : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'}`}
+                        onClick={startClaimProcess}
+                        disabled={!captchaVerified || isClaiming}
+                      >
+                        {isClaiming ? <Loader2 className="w-8 h-8 animate-spin" /> : <Coins className="w-8 h-8" />}
+                        {captchaVerified ? "CLAIM NOW" : "Complete Security Verification"}
+                      </Button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
