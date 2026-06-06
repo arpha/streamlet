@@ -40,7 +40,7 @@ interface LeaderboardUser {
 interface PastWinner {
   id: number
   cycle_id: number
-  leaderboard_type: 'shortlink' | 'referral'
+  leaderboard_type: 'shortlink' | 'referral' | 'faucet'
   username: string
   score: number
   rank: number
@@ -52,11 +52,12 @@ export default function LeaderboardPage() {
   const { id: userId, isAdmin } = useStore()
   
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'shortlink' | 'referral'>('shortlink')
+  const [activeTab, setActiveTab] = useState<'shortlink' | 'referral' | 'faucet'>('shortlink')
   
   const [cycle, setCycle] = useState<Cycle | null>(null)
   const [shortlinkList, setShortlinkList] = useState<LeaderboardUser[]>([])
   const [referralList, setReferralList] = useState<LeaderboardUser[]>([])
+  const [faucetList, setFaucetList] = useState<LeaderboardUser[]>([])
   
   const [pastCycles, setPastCycles] = useState<Cycle[]>([])
   const [pastWinners, setPastWinners] = useState<PastWinner[]>([])
@@ -80,6 +81,7 @@ export default function LeaderboardPage() {
           })
           setShortlinkList(data.shortlink_leaderboard || [])
           setReferralList(data.referral_leaderboard || [])
+          setFaucetList(data.faucet_leaderboard || [])
           setPastCycles(data.past_cycles || [])
           setPastWinners(data.past_winners || [])
           
@@ -125,7 +127,7 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer)
   }, [cycle])
 
-  const activeList = activeTab === 'shortlink' ? shortlinkList : referralList
+  const activeList = activeTab === 'shortlink' ? shortlinkList : activeTab === 'referral' ? referralList : faucetList
 
   // Helper values for podium
   const rank1 = activeList.find(u => u.rank === 1)
@@ -137,11 +139,28 @@ export default function LeaderboardPage() {
   const filteredPastWinners = pastWinners.filter(w => w.cycle_id === selectedPastCycleId)
   const pastShortlinkWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'shortlink')
   const pastReferralWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'referral')
+  const pastFaucetWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'faucet')
 
-  const prizePool = [
-    300000, 200000, 150000, 100000, 75000, 
-    50000, 40000, 35000, 30000, 20000
-  ]
+  const getPrizeForRank = (tab: 'shortlink' | 'referral' | 'faucet', rank: number) => {
+    if (tab === 'faucet') {
+      if (rank === 1) return 200000
+      if (rank === 2) return 150000
+      if (rank === 3) return 100000
+      if (rank === 4) return 75000
+      if (rank === 5) return 60000
+      if (rank === 6) return 50000
+      if (rank === 7) return 45000
+      if (rank === 8) return 40000
+      if (rank === 9) return 35000
+      if (rank === 10) return 30000
+      if (rank >= 11 && rank <= 15) return 20000
+      if (rank >= 16 && rank <= 20) return 15000
+      return 0
+    } else {
+      const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
+      return pool[rank - 1] || 0
+    }
+  }
 
   if (loading) {
     return (
@@ -237,6 +256,17 @@ export default function LeaderboardPage() {
             Shortlinks
           </button>
           <button
+            onClick={() => setActiveTab('faucet')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+              activeTab === 'faucet'
+                ? "bg-primary text-white shadow-lg shadow-primary/30"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            <Coins className="w-4 h-4" />
+            Faucet
+          </button>
+          <button
             onClick={() => setActiveTab('referral')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
               activeTab === 'referral'
@@ -277,13 +307,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank2.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank2.total_points?.toLocaleString("id-ID")} Pts` : `${rank2.total_referrals} Refs`}
+                      {activeTab === 'referral' ? `${rank2.total_referrals} Refs` : `${rank2.total_points?.toLocaleString("id-ID")} Pts`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-28 bg-gradient-to-t from-slate-900/50 to-slate-800/20 border-t border-slate-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-lg font-black text-slate-300 font-mono mt-1">+{prizePool[1].toLocaleString("id-ID")} Pts</span>
+                      <span className="text-lg font-black text-slate-300 font-mono mt-1">+{getPrizeForRank(activeTab, 2).toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -307,13 +337,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-black text-base text-white max-w-[180px] truncate">{rank1.username}</span>
                     <span className="text-xs text-amber-400 font-bold font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank1.total_points?.toLocaleString("id-ID")} Pts` : `${rank1.total_referrals} Refs`}
+                      {activeTab === 'referral' ? `${rank1.total_referrals} Refs` : `${rank1.total_points?.toLocaleString("id-ID")} Pts`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-36 bg-gradient-to-t from-amber-950/20 to-amber-900/5 border-t border-amber-500/30 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4 active-glow shadow-2xl shadow-amber-500/5">
                       <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-xl font-black text-amber-300 font-mono mt-1">+{prizePool[0].toLocaleString("id-ID")} Pts</span>
+                      <span className="text-xl font-black text-amber-300 font-mono mt-1">+{getPrizeForRank(activeTab, 1).toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -336,13 +366,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank3.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank3.total_points?.toLocaleString("id-ID")} Pts` : `${rank3.total_referrals} Refs`}
+                      {activeTab === 'referral' ? `${rank3.total_referrals} Refs` : `${rank3.total_points?.toLocaleString("id-ID")} Pts`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-24 bg-gradient-to-t from-amber-950/20 to-amber-950/5 border-t border-amber-700/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
                       <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-lg font-black text-amber-500 font-mono mt-1">+{prizePool[2].toLocaleString("id-ID")} Pts</span>
+                      <span className="text-lg font-black text-amber-500 font-mono mt-1">+{getPrizeForRank(activeTab, 3).toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -351,7 +381,7 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* RANK TABLE FOR 4-10 */}
+            {/* RANK TABLE FOR 4+ */}
             {tableList.length > 0 && (
               <div className="glass border-white/10 rounded-[2.5rem] overflow-hidden max-w-4xl mx-auto shadow-xl">
                 <table className="w-full text-left border-collapse">
@@ -369,13 +399,13 @@ export default function LeaderboardPage() {
                         <td className="p-5 text-center font-bold text-white/60">#{user.rank}</td>
                         <td className="p-5 text-white font-bold">{user.username}</td>
                         <td className="p-5 text-white/60 font-mono text-xs">
-                          {activeTab === 'shortlink' 
-                            ? `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims} Claims)`
-                            : `${user.total_referrals} Referrals`
+                          {activeTab === 'referral' 
+                            ? `${user.total_referrals} Referrals`
+                            : `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims} Claims)`
                           }
                         </td>
                         <td className="p-5 text-purple-400 font-black font-mono">
-                          +{user.estimated_prize.toLocaleString("id-ID")} Pts
+                          +{getPrizeForRank(activeTab, user.rank).toLocaleString("id-ID")} Pts
                         </td>
                       </tr>
                     ))}
@@ -388,7 +418,31 @@ export default function LeaderboardPage() {
       </div>
 
       {/* RULES & INSTRUCTIONS BOX */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
+        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
+          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
+            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
+              <Coins className="w-5 h-5 text-purple-400" />
+              FAUCET RULES
+            </CardTitle>
+            <CardDescription className="text-white/40 font-medium italic">How faucet leaderboard scores are calculated.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>Faucet leaderboard is calculated based on the total points earned from completing faucet claims during the active cycle.</p>
+            </div>
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +5%, Platinum +10%, Diamond +15%).</p>
+            </div>
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>Points earned from referral commissions are **not included** in the Faucet Leaderboard score.</p>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
@@ -466,7 +520,39 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* PAST FAUCET WINNERS */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 px-2">
+                <Coins className="w-4 h-4" />
+                Faucet Winners (Cycle #{selectedPastCycleId})
+              </h4>
+              <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+                {pastFaucetWinners.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
+                ) : (
+                  pastFaucetWinners.map((winner) => (
+                    <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>
+                        <span className="font-bold text-sm text-white">{winner.username}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Pts</span>
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          winner.payout_status === 'approved' 
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}>
+                          {winner.payout_status === 'approved' ? "Paid" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* PAST SHORTLINK WINNERS */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5 px-2">
