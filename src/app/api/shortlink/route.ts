@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     let fingerprint: string | null = null
     try {
       const body = await req.json()
-      if (body?.provider && ["shrinkme", "exeio"].includes(body.provider)) {
+      if (body?.provider && ["shrinkme", "exeio", "fclc"].includes(body.provider)) {
         provider = body.provider
       }
       if (body?.fingerprint) {
@@ -40,7 +40,13 @@ export async function POST(req: NextRequest) {
       if (!apiKey) {
         return NextResponse.json({ error: "Exe.io API key not configured on server. Please add EXEIO_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 500 // Set reward to 500 points for Exe.io
+      reward = 500
+    } else if (provider === "fclc") {
+      apiKey = process.env.FCLC_API_KEY || ""
+      if (!apiKey) {
+        return NextResponse.json({ error: "FC.LC API key not configured on server. Please add FCLC_API_KEY to your environment." }, { status: 500 })
+      }
+      reward = 500
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
@@ -83,6 +89,8 @@ export async function POST(req: NextRequest) {
       apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
     } else if (provider === "exeio") {
       apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "fclc") {
+      apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
     }
 
     const response = await fetch(apiUrl)

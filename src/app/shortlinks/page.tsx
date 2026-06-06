@@ -33,6 +33,7 @@ function ShortlinksContent() {
   const [completedToday, setCompletedToday] = useState<number>(0)
   const [completedShrinkme, setCompletedShrinkme] = useState<number>(0)
   const [completedExeio, setCompletedExeio] = useState<number>(0)
+  const [completedFclc, setCompletedFclc] = useState<number>(0)
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0) // in seconds
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
@@ -88,6 +89,7 @@ function ShortlinksContent() {
         setCompletedToday(data.completed_today)
         setCompletedShrinkme(data.completed_shrinkme || 0)
         setCompletedExeio(data.completed_exeio || 0)
+        setCompletedFclc(data.completed_fclc || 0)
         setCooldownRemaining(data.cooldown_remaining)
         setTotalEarned(data.total_earned)
       }
@@ -139,7 +141,10 @@ function ShortlinksContent() {
       cooldown: "30 Mins",
       points: 500,
       xp: 10,
-      gradient: "from-purple-500 to-fuchsia-600"
+      gradient: "from-purple-500 to-fuchsia-600",
+      limit: 1,
+      completed: completedShrinkme,
+      tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
     },
     {
       id: "exeio",
@@ -149,7 +154,23 @@ function ShortlinksContent() {
       cooldown: "30 Mins",
       points: 500,
       xp: 10,
-      gradient: "from-blue-500 to-cyan-600"
+      gradient: "from-blue-500 to-cyan-600",
+      limit: 1,
+      completed: completedExeio,
+      tagColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+    },
+    {
+      id: "fclc",
+      name: "FC.LC",
+      tag: "Fast & Clean",
+      description: "FC.LC is a fast and simple shortlink service with a high payout rate. Complete the quick steps to receive your reward.",
+      cooldown: "30 Mins",
+      points: 500,
+      xp: 10,
+      gradient: "from-emerald-500 to-teal-600",
+      limit: 3,
+      completed: completedFclc,
+      tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
     }
   ]
 
@@ -165,8 +186,8 @@ function ShortlinksContent() {
       return
     }
 
-    const providerLimit = provider === "shrinkme" ? 1 : 4
-    const providerCompleted = provider === "shrinkme" ? completedShrinkme : completedExeio
+    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 1 : 3)
+    const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : completedFclc)
 
     if (providerCompleted >= providerLimit) {
       toast.warning(`Daily limit reached for this shortlink! Please wait 24 hours.`)
@@ -290,11 +311,7 @@ function ShortlinksContent() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-lg font-black text-white tracking-tight uppercase group-hover:text-primary transition-colors">{p.name}</span>
-                        <span className={`text-[9px] px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider ${
-                          p.id === 'shrinkme' 
-                            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
-                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        }`}>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider ${p.tagColor}`}>
                           {p.tag}
                         </span>
                       </div>
@@ -306,7 +323,7 @@ function ShortlinksContent() {
                           <Timer className="w-3.5 h-3.5 text-purple-400" /> Cooldown: {p.cooldown}
                         </span>
                         <span>•</span>
-                        <span>Daily: {(p.id === 'shrinkme' ? 1 : 4) - (p.id === 'shrinkme' ? completedShrinkme : completedExeio)} left</span>
+                        <span>Daily: {p.limit - p.completed} left</span>
                       </div>
                     </div>
                   </div>
@@ -324,7 +341,7 @@ function ShortlinksContent() {
 
                     <Button
                       onClick={() => handleVisit(p.id)}
-                      disabled={isGenerating || (p.id === 'shrinkme' ? completedShrinkme >= 1 : completedExeio >= 4) || cooldownRemaining > 0}
+                      disabled={isGenerating || p.completed >= p.limit || cooldownRemaining > 0}
                       className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                     >
                       {isGenerating ? (
@@ -332,7 +349,7 @@ function ShortlinksContent() {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Generating...
                         </>
-                      ) : (p.id === 'shrinkme' ? completedShrinkme >= 1 : completedExeio >= 4) ? (
+                      ) : p.completed >= p.limit ? (
                         "Limit Reached"
                       ) : cooldownRemaining > 0 ? (
                         `Cooldown (${formatTime(cooldownRemaining)})`
