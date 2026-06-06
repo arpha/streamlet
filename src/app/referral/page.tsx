@@ -227,21 +227,21 @@ export default function ReferralPage() {
         <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
           <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
             <Users className="w-5 h-5 text-purple-400" />
-            Daftar Teman Diundang ({referralsList.length})
+            Referred Friends List ({referralsList.length})
           </CardTitle>
-          <CardDescription className="text-white/40 font-medium italic">Rincian nama pengguna, XP, dan total kontribusi komisi yang Anda hasilkan dari setiap teman.</CardDescription>
+          <CardDescription className="text-white/40 font-medium italic">Detailed list of your referrals, showing username, accumulated XP, and commission points generated for you.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoadingList ? (
             <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-              <span className="text-xs font-bold uppercase tracking-wider text-white/40">Memuat daftar teman...</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-white/40">Loading referrals list...</span>
             </div>
           ) : referralsList.length === 0 ? (
             <div className="p-12 text-center">
               <Users className="w-12 h-12 text-white/10 mx-auto mb-4" />
-              <h4 className="text-base font-black uppercase text-white/60">Belum ada teman yang diundang</h4>
-              <p className="text-white/45 text-xs mt-1">Bagikan tautan referral Anda untuk mulai mengundang teman dan dapatkan komisi faucet seumur hidup!</p>
+              <h4 className="text-base font-black uppercase text-white/60">No referred friends yet</h4>
+              <p className="text-white/45 text-xs mt-1">Share your referral link to start inviting friends and earn faucet commission for life!</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -250,7 +250,7 @@ export default function ReferralPage() {
                   <tr className="border-b border-white/5 bg-white/[0.02]">
                     <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Username</th>
                     <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Total XP</th>
-                    <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Kontribusi Komisi</th>
+                    <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Commission Contribution</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 font-medium text-sm">
