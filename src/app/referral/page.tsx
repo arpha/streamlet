@@ -201,27 +201,6 @@ export default function ReferralPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {[
-          { title: 'Faucet Claim', commission: '25%', desc: 'Earn a 25% commission from every faucet claim completed by your friends.', icon: Award },
-          { title: 'Offerwalls', commission: '10%', desc: 'Get a 10% cut from every offerwall task completed by your referrals.', icon: MousePointer2 },
-          { title: 'Shortlinks', commission: '10%', desc: 'Earn a 10% commission from every shortlink completed by your referrals.', icon: Share2 },
-        ].map((item, i) => (
-          <Card key={i} className="glass group hover:bg-primary/5 transition-colors border-white/5 rounded-[2rem] p-4">
-            <CardHeader className="pb-3">
-              <Badge className="w-fit mb-3 bg-primary/20 text-primary border-primary/20 font-black uppercase text-[10px] tracking-wider px-3 py-1 rounded-full">{item.commission} Commission</Badge>
-              <CardTitle className="text-white font-black uppercase text-lg italic flex items-center gap-2">
-                <item.icon className="w-5 h-5 text-purple-400" />
-                {item.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-white/50 font-medium italic">{item.desc}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* REFERRALS DETAIL TABLE */}
       <Card className="glass border-white/10 rounded-[2.5rem] overflow-hidden shadow-xl">
         <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
@@ -272,6 +251,27 @@ export default function ReferralPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        {[
+          { title: 'Faucet Claim', commission: '25%', desc: 'Earn a 25% commission from every faucet claim completed by your friends.', icon: Award },
+          { title: 'Offerwalls', commission: '10%', desc: 'Get a 10% cut from every offerwall task completed by your referrals.', icon: MousePointer2 },
+          { title: 'Shortlinks', commission: '10%', desc: 'Earn a 10% commission from every shortlink completed by your referrals.', icon: Share2 },
+        ].map((item, i) => (
+          <Card key={i} className="glass group hover:bg-primary/5 transition-colors border-white/5 rounded-[2rem] p-4">
+            <CardHeader className="pb-3">
+              <Badge className="w-fit mb-3 bg-primary/20 text-primary border-primary/20 font-black uppercase text-[10px] tracking-wider px-3 py-1 rounded-full">{item.commission} Commission</Badge>
+              <CardTitle className="text-white font-black uppercase text-lg italic flex items-center gap-2">
+                <item.icon className="w-5 h-5 text-purple-400" />
+                {item.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-white/50 font-medium italic">{item.desc}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
