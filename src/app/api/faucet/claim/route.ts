@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Call Supabase claim_faucet RPC
-    const cooldownMinutes = 30
+    const cooldownMinutes = 5
     const rewardXp = 10
     const clientIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1"
     const userAgent = req.headers.get("user-agent") || ""
