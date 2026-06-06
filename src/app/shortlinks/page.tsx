@@ -36,7 +36,9 @@ function ShortlinksContent() {
   const [completedExeio, setCompletedExeio] = useState<number>(0)
   const [completedFclc, setCompletedFclc] = useState<number>(0)
   const [completedCuty, setCompletedCuty] = useState<number>(0)
-  const [cooldownRemaining, setCooldownRemaining] = useState<number>(0) // in seconds
+  const [cooldownExeio, setCooldownExeio] = useState<number>(0)
+  const [cooldownFclc, setCooldownFclc] = useState<number>(0)
+  const cooldownRemaining = Math.max(cooldownExeio, cooldownFclc)
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
@@ -93,7 +95,8 @@ function ShortlinksContent() {
         setCompletedExeio(data.completed_exeio || 0)
         setCompletedFclc(data.completed_fclc || 0)
         setCompletedCuty(data.completed_cuty || 0)
-        setCooldownRemaining(data.cooldown_remaining)
+        setCooldownExeio(data.cooldown_exeio || 0)
+        setCooldownFclc(data.cooldown_fclc || 0)
         setTotalEarned(data.total_earned)
       }
     } catch (err) {
@@ -112,22 +115,15 @@ function ShortlinksContent() {
     }
   }, [userId, balance])
 
-  // Countdown timer for cooldown
+  // Countdown timer for cooldowns
   useEffect(() => {
-    if (cooldownRemaining <= 0) return
-
     const timer = setInterval(() => {
-      setCooldownRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
+      setCooldownExeio(prev => (prev > 0 ? prev - 1 : 0))
+      setCooldownFclc(prev => (prev > 0 ? prev - 1 : 0))
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [cooldownRemaining])
+  }, [])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -155,6 +151,7 @@ function ShortlinksContent() {
       gradient: "from-purple-500 to-fuchsia-600",
       limit: 1,
       completed: completedShrinkme,
+      cooldownRemaining: 0,
       tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
       tutorialUrl: "https://www.youtube.com/watch?v=dQLbvJaJyxw"
     },
@@ -169,6 +166,7 @@ function ShortlinksContent() {
       gradient: "from-blue-500 to-cyan-600",
       limit: 2,
       completed: completedExeio,
+      cooldownRemaining: cooldownExeio,
       tagColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20"
     },
     {
@@ -182,6 +180,7 @@ function ShortlinksContent() {
       gradient: "from-emerald-500 to-teal-600",
       limit: 2,
       completed: completedFclc,
+      cooldownRemaining: cooldownFclc,
       tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       tutorialUrl: "https://youtu.be/XeuR1v7oCgQ?si=Pd-dD6QVNySmmL7p"
     },
@@ -196,6 +195,7 @@ function ShortlinksContent() {
       gradient: "from-orange-500 to-amber-600",
       limit: 1,
       completed: completedCuty,
+      cooldownRemaining: 0,
       tagColor: "bg-orange-500/10 text-orange-400 border border-orange-500/20"
     }
   ]
@@ -214,14 +214,15 @@ function ShortlinksContent() {
 
     const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : 1))
     const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : completedCuty))
+    const providerCooldown = provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : 0)
 
     if (providerCompleted >= providerLimit) {
       toast.warning(`Daily limit reached for this shortlink! Reset at 07:00 AM GMT+7.`)
       return
     }
 
-    if (cooldownRemaining > 0) {
-      toast.warning(`Please wait for the cooldown to end: ${formatTime(cooldownRemaining)}`)
+    if (providerCooldown > 0) {
+      toast.warning(`Please wait for the cooldown to end: ${formatTime(providerCooldown)}`)
       return
     }
 
@@ -399,7 +400,7 @@ function ShortlinksContent() {
                       )}
                       <Button
                         onClick={() => handleVisit(p.id)}
-                        disabled={isGenerating || p.completed >= p.limit || cooldownRemaining > 0}
+                        disabled={isGenerating || p.completed >= p.limit || p.cooldownRemaining > 0}
                         className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20 flex-1"
                       >
                         {isGenerating ? (
@@ -409,8 +410,8 @@ function ShortlinksContent() {
                           </>
                         ) : p.completed >= p.limit ? (
                           "Limit Reached"
-                        ) : cooldownRemaining > 0 ? (
-                          `Cooldown (${formatTime(cooldownRemaining)})`
+                        ) : p.cooldownRemaining > 0 ? (
+                          `Cooldown (${formatTime(p.cooldownRemaining)})`
                         ) : (
                           <>
                             Visit & Claim

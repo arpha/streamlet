@@ -45,19 +45,22 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Daily limit reached for ' || p_provider || ' (Max ' || v_limit || ' per day)');
   END IF;
 
-  -- 2. Cek cooldown global 30 menit
-  SELECT completed_at INTO v_last_completion
-  FROM public.shortlink_claims
-  WHERE user_id = p_user_id
-    AND status = 'completed'
-    ORDER BY completed_at DESC
-    LIMIT 1;
+  -- 2. Cek cooldown 30 menit (hanya untuk provider dengan limit > 1, per provider)
+  IF v_limit > 1 THEN
+    SELECT completed_at INTO v_last_completion
+    FROM public.shortlink_claims
+    WHERE user_id = p_user_id
+      AND provider = p_provider
+      AND status = 'completed'
+      ORDER BY completed_at DESC
+      LIMIT 1;
 
-  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
-    RETURN json_build_object(
-      'success', false, 
-      'message', 'Cooldown in progress. Please wait 30 minutes between shortlinks.'
-    );
+    IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+      RETURN json_build_object(
+        'success', false, 
+        'message', 'Cooldown in progress for ' || p_provider || '. Please wait 30 minutes between visits.'
+      );
+    END IF;
   END IF;
 
   -- 3. Hapus visit pending lama
@@ -175,16 +178,19 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Daily limit reached for ' || v_provider || ' (Max ' || v_limit || ' per day)');
   END IF;
 
-  -- 3. Double-check cooldown 30 menit
-  SELECT completed_at INTO v_last_completion
-  FROM public.shortlink_claims
-  WHERE user_id = v_user_id
-    AND status = 'completed'
-    ORDER BY completed_at DESC
-    LIMIT 1;
+  -- 3. Double-check cooldown 30 menit (hanya untuk provider dengan limit > 1, per provider)
+  IF v_limit > 1 THEN
+    SELECT completed_at INTO v_last_completion
+    FROM public.shortlink_claims
+    WHERE user_id = v_user_id
+      AND provider = v_provider
+      AND status = 'completed'
+      ORDER BY completed_at DESC
+      LIMIT 1;
 
-  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
-    RETURN json_build_object('success', false, 'message', 'Cooldown active. Please wait 30 minutes.');
+    IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+      RETURN json_build_object('success', false, 'message', 'Cooldown active for ' || v_provider || '. Please wait.');
+    END IF;
   END IF;
 
   -- 4. Tandai visit selesai dan rekam IP, UA, dan fingerprint
@@ -245,7 +251,8 @@ DECLARE
   v_completed_fclc INT;
   v_completed_cuty INT;
   v_last_completion TIMESTAMP WITH TIME ZONE;
-  v_cooldown_remaining INT := 0;
+  v_cooldown_exeio INT := 0;
+  v_cooldown_fclc INT := 0;
   v_total_earned BIGINT;
 BEGIN
   -- 1. Total klaim selesai hari ini (semua provider) sejak jam 7 pagi GMT+7 (00:00 UTC)
@@ -284,18 +291,31 @@ BEGIN
     AND status = 'completed'
     AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
-  -- 3. Hitung sisa cooldown global
+  -- 3. Hitung sisa cooldown per provider (hanya jika limit > 1)
+  -- FC.LC
   SELECT completed_at INTO v_last_completion
   FROM public.shortlink_claims
   WHERE user_id = p_user_id
+    AND provider = 'fclc'
     AND status = 'completed'
     ORDER BY completed_at DESC
     LIMIT 1;
 
-  IF v_last_completion IS NOT NULL THEN
-    IF (now() - v_last_completion) < interval '30 minutes' THEN
-      v_cooldown_remaining := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
-    END IF;
+  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+    v_cooldown_fclc := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
+  END IF;
+
+  -- Exe.io
+  SELECT completed_at INTO v_last_completion
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'exeio'
+    AND status = 'completed'
+    ORDER BY completed_at DESC
+    LIMIT 1;
+
+  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+    v_cooldown_exeio := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
   END IF;
 
   -- 4. Hitung total pendapatan dari shortlinks
@@ -310,7 +330,8 @@ BEGIN
     'completed_exeio', v_completed_exeio,
     'completed_fclc', v_completed_fclc,
     'completed_cuty', v_completed_cuty,
-    'cooldown_remaining', v_cooldown_remaining,
+    'cooldown_exeio', v_cooldown_exeio,
+    'cooldown_fclc', v_cooldown_fclc,
     'total_earned', v_total_earned
   );
 END;
