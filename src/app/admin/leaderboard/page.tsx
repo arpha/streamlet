@@ -61,7 +61,7 @@ export default function AdminLeaderboardPage() {
     
     if (!userId || !isAdmin) {
       const timer = setTimeout(() => {
-        toast.error("Akses Ditolak: Memerlukan otorisasi Admin.")
+        toast.error("Access Denied: Admin authorization required.")
         router.push("/")
       }, 1000)
       return () => clearTimeout(timer)
@@ -88,7 +88,7 @@ export default function AdminLeaderboardPage() {
       }
     } catch (err: any) {
       console.error("Failed to load leaderboard data:", err)
-      toast.error(err.message || "Gagal memuat data leaderboard")
+      toast.error(err.message || "Failed to load leaderboard data")
     } finally {
       setLoading(false)
     }
@@ -104,13 +104,13 @@ export default function AdminLeaderboardPage() {
       if (error) throw error
 
       if (data && data.success) {
-        toast.success(data.message || "Hadiah berhasil disetujui dan dikirim!")
+        toast.success(data.message || "Reward successfully approved and sent!")
         fetchLeaderboardData()
       } else {
-        toast.error(data?.message || "Gagal menyetujui hadiah")
+        toast.error(data?.message || "Failed to approve reward")
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal memproses persetujuan")
+      toast.error(err.message || "Failed to process approval")
     } finally {
       setActionLoadingId(null)
     }
@@ -118,7 +118,7 @@ export default function AdminLeaderboardPage() {
 
   const handleApproveCycleAll = async () => {
     if (!selectedCycleId) return
-    if (!confirm("Apakah Anda yakin ingin menyetujui dan menyalurkan hadiah ke SEMUA pemenang di siklus ini?")) return
+    if (!confirm("Are you sure you want to approve and distribute rewards to ALL winners in this cycle?")) return
 
     setBulkLoading(true)
     try {
@@ -129,13 +129,13 @@ export default function AdminLeaderboardPage() {
       if (error) throw error
 
       if (data && data.success) {
-        toast.success(data.message || "Semua hadiah berhasil dikirim!")
+        toast.success(data.message || "All rewards successfully sent!")
         fetchLeaderboardData()
       } else {
-        toast.error(data?.message || "Gagal menyetujui seluruh hadiah siklus")
+        toast.error(data?.message || "Failed to approve cycle rewards")
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal memproses persetujuan massal")
+      toast.error(err.message || "Failed to process bulk approval")
     } finally {
       setBulkLoading(false)
     }
@@ -145,7 +145,7 @@ export default function AdminLeaderboardPage() {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-4" />
-        <p className="text-white/40 font-bold uppercase tracking-wider text-xs">Memeriksa otorisasi admin...</p>
+        <p className="text-white/40 font-bold uppercase tracking-wider text-xs">Checking admin authorization...</p>
       </div>
     )
   }
@@ -160,39 +160,39 @@ export default function AdminLeaderboardPage() {
         <div>
           <Link href="/leaderboard" className="inline-flex items-center gap-2 text-white/50 hover:text-white text-xs font-black uppercase tracking-widest mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Kembali ke Leaderboard
+            Back to Leaderboard
           </Link>
           <div className="flex items-center gap-2 mt-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black uppercase tracking-widest">
               <Award className="w-3.5 h-3.5" />
-              Persetujuan Hadiah
+              Reward Approvals
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mt-2 italic uppercase">KONFIRMASI PEMENANG</h2>
-          <p className="text-white/60 font-medium italic">Setujui dan distribusikan hadiah poin kepada pemenang siklus leaderboard sebelumnya secara aman.</p>
+          <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mt-2 italic uppercase">CONFIRM WINNERS</h2>
+          <p className="text-white/60 font-medium italic">Approve and distribute point rewards to the winners of the previous leaderboard cycle safely.</p>
         </div>
       </div>
 
       {loading ? (
         <div className="p-20 text-center flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-          <span className="text-xs font-bold uppercase tracking-wider text-white/40">Memuat data arsip pemenang...</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-white/40">Loading winner archives...</span>
         </div>
       ) : cycles.length === 0 ? (
         <div className="glass border-white/10 rounded-[2.5rem] p-20 text-center flex flex-col items-center justify-center">
           <Clock className="w-16 h-16 text-white/10 mb-4" />
-          <h4 className="text-lg font-black uppercase text-white/60">Belum ada siklus yang selesai</h4>
-          <p className="text-white/40 text-sm mt-1 max-w-md">Data pemenang akan muncul di sini setelah siklus leaderboard pertama (30 hari) berakhir dan direset otomatis.</p>
+          <h4 className="text-lg font-black uppercase text-white/60">No completed cycles yet</h4>
+          <p className="text-white/40 text-sm mt-1 max-w-md">Winner data will appear here after the first leaderboard cycle (30 days) ends and resets automatically.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* SIDEBAR: CYCLE LIST */}
           <div className="lg:col-span-1 space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-white/40 px-2">Daftar Siklus Selesai</h3>
+            <h3 className="text-xs font-black uppercase tracking-wider text-white/40 px-2">Completed Cycles List</h3>
             <div className="space-y-2">
               {cycles.map((cycle) => {
                 const isSelected = selectedCycleId === cycle.id
-                const cycleEndDate = new Date(cycle.end_at).toLocaleDateString("id-ID", {
+                const cycleEndDate = new Date(cycle.end_at).toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "short",
                   year: "numeric"
@@ -209,8 +209,8 @@ export default function AdminLeaderboardPage() {
                     }`}
                   >
                     <div className="space-y-1">
-                      <span className="text-xs font-black uppercase tracking-widest block text-purple-400">Siklus #{cycle.id}</span>
-                      <span className="text-sm font-bold block">Selesai: {cycleEndDate}</span>
+                      <span className="text-xs font-black uppercase tracking-widest block text-purple-400">Cycle #{cycle.id}</span>
+                      <span className="text-sm font-bold block">Ended: {cycleEndDate}</span>
                     </div>
                     <ChevronRight className={`w-4 h-4 transition-transform ${isSelected ? "text-purple-400 translate-x-1" : "text-white/20 group-hover:translate-x-1"}`} />
                   </button>
@@ -227,9 +227,9 @@ export default function AdminLeaderboardPage() {
                 <div>
                   <h3 className="text-xl font-black uppercase tracking-wider flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-purple-400 animate-pulse" />
-                    Pemenang Siklus #{selectedCycleId}
+                    Winners of Cycle #{selectedCycleId}
                   </h3>
-                  <p className="text-white/40 text-xs mt-1">Total {activeCycleWinners.length} entri pemenang terdeteksi.</p>
+                  <p className="text-white/40 text-xs mt-1">Total {activeCycleWinners.length} winner entries detected.</p>
                 </div>
                 {pendingCount > 0 && (
                   <Button
@@ -242,7 +242,7 @@ export default function AdminLeaderboardPage() {
                     ) : (
                       <Check className="w-4 h-4" />
                     )}
-                    Setujui Semua ({pendingCount} Pemenang)
+                    Approve All ({pendingCount} Winners)
                   </Button>
                 )}
               </div>
@@ -253,19 +253,19 @@ export default function AdminLeaderboardPage() {
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.02]">
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center">Rank</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Kategori</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Category</th>
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Username</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Skor</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Poin Hadiah</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Score</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Reward Points</th>
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center">Status</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center">Aksi</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-medium text-sm">
                     {activeCycleWinners.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-10 text-center text-white/40">
-                          Tidak ada data pemenang untuk siklus ini.
+                          No winner data for this cycle.
                         </td>
                       </tr>
                     ) : (
@@ -315,7 +315,7 @@ export default function AdminLeaderboardPage() {
                             <td className="p-5 text-white/60 font-mono text-xs">
                               {winner.score.toLocaleString("id-ID")}{" "}
                               <span className="text-[10px] text-white/30 font-sans font-medium uppercase">
-                                {winner.leaderboard_type === 'shortlink' ? 'poin' : 'reff'}
+                                {winner.leaderboard_type === 'shortlink' ? 'points' : 'refs'}
                               </span>
                             </td>
 
@@ -332,7 +332,7 @@ export default function AdminLeaderboardPage() {
                                   : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                                 }`}
                               >
-                                {isApproved ? "Lunas" : "Menunggu Persetujuan"}
+                                {isApproved ? "Paid" : "Pending Approval"}
                               </span>
                             </td>
 
@@ -351,7 +351,7 @@ export default function AdminLeaderboardPage() {
                                   ) : (
                                     <Check className="w-3 h-3" />
                                   )}
-                                  Setujui
+                                  Approve
                                 </Button>
                               ) : (
                                 <span className="text-xs text-white/20">-</span>

@@ -88,7 +88,7 @@ export default function LeaderboardPage() {
           }
         }
       } catch (err) {
-        console.error("Gagal memuat leaderboard:", err)
+        console.error("Failed to load leaderboard:", err)
       } finally {
         setLoading(false)
       }
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
         <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Memuat peringkat terbaru...</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Loading latest standings...</span>
       </div>
     )
   }
@@ -159,17 +159,17 @@ export default function LeaderboardPage() {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-black uppercase tracking-widest">
             <Trophy className="w-3.5 h-3.5" />
-            Arena Kompetisi
+            COMPETITION ARENA
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase">STREAMLET LEADERBOARD</h2>
-          <p className="text-white/60 font-medium italic">Kumpulkan poin sebanyak-banyaknya dan rebut hadiah hingga 300k poin gratis!</p>
+          <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 300,000 points!</p>
         </div>
 
         {isAdmin && (
           <Link href="/admin/leaderboard">
             <Button className="rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-purple-600/20 h-12">
               <ShieldCheck className="w-4 h-4" />
-              Kelola Pembayaran Hadiah
+              Manage Payouts
             </Button>
           </Link>
         )}
@@ -183,17 +183,17 @@ export default function LeaderboardPage() {
               <Clock className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <span className="text-xs font-black uppercase tracking-widest text-purple-400">Siklus Aktif #{cycle?.id}</span>
-              <h4 className="text-base font-bold text-white mt-0.5">Waktu Sisa Sebelum Reset Standings</h4>
+              <span className="text-xs font-black uppercase tracking-widest text-purple-400">Active Cycle #{cycle?.id}</span>
+              <h4 className="text-base font-bold text-white mt-0.5">Time Remaining Before Reset</h4>
             </div>
           </div>
 
           <div className="flex gap-4">
             {[
-              { label: "Hari", value: timeLeft.days },
-              { label: "Jam", value: timeLeft.hours },
-              { label: "Menit", value: timeLeft.minutes },
-              { label: "Detik", value: timeLeft.seconds }
+              { label: "Days", value: timeLeft.days },
+              { label: "Hours", value: timeLeft.hours },
+              { label: "Minutes", value: timeLeft.minutes },
+              { label: "Seconds", value: timeLeft.seconds }
             ].map((t) => (
               <div key={t.label} className="w-16 h-18 md:w-20 md:h-22 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center">
                 <span className="text-2xl md:text-3xl font-black font-mono text-purple-300">
@@ -220,7 +220,7 @@ export default function LeaderboardPage() {
             }`}
           >
             <TrendingUp className="w-4 h-4" />
-            Shortlink Leaderboard
+            Shortlinks
           </button>
           <button
             onClick={() => setActiveTab('referral')}
@@ -231,7 +231,7 @@ export default function LeaderboardPage() {
             }`}
           >
             <Users className="w-4 h-4" />
-            Referral Leaderboard
+            Referrals
           </button>
         </div>
       </div>
@@ -241,8 +241,8 @@ export default function LeaderboardPage() {
         {activeList.length === 0 ? (
           <div className="glass border-white/10 rounded-[2.5rem] p-20 text-center flex flex-col items-center justify-center">
             <Trophy className="w-16 h-16 text-white/10 mb-4 animate-bounce" />
-            <h4 className="text-lg font-black uppercase text-white/60">Belum ada aktivitas di papan peringkat</h4>
-            <p className="text-white/40 text-sm mt-1 max-w-sm">Jadilah yang pertama untuk menyelesaikan tugas dan mengamankan posisi teratas di siklus ini!</p>
+            <h4 className="text-lg font-black uppercase text-white/60">No activity on this leaderboard yet</h4>
+            <p className="text-white/40 text-sm mt-1 max-w-sm">Be the first to complete tasks and secure the top spot in this cycle!</p>
           </div>
         ) : (
           <div className="space-y-10">
@@ -263,13 +263,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank2.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank2.total_points?.toLocaleString("id-ID")} Poin` : `${rank2.total_referrals} Reff`}
+                      {activeTab === 'shortlink' ? `${rank2.total_points?.toLocaleString("id-ID")} Pts` : `${rank2.total_referrals} Refs`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-28 bg-gradient-to-t from-slate-900/50 to-slate-800/20 border-t border-slate-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Hadiah Siklus</span>
-                      <span className="text-lg font-black text-slate-300 font-mono mt-1">+{prizePool[1].toLocaleString("id-ID")} Poin</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cycle Reward</span>
+                      <span className="text-lg font-black text-slate-300 font-mono mt-1">+{prizePool[1].toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -293,13 +293,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-black text-base text-white max-w-[180px] truncate">{rank1.username}</span>
                     <span className="text-xs text-amber-400 font-bold font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank1.total_points?.toLocaleString("id-ID")} Poin` : `${rank1.total_referrals} Reff`}
+                      {activeTab === 'shortlink' ? `${rank1.total_points?.toLocaleString("id-ID")} Pts` : `${rank1.total_referrals} Refs`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-36 bg-gradient-to-t from-amber-950/20 to-amber-900/5 border-t border-amber-500/30 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4 active-glow shadow-2xl shadow-amber-500/5">
-                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Hadiah Siklus</span>
-                      <span className="text-xl font-black text-amber-300 font-mono mt-1">+{prizePool[0].toLocaleString("id-ID")} Poin</span>
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cycle Reward</span>
+                      <span className="text-xl font-black text-amber-300 font-mono mt-1">+{prizePool[0].toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -322,13 +322,13 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank3.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'shortlink' ? `${rank3.total_points?.toLocaleString("id-ID")} Poin` : `${rank3.total_referrals} Reff`}
+                      {activeTab === 'shortlink' ? `${rank3.total_points?.toLocaleString("id-ID")} Pts` : `${rank3.total_referrals} Refs`}
                     </span>
                     
                     {/* Podium block */}
                     <div className="w-full h-24 bg-gradient-to-t from-amber-950/20 to-amber-950/5 border-t border-amber-700/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
-                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Hadiah Siklus</span>
-                      <span className="text-lg font-black text-amber-500 font-mono mt-1">+{prizePool[2].toLocaleString("id-ID")} Poin</span>
+                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Cycle Reward</span>
+                      <span className="text-lg font-black text-amber-500 font-mono mt-1">+{prizePool[2].toLocaleString("id-ID")} Pts</span>
                     </div>
                   </motion.div>
                 ) : (
@@ -345,8 +345,8 @@ export default function LeaderboardPage() {
                     <tr className="border-b border-white/5 bg-white/[0.01]">
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center w-20">Rank</th>
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Username</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Skor</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Estimasi Hadiah</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Score</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Estimated Reward</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-medium text-sm">
@@ -356,12 +356,12 @@ export default function LeaderboardPage() {
                         <td className="p-5 text-white font-bold">{user.username}</td>
                         <td className="p-5 text-white/60 font-mono text-xs">
                           {activeTab === 'shortlink' 
-                            ? `${user.total_points?.toLocaleString("id-ID")} Poin (${user.total_claims} Klaim)`
-                            : `${user.total_referrals} Referral`
+                            ? `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims} Claims)`
+                            : `${user.total_referrals} Referrals`
                           }
                         </td>
                         <td className="p-5 text-purple-400 font-black font-mono">
-                          +{user.estimated_prize.toLocaleString("id-ID")} Poin
+                          +{user.estimated_prize.toLocaleString("id-ID")} Pts
                         </td>
                       </tr>
                     ))}
@@ -379,22 +379,22 @@ export default function LeaderboardPage() {
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-purple-400" />
-              ATURAN SHORTLINK
+              SHORTLINK RULES
             </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">Bagaimana penghitungan poin leaderboard shortlink bekerja.</CardDescription>
+            <CardDescription className="text-white/40 font-medium italic">How shortlink leaderboard scores are calculated.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Leaderboard Shortlink dihitung dari total poin yang Anda dapatkan setelah berhasil menyelesaikan verifikasi shortlink dari penyedia mana pun.</p>
+              <p>Shortlink leaderboard is calculated based on the total points earned from completing shortlink visits from any provider.</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Perolehan poin yang dihitung sudah **termasuk bonus tambahan berdasarkan level rank** akun Anda (Silver +5%, Platinum +10%, Diamond +15%).</p>
+              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +5%, Platinum +10%, Diamond +15%).</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Pendapatan komisi dari referral **tidak dihitung** dalam Leaderboard Shortlink (kompetisi murni dari hasil kerja keras individu).</p>
+              <p>Points earned from referral commissions are **not included** in the Shortlink Leaderboard score.</p>
             </div>
           </CardContent>
         </Card>
@@ -403,22 +403,22 @@ export default function LeaderboardPage() {
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
               <Users className="w-5 h-5 text-purple-400" />
-              ATURAN REFERRAL
+              REFERRAL RULES
             </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">Bagaimana penghitungan syarat poin leaderboard referral bekerja.</CardDescription>
+            <CardDescription className="text-white/40 font-medium italic">How referral leaderboard scores are calculated.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Leaderboard Referral dihitung dari jumlah teman baru yang Anda undang (mendaftar melalui kode referral Anda) selama siklus aktif berlangsung.</p>
+              <p>Referral leaderboard is calculated based on the number of new friends you invite (registered with your referral code) during the active cycle.</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Referral yang valid dan dihitung adalah **teman yang telah mengumpulkan minimal 1.000 XP** di akun mereka (untuk mencegah akun palsu/spam).</p>
+              <p>Referred accounts are only valid and counted if **they have collected at least 1,000 XP** (to prevent fake or spam accounts).</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Reset data peringkat dilakukan otomatis setiap 30 hari. Jumlah referral yang diklaim di luar siklus tidak akan diakumulasikan kembali.</p>
+              <p>Prizes are automatically logged at the end of the 30-day cycle, and rankings will reset. Referrals from past cycles are not carried over.</p>
             </div>
           </CardContent>
         </Card>
@@ -431,9 +431,9 @@ export default function LeaderboardPage() {
             <div>
               <h3 className="text-xl font-black uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-purple-400" />
-                RIWAYAT PEMENANG SEBELUMNYA
+                PREVIOUS CYCLE WINNERS
               </h3>
-              <p className="text-white/40 text-xs mt-1">Daftar pemenang dan status distribusi hadiah untuk siklus-siklus lampau.</p>
+              <p className="text-white/40 text-xs mt-1">List of winners and payout distribution status from completed cycles.</p>
             </div>
 
             <div className="relative inline-block w-48">
@@ -444,7 +444,7 @@ export default function LeaderboardPage() {
               >
                 {pastCycles.map(c => (
                   <option key={c.id} value={c.id} className="bg-slate-950 text-white">
-                    Siklus #{c.id}
+                    Cycle #{c.id}
                   </option>
                 ))}
               </select>
@@ -457,11 +457,11 @@ export default function LeaderboardPage() {
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5 px-2">
                 <TrendingUp className="w-4 h-4" />
-                Shortlink Juara (Siklus #{selectedPastCycleId})
+                Shortlink Winners (Cycle #{selectedPastCycleId})
               </h4>
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
                 {pastShortlinkWinners.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-white/40">Tidak ada data untuk kategori ini.</div>
+                  <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
                 ) : (
                   pastShortlinkWinners.map((winner) => (
                     <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
@@ -470,13 +470,13 @@ export default function LeaderboardPage() {
                         <span className="font-bold text-sm text-white">{winner.username}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Poin</span>
+                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Pts</span>
                         <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           winner.payout_status === 'approved' 
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
                             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                         }`}>
-                          {winner.payout_status === 'approved' ? "Lunas" : "Tertunda"}
+                          {winner.payout_status === 'approved' ? "Paid" : "Pending"}
                         </span>
                       </div>
                     </div>
@@ -489,11 +489,11 @@ export default function LeaderboardPage() {
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-fuchsia-400 flex items-center gap-1.5 px-2">
                 <Users className="w-4 h-4" />
-                Referral Juara (Siklus #{selectedPastCycleId})
+                Referral Winners (Cycle #{selectedPastCycleId})
               </h4>
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
                 {pastReferralWinners.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-white/40">Tidak ada data untuk kategori ini.</div>
+                  <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
                 ) : (
                   pastReferralWinners.map((winner) => (
                     <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
@@ -502,13 +502,13 @@ export default function LeaderboardPage() {
                         <span className="font-bold text-sm text-white">{winner.username}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Poin</span>
+                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Pts</span>
                         <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           winner.payout_status === 'approved' 
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
                             : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                         }`}>
-                          {winner.payout_status === 'approved' ? "Lunas" : "Tertunda"}
+                          {winner.payout_status === 'approved' ? "Paid" : "Pending"}
                         </span>
                       </div>
                     </div>
