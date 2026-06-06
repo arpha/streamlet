@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       if (!apiKey) {
         return NextResponse.json({ error: "FC.LC API key not configured on server. Please add FCLC_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 500
+      reward = 400
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim

@@ -165,7 +165,7 @@ function ShortlinksContent() {
       tag: "Fast & Clean",
       description: "FC.LC is a fast and simple shortlink service with a high payout rate. Complete the quick steps to receive your reward.",
       cooldown: "30 Mins",
-      points: 500,
+      points: 400,
       xp: 10,
       gradient: "from-emerald-500 to-teal-600",
       limit: 3,
