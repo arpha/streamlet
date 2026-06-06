@@ -134,6 +134,9 @@ function ShortlinksContent() {
 
   const getAdjustedPoints = (basePoints: number) => {
     if (xp < 0) return Math.floor(basePoints * 0.5)
+    if (xp >= 100000) return basePoints + Math.ceil(basePoints * 0.15) // Diamond (+15%)
+    if (xp >= 10000) return basePoints + Math.ceil(basePoints * 0.10)  // Platinum (+10%)
+    if (xp >= 1000) return basePoints + Math.ceil(basePoints * 0.05)   // Silver (+5%)
     return basePoints
   }
 

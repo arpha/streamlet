@@ -226,12 +226,21 @@ BEGIN
   -- 1b. Jalankan decay sebelum memproses reward agar level ter-update paling kini
   PERFORM public.check_and_apply_xp_decay(v_user_id);
 
-  -- Ambil XP terbaru untuk cek level penalti
+  -- Ambil XP terbaru untuk cek level penalti atau bonus
   SELECT xp INTO user_xp FROM public.profiles WHERE id = v_user_id LIMIT 1;
 
-  -- 1c. Terapkan penalti Mud (-50%) jika user_xp < 0
+  -- 1c. Terapkan penalti Mud (-50%) atau bonus rank
   IF user_xp < 0 THEN
     v_reward := FLOOR(v_reward * 0.5);
+  ELSIF user_xp >= 100000 THEN
+    -- Diamond (+15%)
+    v_reward := v_reward + CEIL(v_reward * 0.15);
+  ELSIF user_xp >= 10000 THEN
+    -- Platinum (+10%)
+    v_reward := v_reward + CEIL(v_reward * 0.10);
+  ELSIF user_xp >= 1000 THEN
+    -- Silver (+5%)
+    v_reward := v_reward + CEIL(v_reward * 0.05);
   END IF;
 
   -- Set limit berdasarkan aturan pembagian baru (Total limit harian = 5)

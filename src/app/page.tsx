@@ -652,7 +652,7 @@ export default function Home() {
                       📈 Rank Benefits
                     </h5>
                     <p className="text-white/60 font-medium leading-relaxed">
-                      Higher ranks receive bonus multiplier rewards on Faucet claims:
+                      Higher ranks receive bonus multiplier rewards on Faucet & Shortlink claims:
                       <br />• **Silver**: +5% bonus
                       <br />• **Platinum**: +10% bonus
                       <br />• **Diamond**: +15% bonus
