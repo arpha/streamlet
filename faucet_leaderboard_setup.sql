@@ -87,7 +87,7 @@ BEGIN
       SELECT 
         c.user_id,
         COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC)::INT AS rank
+        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank
       FROM public.shortlink_claims c
       WHERE c.status = 'completed'
         AND c.completed_at >= v_active_cycle.start_at
@@ -112,7 +112,7 @@ BEGIN
       SELECT 
         ref.referred_by_id AS user_id,
         COUNT(ref.id)::INT AS total_referrals,
-        ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC)::INT AS rank
+        ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC, MAX(ref.created_at) ASC)::INT AS rank
       FROM public.profiles ref
       WHERE ref.referred_by_id IS NOT NULL
         AND ref.created_at >= v_active_cycle.start_at
@@ -138,7 +138,7 @@ BEGIN
       SELECT 
         c.user_id,
         COALESCE(SUM(c.amount), 0)::INT AS total_points,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC)::INT AS rank
+        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC, MAX(c.claimed_at) ASC)::INT AS rank
       FROM public.faucet_claims c
       WHERE c.claimed_at >= v_active_cycle.start_at
         AND c.claimed_at <= v_active_cycle.end_at
@@ -183,8 +183,8 @@ BEGIN
       p.username,
       COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
       COUNT(c.id)::INT AS total_claims,
-      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC)::INT AS rank,
-      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC)::INT) AS estimated_prize
+      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank,
+      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT) AS estimated_prize
     FROM public.profiles p
     JOIN public.shortlink_claims c ON p.id = c.user_id
     WHERE c.status = 'completed'
@@ -192,7 +192,7 @@ BEGIN
       AND c.completed_at <= v_cycle.end_at
     GROUP BY p.id, p.username
     HAVING SUM(c.points_reward) > 0
-    ORDER BY total_points DESC
+    ORDER BY total_points DESC, MAX(c.completed_at) ASC
     LIMIT 10
   ) t;
 
@@ -202,8 +202,8 @@ BEGIN
     SELECT 
       p.username,
       COUNT(ref.id)::INT AS total_referrals,
-      ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC)::INT AS rank,
-      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC)::INT) AS estimated_prize
+      ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC, MAX(ref.created_at) ASC)::INT AS rank,
+      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC, MAX(ref.created_at) ASC)::INT) AS estimated_prize
     FROM public.profiles p
     JOIN public.profiles ref ON p.id = ref.referred_by_id
     WHERE ref.referred_by_id IS NOT NULL
@@ -212,7 +212,7 @@ BEGIN
       AND ref.xp >= 100
     GROUP BY p.id, p.username
     HAVING COUNT(ref.id) > 0
-    ORDER BY total_referrals DESC
+    ORDER BY total_referrals DESC, MAX(ref.created_at) ASC
     LIMIT 10
   ) t;
 
@@ -223,15 +223,15 @@ BEGIN
       p.username,
       COALESCE(SUM(c.amount), 0)::INT AS total_points,
       COUNT(c.id)::INT AS total_claims,
-      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC)::INT AS rank,
-      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC)::INT) AS estimated_prize
+      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC, MAX(c.claimed_at) ASC)::INT AS rank,
+      public.get_leaderboard_rank_reward(ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.amount), 0) DESC, MAX(c.claimed_at) ASC)::INT) AS estimated_prize
     FROM public.profiles p
     JOIN public.faucet_claims c ON p.id = c.user_id
     WHERE c.claimed_at >= v_cycle.start_at
       AND c.claimed_at <= v_cycle.end_at
     GROUP BY p.id, p.username
     HAVING SUM(c.amount) > 0
-    ORDER BY total_points DESC
+    ORDER BY total_points DESC, MAX(c.claimed_at) ASC
     LIMIT 20
   ) t;
 
