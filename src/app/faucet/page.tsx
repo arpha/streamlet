@@ -364,6 +364,7 @@ function FaucetContent() {
       toast.success(result.message || `Successfully claimed ${result.reward_given} Points!`, {
         icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />
       })
+      router.push("/")
     } catch (error: any) {
       toast.error(error.message || "Failed to claim faucet")
       resetCaptchas()
