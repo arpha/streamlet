@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           token: apiKey,
           url: callbackUrl,
+          title: `Streamlet Shortlink ${result.visit_id.substring(0, 8)}`,
         }),
       })
       shrinkResult = await response.json()

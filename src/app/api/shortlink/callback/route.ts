@@ -18,6 +18,31 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await getServerSupabase()
 
+    // 1. Fetch shortlink claim creation time to verify if it is a scraper or user
+    const { data: claim, error: claimError } = await supabase
+      .from("shortlink_claims")
+      .select("created_at")
+      .eq("id", visitId)
+      .single()
+
+    if (claimError || !claim) {
+      console.error("Failed to fetch shortlink claim:", claimError)
+      return NextResponse.redirect(
+        new URL(`/shortlinks?status=error&message=${encodeURIComponent("Shortlink claim not found")}`, origin)
+      )
+    }
+
+    const createdAt = new Date(claim.created_at).getTime()
+    const diffSeconds = (Date.now() - createdAt) / 1000
+
+    if (diffSeconds < 8) {
+      console.warn(`[Bot Blocked] Scraper callback request for visit ${visitId} arrived in ${diffSeconds}s (threshold 8s). Ignoring db update.`)
+      return new NextResponse(
+        `<html><head><title>Streamlet Verification</title></head><body>Verification in progress... Please solve the shortlink.</body></html>`,
+        { headers: { "Content-Type": "text/html" } }
+      )
+    }
+
     const callbackIp = req.headers.get("x-forwarded-for")?.split(',')[0].trim() || req.headers.get("x-real-ip") || "127.0.0.1"
     const callbackUserAgent = req.headers.get("user-agent") || ""
     const { data, error: rpcError } = await supabase.rpc("complete_shortlink_visit", {
