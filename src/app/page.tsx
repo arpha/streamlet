@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -53,6 +53,8 @@ export default function Home() {
   const { balance, username, id: userId, xp, lastDecayCheckedAt } = useStore()
   const { user, loading } = useAuth()
   const supabase = createClient()
+  
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
   
   const [statsData, setStatsData] = useState({
     totalClaims: 0,
@@ -335,7 +337,16 @@ export default function Home() {
                   <LevelIcon className="w-10 h-10 text-white drop-shadow-lg" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Current Rank</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Current Rank</p>
+                    <button 
+                      onClick={() => setIsGuideOpen(true)}
+                      className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all border border-white/10"
+                      title="Rank Guide"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  </div>
                   <h3 className={`text-3xl md:text-4xl font-black uppercase tracking-tighter ${levelInfo.textColor}`}>
                     {levelInfo.name}
                   </h3>
@@ -384,34 +395,22 @@ export default function Home() {
                 })}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
 
-      {/* RANK INFO & DECAY TIMER GRID */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="grid gap-6 md:grid-cols-12"
-      >
-        {/* Left Column: Decay Timer */}
-        <div className="md:col-span-5">
-          <Card className="glass relative overflow-hidden border-white/10 rounded-[2.5rem] shadow-xl h-full flex flex-col justify-between p-8">
-            <div className="space-y-4">
+            {/* Bottom row: Activity Deadline Timer */}
+            <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                  <Clock className="w-6 h-6 animate-pulse" />
+                  <Clock className="w-5 h-5 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-black text-white uppercase tracking-tight italic">Activity Deadline</h4>
-                  <p className="text-xs text-white/50 font-bold uppercase tracking-wider">Claim before decay</p>
+                  <h4 className="text-sm font-black text-white uppercase tracking-tight italic">Activity Deadline</h4>
+                  <p className="text-[10px] text-white/40 font-black uppercase tracking-wider">Claim before decay</p>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2">
+              <div className="flex-1 max-w-md space-y-2">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-black font-mono tracking-tighter text-rose-400">
+                  <span className="text-xl font-black font-mono tracking-tighter text-rose-400">
                     {decayTimeLeft > 0 ? formatDecayTime(decayTimeLeft) : "DECAY ACTIVE"}
                   </span>
                   <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
@@ -420,7 +419,7 @@ export default function Home() {
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden border border-white/10">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(100, Math.max(0, (decayTimeLeft / 86400) * 100))}%` }}
@@ -433,58 +432,16 @@ export default function Home() {
                   />
                 </div>
               </div>
-            </div>
 
-            <p className="text-[10px] text-white/40 font-black uppercase tracking-wide mt-4 italic">
-              *Claim Faucet or Shortlink once every 24h to refresh this timer to 100%.
-            </p>
-          </Card>
-        </div>
-
-        {/* Right Column: Rank Guide / FAQ */}
-        <div className="md:col-span-7">
-          <Card className="glass relative overflow-hidden border-white/10 rounded-[2.5rem] shadow-xl p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
-                <Info className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-lg font-black text-white uppercase tracking-tight italic">Rank & Inactivity Guide</h4>
-                <p className="text-xs text-white/50 font-bold uppercase tracking-wider">How levels & decay work</p>
+              <div className="text-[10px] text-white/30 font-black uppercase tracking-wider md:text-right max-w-[200px] leading-relaxed">
+                *Claim Faucet or Shortlink daily to refresh timer.
               </div>
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 text-xs">
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                <h5 className="font-black text-fuchsia-400 uppercase">📈 Rank Benefits</h5>
-                <p className="text-white/60 font-medium leading-relaxed">
-                  Higher ranks receive bonus multiplier rewards on Faucet claims:
-                  <br />• **Silver**: +5% bonus
-                  <br />• **Platinum**: +10% bonus
-                  <br />• **Diamond**: +15% bonus
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
-                <h5 className="font-black text-rose-400 uppercase">⏳ Inactivity Decay</h5>
-                <p className="text-white/60 font-medium leading-relaxed">
-                  If you do not claim within 24 hours, your XP decays daily based on your rank:
-                  <br />• **Diamond**: -400 XP | **Platinum**: -200 XP
-                  <br />• **Silver**: -100 XP | **Bronze**: -50 XP
-                  <br />• **Mud**: -20 XP
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 sm:col-span-2 space-y-1">
-                <h5 className="font-black text-amber-500 uppercase">⚠️ Rank Mud Penalty (-50%)</h5>
-                <p className="text-white/60 font-medium leading-relaxed">
-                  If your XP drops below 0 (down to **-500 XP**), you enter **Rank Mud**. While in Mud, all payouts are **slashed by 50%**. Complete any claim to immediately refresh this timer!
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
       </motion.div>
+
+
 
       <motion.div 
         variants={container}
@@ -647,6 +604,97 @@ export default function Home() {
           </div>
         </motion.div>
       )}
+      {/* RANK GUIDE MODAL */}
+      <AnimatePresence>
+        {isGuideOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsGuideOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="glass border border-white/10 rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative z-10"
+            >
+              <div className="p-8 md:p-10 space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
+                      <Info className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white uppercase tracking-tight italic">Rank & Inactivity Guide</h3>
+                      <p className="text-[10px] text-white/50 font-bold uppercase tracking-wider">How levels & decay work</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsGuideOpen(false)}
+                    className="p-2 rounded-2xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Content Grid */}
+                <div className="grid gap-4 sm:grid-cols-2 text-xs">
+                  <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <h5 className="font-black text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
+                      📈 Rank Benefits
+                    </h5>
+                    <p className="text-white/60 font-medium leading-relaxed">
+                      Higher ranks receive bonus multiplier rewards on Faucet claims:
+                      <br />• **Silver**: +5% bonus
+                      <br />• **Platinum**: +10% bonus
+                      <br />• **Diamond**: +15% bonus
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
+                    <h5 className="font-black text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                      ⏳ Inactivity Decay
+                    </h5>
+                    <p className="text-white/60 font-medium leading-relaxed">
+                      If you do not claim within 24 hours, your XP decays daily based on your rank:
+                      <br />• **Diamond**: -400 XP | **Platinum**: -200 XP
+                      <br />• **Silver**: -100 XP | **Bronze**: -50 XP
+                      <br />• **Mud**: -20 XP
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 sm:col-span-2 space-y-2">
+                    <h5 className="font-black text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
+                      ⚠️ Rank Mud Penalty (-50%)
+                    </h5>
+                    <p className="text-white/60 font-medium leading-relaxed">
+                      If your XP drops below 0 (down to **-500 XP**), you enter **Rank Mud**. While in Mud, all payouts are **slashed by 50%**. Complete any claim (Faucet or Shortlink) to immediately stop decay and start recovering your XP!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => setIsGuideOpen(false)}
+                    className="w-full sm:w-auto px-6 h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase text-xs tracking-wider transition-all border border-white/10"
+                  >
+                    Close Guide
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
