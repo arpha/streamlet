@@ -275,6 +275,19 @@ function FaucetContent() {
     }
   }, [timeLeft])
 
+  // Update document title with cooldown
+  useEffect(() => {
+    const originalTitle = "Streamlet | Faucet"
+    if (timeLeft > 0) {
+      document.title = `[${formatTime(timeLeft)}] ${originalTitle}`
+    } else {
+      document.title = originalTitle
+    }
+    return () => {
+      document.title = originalTitle
+    }
+  }, [timeLeft])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
