@@ -29,7 +29,7 @@ const navItems = [
   { name: "PTC Ads", icon: MousePointer2, href: "/ptc", comingSoon: true },
   { name: "Shortlinks", icon: Link2, href: "/shortlinks" },
   { name: "Offerwalls", icon: Gamepad2, href: "/offerwalls", comingSoon: true },
-  { name: "Leaderboard", icon: Trophy, href: "/leaderboard", comingSoon: true },
+  { name: "Leaderboard", icon: Trophy, href: "/leaderboard" },
   { name: "Referrals", icon: Users, href: "/referral" },
   { name: "Withdraw", icon: Wallet, href: "/withdraw" },
 ]
@@ -103,8 +103,10 @@ export function Sidebar() {
         return "Streamlet | Shortlinks"
       case "/referral":
         return "Streamlet | Referrals"
-      case "/withdraw":
-        return "Streamlet | Withdraw"
+      case "/leaderboard":
+        return "Streamlet | Leaderboard"
+      case "/admin/leaderboard":
+        return "Streamlet | Admin Leaderboard"
       default:
         return "Streamlet | Crypto Faucet & Rewards"
     }
