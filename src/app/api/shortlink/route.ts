@@ -93,36 +93,22 @@ export async function POST(req: NextRequest) {
     let shortenedUrl = ""
     let shrinkResult: any = null
 
-    if (provider === "cuty") {
-      const response = await fetch("https://api.cuty.io/full", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: apiKey,
-          url: callbackUrl,
-          title: `Streamlet Shortlink ${result.visit_id.substring(0, 8)}`,
-        }),
-      })
-      shrinkResult = await response.json()
-      shortenedUrl = shrinkResult?.data?.short_url || ""
-    } else {
-      let apiUrl = ""
-      if (provider === "shrinkme") {
-        apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-      } else if (provider === "exeio") {
-        apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-      } else if (provider === "fclc") {
-        apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-      }
-
-      const response = await fetch(apiUrl)
-      shrinkResult = await response.json()
-      shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.short_url || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
+    let apiUrl = ""
+    if (provider === "shrinkme") {
+      apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "exeio") {
+      apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "fclc") {
+      apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "cuty") {
+      apiUrl = `https://cuty.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}`
     }
 
-    if (shortenedUrl && (provider === "cuty" || shrinkResult.success === true || shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
+    const response = await fetch(apiUrl)
+    shrinkResult = await response.json()
+    shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.short_url || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
+
+    if (shortenedUrl && (shrinkResult.success === true || shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
       return NextResponse.json({ shortenedUrl })
     } else {
       console.error(`${provider} API returned error status:`, shrinkResult)
