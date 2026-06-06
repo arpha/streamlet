@@ -22,6 +22,7 @@ export const metadata: Metadata = {
     other: {
       "6a97888e-site-verification": "87f1ba96ba15185e71d9f63ff4fccdb2",
       "bitmedia-site-verification": "6cfe840eda692a57488bcaef3c37e272",
+      "coinzilla": "1c65bc05c46e193a73605b590404e8e4",
     },
   },
 };
