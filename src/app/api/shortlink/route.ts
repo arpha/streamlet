@@ -90,29 +90,43 @@ export async function POST(req: NextRequest) {
       origin = "https://streamlet.fun"
     }
     const callbackUrl = `${origin}/api/shortlink/callback?visit_id=${result.visit_id}`
-    let apiUrl = ""
-    if (provider === "shrinkme") {
-      apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-    } else if (provider === "exeio") {
-      apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-    } else if (provider === "fclc") {
-      apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-    } else if (provider === "cuty") {
-      apiUrl = `https://api.cuty.io/quick?token=${apiKey}&url=${encodeURIComponent(callbackUrl)}`
+    let shortenedUrl = ""
+    let shrinkResult: any = null
+
+    if (provider === "cuty") {
+      const response = await fetch("https://api.cuty.io/full", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: apiKey,
+          url: callbackUrl,
+        }),
+      })
+      shrinkResult = await response.json()
+      shortenedUrl = shrinkResult?.data?.short_url || ""
+    } else {
+      let apiUrl = ""
+      if (provider === "shrinkme") {
+        apiUrl = `https://shrinkme.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+      } else if (provider === "exeio") {
+        apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+      } else if (provider === "fclc") {
+        apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+      }
+
+      const response = await fetch(apiUrl)
+      shrinkResult = await response.json()
+      shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.short_url || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
     }
 
-    const response = await fetch(apiUrl)
-    const shrinkResult = await response.json()
-
-    // Cuty.io might return success status, check for shortened URL in any format
-    const shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.short_url || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
-
-    if (shortenedUrl && (shrinkResult.success === true || shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
+    if (shortenedUrl && (provider === "cuty" || shrinkResult.success === true || shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
       return NextResponse.json({ shortenedUrl })
     } else {
       console.error(`${provider} API returned error status:`, shrinkResult)
       return NextResponse.json(
-        { error: shrinkResult.message || `Failed to shorten URL using ${provider} API.` },
+        { error: shrinkResult?.message || `Failed to shorten URL using ${provider} API.` },
         { status: 500 }
       )
     }
