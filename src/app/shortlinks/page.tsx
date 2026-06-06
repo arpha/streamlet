@@ -12,7 +12,8 @@ import {
   ExternalLink,
   Info,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Play
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -178,7 +179,8 @@ function ShortlinksContent() {
       gradient: "from-emerald-500 to-teal-600",
       limit: 3,
       completed: completedFclc,
-      tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+      tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      tutorialUrl: "https://youtu.be/XeuR1v7oCgQ?si=Pd-dD6QVNySmmL7p"
     }
   ]
 
@@ -362,27 +364,45 @@ function ShortlinksContent() {
                       </span>
                     </div>
 
-                    <Button
-                      onClick={() => handleVisit(p.id)}
-                      disabled={isGenerating || p.completed >= p.limit || cooldownRemaining > 0}
-                      className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : p.completed >= p.limit ? (
-                        "Limit Reached"
-                      ) : cooldownRemaining > 0 ? (
-                        `Cooldown (${formatTime(cooldownRemaining)})`
-                      ) : (
-                        <>
-                          Visit & Claim
-                          <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                      {p.tutorialUrl && (
+                        <a
+                          href={p.tutorialUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto"
+                        >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full sm:w-auto rounded-2xl h-11 px-4 border-fuchsia-500/30 hover:border-fuchsia-500/60 bg-fuchsia-500/5 hover:bg-fuchsia-500/10 text-fuchsia-400 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-fuchsia-400/20" /> Tutorial
+                          </Button>
+                        </a>
                       )}
-                    </Button>
+                      <Button
+                        onClick={() => handleVisit(p.id)}
+                        disabled={isGenerating || p.completed >= p.limit || cooldownRemaining > 0}
+                        className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20 flex-1"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : p.completed >= p.limit ? (
+                          "Limit Reached"
+                        ) : cooldownRemaining > 0 ? (
+                          `Cooldown (${formatTime(cooldownRemaining)})`
+                        ) : (
+                          <>
+                            Visit & Claim
+                            <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
