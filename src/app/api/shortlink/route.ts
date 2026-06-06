@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       if (!apiKey) {
         return NextResponse.json({ error: "Cuty.io API key not configured on server. Please add CUTY_IO_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 300
+      reward = 200
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim

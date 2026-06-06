@@ -190,7 +190,7 @@ function ShortlinksContent() {
       tag: "Hot Reward",
       description: "Cuty.io is a fast and secure shortlink service. Complete the verification steps to claim your reward points.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(300),
+      points: getAdjustedPoints(200),
       xp: 10,
       gradient: "from-orange-500 to-amber-600",
       limit: 1,
