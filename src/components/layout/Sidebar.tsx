@@ -93,11 +93,38 @@ export function Sidebar() {
     }
   }, [faucetCooldown])
 
+  const getPageTitle = (path: string) => {
+    switch (path) {
+      case "/":
+        return "Streamlet | Crypto Faucet & Rewards"
+      case "/faucet":
+        return "Streamlet | Faucet"
+      case "/shortlinks":
+        return "Streamlet | Shortlinks"
+      case "/referral":
+        return "Streamlet | Referrals"
+      case "/withdraw":
+        return "Streamlet | Withdraw"
+      default:
+        return "Streamlet | Crypto Faucet & Rewards"
+    }
+  }
+
   const formatCooldown = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
+
+  // Update document title globally based on pathname and faucetCooldown
+  useEffect(() => {
+    const baseTitle = getPageTitle(pathname)
+    if (faucetCooldown > 0) {
+      document.title = `[${formatCooldown(faucetCooldown)}] ${baseTitle}`
+    } else {
+      document.title = baseTitle
+    }
+  }, [pathname, faucetCooldown])
 
   return (
     <motion.aside 
