@@ -37,6 +37,8 @@ export default function ReferralPage() {
     totalCommissions: 0
   })
   const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const [referralsList, setReferralsList] = useState<{ username: string; xp: number; contribution: number }[]>([])
+  const [isLoadingList, setIsLoadingList] = useState(true)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -45,11 +47,12 @@ export default function ReferralPage() {
     }
   }, [user, loading, router])
 
-  // Fetch Referral Stats
+  // Fetch Referral Stats & List
   useEffect(() => {
     async function fetchReferralData() {
       if (!user) return
       setIsLoadingStats(true)
+      setIsLoadingList(true)
       try {
         // Panggil fungsi RPC yang berjalan dengan SECURITY DEFINER (melewati RLS)
         const { data, error } = await supabase.rpc("get_referral_stats", {
@@ -66,10 +69,22 @@ export default function ReferralPage() {
             totalCommissions: data.total_commissions || 0,
           })
         }
+
+        // Panggil fungsi RPC untuk mendapatkan list referal detail
+        const { data: listData, error: listError } = await supabase.rpc("get_referrals_list", {
+          p_user_id: user.id,
+        })
+
+        if (listError) throw listError
+
+        if (listData) {
+          setReferralsList(listData)
+        }
       } catch (error) {
-        console.error("Error fetching referral stats:", error)
+        console.error("Error fetching referral stats & list:", error)
       } finally {
         setIsLoadingStats(false)
+        setIsLoadingList(false)
       }
     }
 
@@ -206,6 +221,57 @@ export default function ReferralPage() {
           </Card>
         ))}
       </div>
+
+      {/* REFERRALS DETAIL TABLE */}
+      <Card className="glass border-white/10 rounded-[2.5rem] overflow-hidden shadow-xl">
+        <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
+          <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
+            <Users className="w-5 h-5 text-purple-400" />
+            Daftar Teman Diundang ({referralsList.length})
+          </CardTitle>
+          <CardDescription className="text-white/40 font-medium italic">Rincian nama pengguna, XP, dan total kontribusi komisi yang Anda hasilkan dari setiap teman.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoadingList ? (
+            <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
+              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <span className="text-xs font-bold uppercase tracking-wider text-white/40">Memuat daftar teman...</span>
+            </div>
+          ) : referralsList.length === 0 ? (
+            <div className="p-12 text-center">
+              <Users className="w-12 h-12 text-white/10 mx-auto mb-4" />
+              <h4 className="text-base font-black uppercase text-white/60">Belum ada teman yang diundang</h4>
+              <p className="text-white/45 text-xs mt-1">Bagikan tautan referral Anda untuk mulai mengundang teman dan dapatkan komisi faucet seumur hidup!</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Username</th>
+                    <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Total XP</th>
+                    <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Kontribusi Komisi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-medium text-sm">
+                  {referralsList.map((refUser) => (
+                    <tr key={refUser.username} className="hover:bg-white/[0.005] transition-colors">
+                      <td className="p-5 text-white font-bold">{refUser.username}</td>
+                      <td className="p-5 text-white/60 font-mono text-xs">
+                        {refUser.xp.toLocaleString("id-ID")}{" "}
+                        <span className="text-[10px] text-white/30 font-sans font-medium uppercase">XP</span>
+                      </td>
+                      <td className="p-5 text-emerald-400 font-black font-mono">
+                        +{refUser.contribution.toLocaleString("id-ID")} Pts
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
