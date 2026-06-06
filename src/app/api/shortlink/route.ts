@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     let fingerprint: string | null = null
     try {
       const body = await req.json()
-      if (body?.provider && ["shrinkme", "exeio", "fclc"].includes(body.provider)) {
+      if (body?.provider && ["shrinkme", "exeio", "fclc", "cuty"].includes(body.provider)) {
         provider = body.provider
       }
       if (body?.fingerprint) {
@@ -47,6 +47,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "FC.LC API key not configured on server. Please add FCLC_API_KEY to your environment." }, { status: 500 })
       }
       reward = 100
+    } else if (provider === "cuty") {
+      apiKey = process.env.CUTY_IO_API_KEY || ""
+      if (!apiKey) {
+        return NextResponse.json({ error: "Cuty.io API key not configured on server. Please add CUTY_IO_API_KEY to your environment." }, { status: 500 })
+      }
+      reward = 300
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
@@ -91,13 +97,18 @@ export async function POST(req: NextRequest) {
       apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
     } else if (provider === "fclc") {
       apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
+    } else if (provider === "cuty") {
+      apiUrl = `https://api.cuty.io/quick?token=${apiKey}&url=${encodeURIComponent(callbackUrl)}`
     }
 
     const response = await fetch(apiUrl)
     const shrinkResult = await response.json()
 
-    if (shrinkResult.status === "success" && shrinkResult.shortenedUrl) {
-      return NextResponse.json({ shortenedUrl: shrinkResult.shortenedUrl })
+    // Cuty.io might return success status, check for shortened URL in any format
+    const shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
+
+    if (shortenedUrl && (shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
+      return NextResponse.json({ shortenedUrl })
     } else {
       console.error(`${provider} API returned error status:`, shrinkResult)
       return NextResponse.json(

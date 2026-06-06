@@ -27,6 +27,8 @@ BEGIN
     v_limit := 2;
   ELSIF p_provider = 'fclc' THEN
     v_limit := 2;
+  ELSIF p_provider = 'cuty' THEN
+    v_limit := 1;
   ELSE
     v_limit := 5; -- default fallback jika ada provider lain
   END IF;
@@ -155,6 +157,8 @@ BEGIN
     v_limit := 2;
   ELSIF v_provider = 'fclc' THEN
     v_limit := 2;
+  ELSIF v_provider = 'cuty' THEN
+    v_limit := 1;
   ELSE
     v_limit := 5;
   END IF;
@@ -239,6 +243,7 @@ DECLARE
   v_completed_shrinkme INT;
   v_completed_exeio INT;
   v_completed_fclc INT;
+  v_completed_cuty INT;
   v_last_completion TIMESTAMP WITH TIME ZONE;
   v_cooldown_remaining INT := 0;
   v_total_earned BIGINT;
@@ -272,6 +277,13 @@ BEGIN
     AND status = 'completed'
     AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
+  SELECT COUNT(*) INTO v_completed_cuty
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'cuty'
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
   -- 3. Hitung sisa cooldown global
   SELECT completed_at INTO v_last_completion
   FROM public.shortlink_claims
@@ -297,6 +309,7 @@ BEGIN
     'completed_shrinkme', v_completed_shrinkme,
     'completed_exeio', v_completed_exeio,
     'completed_fclc', v_completed_fclc,
+    'completed_cuty', v_completed_cuty,
     'cooldown_remaining', v_cooldown_remaining,
     'total_earned', v_total_earned
   );

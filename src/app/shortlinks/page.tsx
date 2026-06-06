@@ -35,6 +35,7 @@ function ShortlinksContent() {
   const [completedShrinkme, setCompletedShrinkme] = useState<number>(0)
   const [completedExeio, setCompletedExeio] = useState<number>(0)
   const [completedFclc, setCompletedFclc] = useState<number>(0)
+  const [completedCuty, setCompletedCuty] = useState<number>(0)
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0) // in seconds
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
@@ -91,6 +92,7 @@ function ShortlinksContent() {
         setCompletedShrinkme(data.completed_shrinkme || 0)
         setCompletedExeio(data.completed_exeio || 0)
         setCompletedFclc(data.completed_fclc || 0)
+        setCompletedCuty(data.completed_cuty || 0)
         setCooldownRemaining(data.cooldown_remaining)
         setTotalEarned(data.total_earned)
       }
@@ -182,6 +184,19 @@ function ShortlinksContent() {
       completed: completedFclc,
       tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       tutorialUrl: "https://youtu.be/XeuR1v7oCgQ?si=Pd-dD6QVNySmmL7p"
+    },
+    {
+      id: "cuty",
+      name: "Cuty.io",
+      tag: "Hot Reward",
+      description: "Cuty.io is a fast and secure shortlink service. Complete the verification steps to claim your reward points.",
+      cooldown: "30 Mins",
+      points: getAdjustedPoints(300),
+      xp: 10,
+      gradient: "from-orange-500 to-amber-600",
+      limit: 1,
+      completed: completedCuty,
+      tagColor: "bg-orange-500/10 text-orange-400 border border-orange-500/20"
     }
   ]
 
@@ -197,8 +212,8 @@ function ShortlinksContent() {
       return
     }
 
-    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : 2)
-    const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : completedFclc)
+    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : 1))
+    const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : completedCuty))
 
     if (providerCompleted >= providerLimit) {
       toast.warning(`Daily limit reached for this shortlink! Reset at 07:00 AM GMT+7.`)
