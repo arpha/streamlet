@@ -34,19 +34,19 @@ export async function POST(req: NextRequest) {
       if (!apiKey) {
         return NextResponse.json({ error: "ShrinkMe API key not configured on server." }, { status: 500 })
       }
-      reward = 500
+      reward = 250
     } else if (provider === "exeio") {
       apiKey = process.env.EXEIO_API_KEY || ""
       if (!apiKey) {
         return NextResponse.json({ error: "Exe.io API key not configured on server. Please add EXEIO_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 500
+      reward = 100
     } else if (provider === "fclc") {
       apiKey = process.env.FCLC_API_KEY || ""
       if (!apiKey) {
         return NextResponse.json({ error: "FC.LC API key not configured on server. Please add FCLC_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 400
+      reward = 100
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim

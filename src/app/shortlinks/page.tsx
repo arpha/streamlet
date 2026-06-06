@@ -148,7 +148,7 @@ function ShortlinksContent() {
       tag: "High Reward",
       description: "ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(500),
+      points: getAdjustedPoints(250),
       xp: 10,
       gradient: "from-purple-500 to-fuchsia-600",
       limit: 1,
@@ -162,10 +162,10 @@ function ShortlinksContent() {
       tag: "Easy Claim",
       description: "Exe.io is a popular high-paying shortlink network. Complete the short captcha step to claim your reward points.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(500),
+      points: getAdjustedPoints(100),
       xp: 10,
       gradient: "from-blue-500 to-cyan-600",
-      limit: 1,
+      limit: 2,
       completed: completedExeio,
       tagColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20"
     },
@@ -175,10 +175,10 @@ function ShortlinksContent() {
       tag: "Fast & Clean",
       description: "FC.LC is a fast and simple shortlink service with a high payout rate. Complete the quick steps to receive your reward.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(400),
+      points: getAdjustedPoints(100),
       xp: 10,
       gradient: "from-emerald-500 to-teal-600",
-      limit: 3,
+      limit: 2,
       completed: completedFclc,
       tagColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       tutorialUrl: "https://youtu.be/XeuR1v7oCgQ?si=Pd-dD6QVNySmmL7p"
@@ -197,11 +197,11 @@ function ShortlinksContent() {
       return
     }
 
-    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 1 : 3)
+    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : 2)
     const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : completedFclc)
 
     if (providerCompleted >= providerLimit) {
-      toast.warning(`Daily limit reached for this shortlink! Please wait 24 hours.`)
+      toast.warning(`Daily limit reached for this shortlink! Reset at 07:00 AM GMT+7.`)
       return
     }
 
@@ -262,9 +262,9 @@ function ShortlinksContent() {
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Daily Claims Limit</span>
+              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Completed Today</span>
               <span className="text-2xl font-black font-mono text-cyan-400">
-                {loadingStats ? "..." : `${completedToday} / 5`}
+                {loadingStats ? "..." : `${completedToday} Claims`}
               </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
