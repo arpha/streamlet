@@ -3,8 +3,11 @@
 -- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
 -- ====================================================================
 
--- 1. Tambahkan kolom last_decay_checked_at jika belum ada
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_decay_checked_at TIMESTAMP WITH TIME ZONE;
+-- 1. Tambahkan kolom last_decay_checked_at jika belum ada dengan DEFAULT now()
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_decay_checked_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
+
+-- Pastikan default value terpasang untuk insert masa depan
+ALTER TABLE public.profiles ALTER COLUMN last_decay_checked_at SET DEFAULT timezone('utc'::text, now());
 
 -- Inisialisasi untuk pengguna yang sudah ada
 UPDATE public.profiles 
