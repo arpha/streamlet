@@ -18,6 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Streamlet | Crypto Faucet & Rewards",
   description: "Play games, claim faucet and earn real crypto rewards instanly to FaucetPay.",
+  verification: {
+    other: {
+      "6a97888e-site-verification": "87f1ba96ba15185e71d9f63ff4fccdb2",
+    },
+  },
 };
 
 export default function RootLayout({
