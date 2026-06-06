@@ -9,9 +9,9 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_decay_checked_at TIMES
 -- Pastikan default value terpasang untuk insert masa depan
 ALTER TABLE public.profiles ALTER COLUMN last_decay_checked_at SET DEFAULT timezone('utc'::text, now());
 
--- Inisialisasi untuk pengguna yang sudah ada
+-- Inisialisasi untuk pengguna yang sudah ada (set ke now() agar mulai dihitung saat migrasi dijalankan, menghindari pemotongan instan)
 UPDATE public.profiles 
-SET last_decay_checked_at = COALESCE(created_at, now()) 
+SET last_decay_checked_at = now() 
 WHERE last_decay_checked_at IS NULL;
 
 
@@ -28,8 +28,8 @@ DECLARE
   v_periods INT;
   v_deduction INT;
 BEGIN
-  -- Ambil XP dan waktu cek terakhir dari profiles
-  SELECT xp, COALESCE(last_decay_checked_at, created_at, now())
+  -- Ambil XP dan waktu cek terakhir dari profiles (fallback ke now() jika kosong)
+  SELECT xp, COALESCE(last_decay_checked_at, now())
   INTO v_current_xp, v_last_check
   FROM public.profiles
   WHERE id = p_user_id;
