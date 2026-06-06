@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
     const shrinkResult = await response.json()
 
     // Cuty.io might return success status, check for shortened URL in any format
-    const shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
+    const shortenedUrl = shrinkResult.shortenedUrl || shrinkResult.short_url || shrinkResult.url || shrinkResult.short || shrinkResult.shortened;
 
-    if (shortenedUrl && (shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
+    if (shortenedUrl && (shrinkResult.success === true || shrinkResult.status === "success" || !shrinkResult.status || shrinkResult.status === "ok")) {
       return NextResponse.json({ shortenedUrl })
     } else {
       console.error(`${provider} API returned error status:`, shrinkResult)
