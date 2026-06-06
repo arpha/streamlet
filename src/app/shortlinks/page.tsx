@@ -153,7 +153,8 @@ function ShortlinksContent() {
       gradient: "from-purple-500 to-fuchsia-600",
       limit: 1,
       completed: completedShrinkme,
-      tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+      tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+      tutorialUrl: "https://www.youtube.com/watch?v=dQLbvJaJyxw"
     },
     {
       id: "exeio",
