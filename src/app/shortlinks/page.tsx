@@ -132,6 +132,11 @@ function ShortlinksContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const getAdjustedPoints = (basePoints: number) => {
+    if (xp < 0) return Math.floor(basePoints * 0.5)
+    return basePoints
+  }
+
   const providers = [
     {
       id: "shrinkme",
@@ -139,7 +144,7 @@ function ShortlinksContent() {
       tag: "High Reward",
       description: "ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.",
       cooldown: "30 Mins",
-      points: 500,
+      points: getAdjustedPoints(500),
       xp: 10,
       gradient: "from-purple-500 to-fuchsia-600",
       limit: 1,
@@ -152,7 +157,7 @@ function ShortlinksContent() {
       tag: "Easy Claim",
       description: "Exe.io is a popular high-paying shortlink network. Complete the short captcha step to claim your reward points.",
       cooldown: "30 Mins",
-      points: 500,
+      points: getAdjustedPoints(500),
       xp: 10,
       gradient: "from-blue-500 to-cyan-600",
       limit: 1,
@@ -165,7 +170,7 @@ function ShortlinksContent() {
       tag: "Fast & Clean",
       description: "FC.LC is a fast and simple shortlink service with a high payout rate. Complete the quick steps to receive your reward.",
       cooldown: "30 Mins",
-      points: 400,
+      points: getAdjustedPoints(400),
       xp: 10,
       gradient: "from-emerald-500 to-teal-600",
       limit: 3,
@@ -295,6 +300,21 @@ function ShortlinksContent() {
 
       {/* SHORTLINKS PROVIDERS SECTION */}
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Mud Rank Warning Banner */}
+        {xp < 0 && (
+          <Card className="glass border-amber-500/20 rounded-[2.5rem] shadow-xl overflow-hidden relative bg-amber-500/10 p-6 flex gap-4 items-start text-left">
+            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 mt-0.5">
+              <AlertCircle className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider">Rank Mud Penalty Active (-50% Reward)</h4>
+              <p className="text-xs text-white/70 font-bold mt-1.5 leading-relaxed">
+                You haven't claimed faucet or shortlinks in the last 24 hours. Your rewards are reduced by 50% until your XP is restored above 0. Complete claims to regain XP!
+              </p>
+            </div>
+          </Card>
+        )}
+
         <Card className="glass border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
           <CardHeader className="p-8 pb-4">
             <CardTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Available Shortlinks</CardTitle>

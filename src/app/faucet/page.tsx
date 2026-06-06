@@ -72,6 +72,7 @@ function FaucetContent() {
   const cooldownMinutes = 30
 
   const getFaucetBonus = (baseReward: number, userXp: number) => {
+    if (userXp < 0) return -Math.floor(baseReward * 0.5)
     if (userXp >= 100000) return Math.ceil(baseReward * 0.15)
     if (userXp >= 10000) return Math.ceil(baseReward * 0.10)
     if (userXp >= 1000) return Math.ceil(baseReward * 0.05)
@@ -79,6 +80,7 @@ function FaucetContent() {
   }
 
   const getLevelBadgeInfo = (userXp: number) => {
+    if (userXp < 0) return { name: "Mud", bonus: "-50%", color: "text-amber-500 bg-amber-950/20 border-amber-900/30", icon: Award }
     if (userXp >= 100000) return { name: "Diamond", bonus: "+15%", color: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20", icon: Gem }
     if (userXp >= 10000) return { name: "Platinum", bonus: "+10%", color: "text-indigo-200 bg-indigo-300/10 border-indigo-300/20", icon: Crown }
     if (userXp >= 1000) return { name: "Silver", bonus: "+5%", color: "text-slate-300 bg-slate-300/10 border-slate-300/20", icon: Award }
@@ -406,6 +408,21 @@ function FaucetContent() {
             </CardHeader>
             
             <CardContent className="p-10 pt-0 space-y-8 relative z-10">
+              {/* Mud Rank Warning Banner */}
+              {xp < 0 && (
+                <div className="p-6 rounded-[2.5rem] bg-amber-500/10 border border-amber-500/20 flex gap-4 items-start text-left">
+                  <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 mt-0.5">
+                    <Award className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-amber-400 uppercase tracking-wider">Rank Mud Penalty Active (-50% Reward)</h4>
+                    <p className="text-xs text-white/70 font-bold mt-1.5 leading-relaxed">
+                      You haven't claimed faucet or shortlinks in the last 24 hours. Your rewards are reduced by 50% until your XP is restored above 0. Claim now to regain XP!
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* REWARD AMOUNT DISPLAY */}
               <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/10 flex flex-col items-center gap-2 relative overflow-hidden">
                 <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Reward Amount</span>

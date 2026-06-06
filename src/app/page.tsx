@@ -29,6 +29,7 @@ const item = {
 
 // Level System Definition
 const LEVELS = [
+  { name: 'Mud',      minXp: -500,    maxXp: 0,       color: 'from-amber-950 to-amber-850',   textColor: 'text-amber-600',   borderColor: 'border-amber-900/30',  bgColor: 'bg-amber-900',   icon: Shield },
   { name: 'Bronze',   minXp: 0,       maxXp: 1000,    color: 'from-amber-700 to-amber-500',   textColor: 'text-amber-400',   borderColor: 'border-amber-500/30',  bgColor: 'bg-amber-500',   icon: Shield },
   { name: 'Silver',   minXp: 1000,    maxXp: 10000,   color: 'from-slate-400 to-slate-300',    textColor: 'text-slate-300',   borderColor: 'border-slate-400/30',  bgColor: 'bg-slate-400',   icon: Award },
   { name: 'Platinum', minXp: 10000,   maxXp: 100000,  color: 'from-indigo-300 to-slate-200',   textColor: 'text-indigo-200',  borderColor: 'border-indigo-300/30', bgColor: 'bg-indigo-300',  icon: Crown },
@@ -36,15 +37,16 @@ const LEVELS = [
 ]
 
 function getLevelInfo(xp: number) {
+  const cappedXp = Math.max(xp, -500)
   for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (xp >= LEVELS[i].minXp) {
+    if (cappedXp >= LEVELS[i].minXp) {
       const level = LEVELS[i]
-      const progress = Math.min(((xp - level.minXp) / (level.maxXp - level.minXp)) * 100, 100)
+      const progress = Math.min(((cappedXp - level.minXp) / (level.maxXp - level.minXp)) * 100, 100)
       const nextLevel = i < LEVELS.length - 1 ? LEVELS[i + 1] : null
-      return { ...level, progress, xp, nextLevel }
+      return { ...level, progress, xp: cappedXp, nextLevel }
     }
   }
-  return { ...LEVELS[0], progress: 0, xp, nextLevel: LEVELS[1] }
+  return { ...LEVELS[0], progress: 0, xp: cappedXp, nextLevel: LEVELS[1] }
 }
 
 export default function Home() {
