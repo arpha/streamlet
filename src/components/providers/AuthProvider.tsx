@@ -29,7 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             username: profile?.username || session.user.email,
             balance: profile?.balance || 0,
             xp: profile?.xp || 0,
-            isAdmin: profile?.is_admin || false
+            isAdmin: profile?.is_admin || false,
+            lastDecayCheckedAt: profile?.last_decay_checked_at
           }
           setUser(userData)
           setUserState(session.user)

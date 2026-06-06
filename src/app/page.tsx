@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2 } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -50,7 +50,7 @@ function getLevelInfo(xp: number) {
 }
 
 export default function Home() {
-  const { balance, username, id: userId, xp } = useStore()
+  const { balance, username, id: userId, xp, lastDecayCheckedAt } = useStore()
   const { user, loading } = useAuth()
   const supabase = createClient()
   
@@ -72,6 +72,40 @@ export default function Home() {
     { name: 'Sat', points: 0, heightPercent: 5 },
     { name: 'Sun', points: 0, heightPercent: 5 },
   ])
+
+  const [decayTimeLeft, setDecayTimeLeft] = useState<number>(0)
+
+  useEffect(() => {
+    if (!lastDecayCheckedAt) {
+      setDecayTimeLeft(86400)
+      return
+    }
+
+    const intervalId = setInterval(() => {
+      const lastCheckTime = new Date(lastDecayCheckedAt).getTime()
+      const deadline = lastCheckTime + 24 * 60 * 60 * 1000
+      const now = Date.now()
+      const diff = Math.max(0, Math.floor((deadline - now) / 1000))
+      setDecayTimeLeft(diff)
+    }, 1000)
+
+    // Run once immediately
+    const lastCheckTime = new Date(lastDecayCheckedAt).getTime()
+    const deadline = lastCheckTime + 24 * 60 * 60 * 1000
+    const now = Date.now()
+    const diff = Math.max(0, Math.floor((deadline - now) / 1000))
+    setDecayTimeLeft(diff)
+
+    return () => clearInterval(intervalId)
+  }, [lastDecayCheckedAt])
+
+  const formatDecayTime = (seconds: number) => {
+    if (seconds <= 0) return "Overdue (Decay Active)"
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    return `${hours}h ${minutes}m ${secs}s`
+  }
 
   // Fetch real-time stats and activity from database
   useEffect(() => {
@@ -352,6 +386,104 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* RANK INFO & DECAY TIMER GRID */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="grid gap-6 md:grid-cols-12"
+      >
+        {/* Left Column: Decay Timer */}
+        <div className="md:col-span-5">
+          <Card className="glass relative overflow-hidden border-white/10 rounded-[2.5rem] shadow-xl h-full flex flex-col justify-between p-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                  <Clock className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-white uppercase tracking-tight italic">Activity Deadline</h4>
+                  <p className="text-xs text-white/50 font-bold uppercase tracking-wider">Claim before decay</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-2xl font-black font-mono tracking-tighter text-rose-400">
+                    {decayTimeLeft > 0 ? formatDecayTime(decayTimeLeft) : "DECAY ACTIVE"}
+                  </span>
+                  <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
+                    {decayTimeLeft > 0 ? `${Math.floor((decayTimeLeft / 86400) * 100)}% time left` : "0% left"}
+                  </span>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, Math.max(0, (decayTimeLeft / 86400) * 100))}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className={`h-full rounded-full bg-gradient-to-r ${
+                      decayTimeLeft > 43200 ? "from-emerald-500 to-teal-500" :
+                      decayTimeLeft > 14400 ? "from-amber-500 to-orange-500" :
+                      "from-rose-500 to-red-600"
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-white/40 font-black uppercase tracking-wide mt-4 italic">
+              *Claim Faucet or Shortlink once every 24h to refresh this timer to 100%.
+            </p>
+          </Card>
+        </div>
+
+        {/* Right Column: Rank Guide / FAQ */}
+        <div className="md:col-span-7">
+          <Card className="glass relative overflow-hidden border-white/10 rounded-[2.5rem] shadow-xl p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400">
+                <Info className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-white uppercase tracking-tight italic">Rank & Inactivity Guide</h4>
+                <p className="text-xs text-white/50 font-bold uppercase tracking-wider">How levels & decay work</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 text-xs">
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                <h5 className="font-black text-fuchsia-400 uppercase">📈 Rank Benefits</h5>
+                <p className="text-white/60 font-medium leading-relaxed">
+                  Higher ranks receive bonus multiplier rewards on Faucet claims:
+                  <br />• **Silver**: +5% bonus
+                  <br />• **Platinum**: +10% bonus
+                  <br />• **Diamond**: +15% bonus
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                <h5 className="font-black text-rose-400 uppercase">⏳ Inactivity Decay</h5>
+                <p className="text-white/60 font-medium leading-relaxed">
+                  If you do not claim within 24 hours, your XP decays daily based on your rank:
+                  <br />• **Diamond**: -400 XP | **Platinum**: -200 XP
+                  <br />• **Silver**: -100 XP | **Bronze**: -50 XP
+                  <br />• **Mud**: -20 XP
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 sm:col-span-2 space-y-1">
+                <h5 className="font-black text-amber-500 uppercase">⚠️ Rank Mud Penalty (-50%)</h5>
+                <p className="text-white/60 font-medium leading-relaxed">
+                  If your XP drops below 0 (down to **-500 XP**), you enter **Rank Mud**. While in Mud, all payouts are **slashed by 50%**. Complete any claim to immediately refresh this timer!
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
       </motion.div>
 
       <motion.div 
