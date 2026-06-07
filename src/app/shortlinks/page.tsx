@@ -167,7 +167,8 @@ function ShortlinksContent() {
       limit: 2,
       completed: completedExeio,
       cooldownRemaining: cooldownExeio,
-      tagColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+      tagColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
+      tutorialUrl: "https://youtu.be/2X0BG5q7ILE"
     },
     {
       id: "fclc",
