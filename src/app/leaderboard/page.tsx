@@ -161,18 +161,18 @@ export default function LeaderboardPage() {
 
   const getPrizeForRank = (tab: 'faucet_shortlink' | 'offerwall' | 'referral', rank: number) => {
     if (tab === 'faucet_shortlink') {
-      if (rank === 1) return 200000
-      if (rank === 2) return 150000
-      if (rank === 3) return 100000
-      if (rank === 4) return 75000
-      if (rank === 5) return 60000
-      if (rank === 6) return 50000
-      if (rank === 7) return 45000
-      if (rank === 8) return 40000
-      if (rank === 9) return 35000
-      if (rank === 10) return 30000
-      if (rank >= 11 && rank <= 15) return 20000
-      if (rank >= 16 && rank <= 20) return 15000
+      if (rank === 1) return 50000
+      if (rank === 2) return 35000
+      if (rank === 3) return 25000
+      if (rank === 4) return 20000
+      if (rank === 5) return 15000
+      if (rank === 6) return 12500
+      if (rank === 7) return 10000
+      if (rank === 8) return 9000
+      if (rank === 9) return 8000
+      if (rank === 10) return 7500
+      if (rank >= 11 && rank <= 15) return 5000
+      if (rank >= 16 && rank <= 20) return 3000
       return 0
     } else {
       const pool = [75000, 50000, 37500, 25000, 18750, 12500, 10000, 8750, 7500, 5000]
@@ -208,7 +208,7 @@ export default function LeaderboardPage() {
             COMPETITION ARENA
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase">STREAMLET LEADERBOARD</h2>
-          <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 200,000 points!</p>
+          <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 75,000 points!</p>
         </div>
 
         {isAdmin && (
