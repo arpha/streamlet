@@ -64,10 +64,10 @@ BEGIN
   INSERT INTO public.offerwall_claims (user_id, provider, transaction_id, points_reward, payout_usd, status)
   VALUES (p_user_id, p_provider, p_transaction_id, p_reward_points, p_payout_usd, 'completed');
 
-  -- 3. Tambahkan poin ke user dan berikan 15 XP
+  -- 3. Tambahkan poin ke user dan berikan 100 XP
   UPDATE public.profiles
   SET balance = balance + p_reward_points,
-      xp = xp + 15
+      xp = xp + 100
   WHERE id = p_user_id
   RETURNING balance INTO v_new_balance;
 
