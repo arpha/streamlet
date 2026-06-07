@@ -589,7 +589,7 @@ function HomeContent() {
               </div>
 
               <div className="text-[10px] text-white/30 font-black uppercase tracking-wider md:text-right max-w-[200px] leading-relaxed">
-                *Claim Faucet or Shortlink daily to refresh timer.
+                *Claim Faucet, Shortlink, or Offerwall daily to refresh timer.
               </div>
             </div>
           </CardContent>
@@ -908,7 +908,7 @@ function HomeContent() {
                       ⚠️ Rank Mud Penalty (-50%)
                     </h5>
                     <p className="text-white/60 font-medium leading-relaxed">
-                      If your XP drops below 0 (down to **-500 XP**), you enter **Rank Mud**. While in Mud, all payouts are **slashed by 50%**. Complete any claim (Faucet or Shortlink) to immediately stop decay and start recovering your XP!
+                      If your XP drops below 0 (down to **-500 XP**), you enter **Rank Mud**. While in Mud, all payouts are **slashed by 50%**. Complete any claim (Faucet, Shortlink, or Offerwall) to immediately stop decay and start recovering your XP!
                     </p>
                   </div>
                 </div>
