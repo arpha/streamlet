@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
+import { useAuth } from "@/components/providers/AuthProvider"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
@@ -25,10 +26,18 @@ import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { getDeviceFingerprint } from "@/lib/fingerprint"
 
 function ShortlinksContent() {
+  const { user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { id: userId, balance, setBalance, xp } = useStore()
   const supabase = createClient()
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, loading, router])
 
   // STATS STATES
   const [completedToday, setCompletedToday] = useState<number>(0)
@@ -255,6 +264,14 @@ function ShortlinksContent() {
         return err.message || "Failed to generate shortlink"
       }
     })
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
