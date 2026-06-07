@@ -46,10 +46,11 @@ BEGIN
   END LOOP;
 
   -- Masukkan profil baru
-  INSERT INTO public.profiles (id, username, balance, xp, referral_code, referred_by_id)
+  INSERT INTO public.profiles (id, username, email, balance, xp, referral_code, referred_by_id)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'username', new.email),
+    new.email,
     0,
     0,
     final_code,
