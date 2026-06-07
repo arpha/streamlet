@@ -11,22 +11,19 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
   console.log(`[BitcoTasks Debug] Incoming ${isPost ? "POST" : "GET"} request:`, req.url)
 
-  // Log headers
-  const headersObj: Record<string, string> = {}
-  req.headers.forEach((val, key) => {
-    headersObj[key] = val
+  // 1. Read query parameters in a case-insensitive manner
+  const queryParams: Record<string, string> = {}
+  req.nextUrl.searchParams.forEach((val, key) => {
+    queryParams[key.toLowerCase()] = val
   })
-  console.log("[BitcoTasks Debug] Headers:", JSON.stringify(headersObj))
 
-  // 1. Try reading parameters from the query string
-  const { searchParams } = req.nextUrl
-  subId = searchParams.get("subId")
-  transId = searchParams.get("transId")
-  reward = searchParams.get("reward")
-  payout = searchParams.get("payout")
-  signature = searchParams.get("signature")
+  subId = queryParams["subid"] || queryParams["userid"] || queryParams["uid"]
+  transId = queryParams["transid"] || queryParams["transactionid"] || queryParams["txid"]
+  reward = queryParams["reward"] || queryParams["rewardvalue"] || queryParams["points"]
+  payout = queryParams["payout"] || queryParams["usd"]
+  signature = queryParams["signature"] || queryParams["sig"]
 
-  console.log("[BitcoTasks Debug] Query params extracted:", { subId, transId, reward, payout, signature })
+  console.log("[BitcoTasks Debug] Query params extracted (case-insensitive):", { subId, transId, reward, payout, signature })
 
   // 2. If it is a POST request and we are missing parameters, read them from the request body
   if (isPost) {
@@ -36,28 +33,33 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
       if (contentType.includes("application/json")) {
         const body = await req.json()
-        console.log("[BitcoTasks Debug] JSON Body:", JSON.stringify(body))
-        subId = subId || body.subId
-        transId = transId || body.transId
-        reward = reward || (body.reward !== undefined ? String(body.reward) : null)
-        payout = payout || (body.payout !== undefined ? String(body.payout) : null)
-        signature = signature || body.signature
+        const bodyParams: Record<string, any> = {}
+        Object.keys(body).forEach(k => {
+          bodyParams[k.toLowerCase()] = body[k]
+        })
+        console.log("[BitcoTasks Debug] JSON Body:", JSON.stringify(bodyParams))
+
+        subId = subId || (bodyParams["subid"] !== undefined ? String(bodyParams["subid"]) : null) || (bodyParams["userid"] !== undefined ? String(bodyParams["userid"]) : null) || (bodyParams["uid"] !== undefined ? String(bodyParams["uid"]) : null)
+        transId = transId || (bodyParams["transid"] !== undefined ? String(bodyParams["transid"]) : null) || (bodyParams["transactionid"] !== undefined ? String(bodyParams["transactionid"]) : null) || (bodyParams["txid"] !== undefined ? String(bodyParams["txid"]) : null)
+        reward = reward || (bodyParams["reward"] !== undefined ? String(bodyParams["reward"]) : null) || (bodyParams["rewardvalue"] !== undefined ? String(bodyParams["rewardvalue"]) : null) || (bodyParams["points"] !== undefined ? String(bodyParams["points"]) : null)
+        payout = payout || (bodyParams["payout"] !== undefined ? String(bodyParams["payout"]) : null) || (bodyParams["usd"] !== undefined ? String(bodyParams["usd"]) : null)
+        signature = signature || (bodyParams["signature"] !== undefined ? String(bodyParams["signature"]) : null) || (bodyParams["sig"] !== undefined ? String(bodyParams["sig"]) : null)
       } else if (
         contentType.includes("application/x-www-form-urlencoded") ||
         contentType.includes("multipart/form-data")
       ) {
         const formData = await req.formData()
-        const formObj: Record<string, string> = {}
+        const formParams: Record<string, string> = {}
         formData.forEach((val, key) => {
-          formObj[key] = String(val)
+          formParams[key.toLowerCase()] = String(val)
         })
-        console.log("[BitcoTasks Debug] Form Data Body:", JSON.stringify(formObj))
+        console.log("[BitcoTasks Debug] Form Data Body:", JSON.stringify(formParams))
 
-        subId = subId || formObj.subId
-        transId = transId || formObj.transId
-        reward = reward || formObj.reward
-        payout = payout || formObj.payout
-        signature = signature || formObj.signature
+        subId = subId || formParams["subid"] || formParams["userid"] || formParams["uid"]
+        transId = transId || formParams["transid"] || formParams["transactionid"] || formParams["txid"]
+        reward = reward || formParams["reward"] || formParams["rewardvalue"] || formParams["points"]
+        payout = payout || formParams["payout"] || formParams["usd"]
+        signature = signature || formParams["signature"] || formParams["sig"]
       }
     } catch (e: any) {
       console.warn("[BitcoTasks Debug] Failed to parse POST body:", e.message)
