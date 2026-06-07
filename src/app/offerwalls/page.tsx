@@ -9,25 +9,22 @@ import {
   HelpCircle, 
   Info, 
   CheckCircle2, 
-  AlertCircle,
-  ExternalLink,
   ShieldCheck,
   MousePointer2
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 
 export default function OfferwallsPage() {
   const router = useRouter()
-  const { id: userId, balance } = useStore()
-  const [appId, setAppId] = useState<string>("")
+  const { id: userId } = useStore()
+  const [apiKey, setApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    // Load the public Monlix App ID from env
-    const monlixAppId = process.env.NEXT_PUBLIC_MONLIX_APP_ID || ""
-    setAppId(monlixAppId)
+    // Load the public BitcoTasks API Key from env
+    const key = process.env.NEXT_PUBLIC_BITCOTASKS_API_KEY || ""
+    setApiKey(key)
     setLoading(false)
   }, [])
 
@@ -57,12 +54,12 @@ export default function OfferwallsPage() {
 
       {/* EXPLANATION CARDS */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Card 1: Easy Payouts */}
+        {/* Card 1: Provider Name */}
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
-              <span className="text-2xl font-black font-mono text-amber-400">Monlix Offers</span>
+              <span className="text-2xl font-black font-mono text-amber-400">BitcoTasks</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <Gamepad2 className="w-6 h-6" />
@@ -70,7 +67,7 @@ export default function OfferwallsPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Exchange rate */}
+        {/* Card 2: Conversion Rate */}
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
@@ -116,8 +113,8 @@ export default function OfferwallsPage() {
             </Button>
           </div>
         </Card>
-      ) : !appId ? (
-        // Guide to setup when appid is missing
+      ) : !apiKey ? (
+        // Guide to setup when API key is missing
         <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
           <div className="space-y-4 text-center max-w-2xl mx-auto">
             <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -125,16 +122,16 @@ export default function OfferwallsPage() {
             </div>
             <h3 className="text-xl font-bold text-white uppercase tracking-tight">Offerwall Configuration Needed</h3>
             <p className="text-white/60 text-sm">
-              Monlix Offerwall app ID has not been configured in the environment variables yet.
+              BitcoTasks API key has not been configured in the environment variables yet.
             </p>
             
             <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
-              <p className="text-purple-400 font-bold"># Cara mengaktifkan Monlix Offerwall:</p>
-              <p>1. Dapatkan **App ID** dan **Secret Key** dari dashboard Monlix Publisher Anda.</p>
+              <p className="text-purple-400 font-bold"># Cara mengaktifkan BitcoTasks Offerwall:</p>
+              <p>1. Dapatkan **API Key** (Website Key) dan **Secret Key** dari dashboard BitcoTasks Publisher Anda.</p>
               <p>2. Tambahkan variabel berikut ke berkas <code className="text-cyan-400">.env.local</code> Anda:</p>
               <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
-{`NEXT_PUBLIC_MONLIX_APP_ID=your_monlix_app_id
-MONLIX_SECRET_KEY=your_monlix_secret_key`}
+{`NEXT_PUBLIC_BITCOTASKS_API_KEY=your_bitcotasks_api_key
+BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
               </pre>
               <p className="mt-2 text-white/40">3. Restart server dev Anda untuk menerapkan perubahan env.</p>
             </div>
@@ -146,17 +143,18 @@ MONLIX_SECRET_KEY=your_monlix_secret_key`}
           <div className="flex justify-between items-center px-4">
             <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Monlix Offerwall Loaded
+              BitcoTasks Offerwall Loaded
             </span>
             <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
           </div>
           
           <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
             <iframe 
-              src={`https://offers.monlix.com/?appid=${appId}&userid=${userId}`}
+              src={`https://bitcotasks.com/offerwall/${apiKey}/${userId}`}
               style={{ width: "100%", height: "800px", border: "none" }}
-              title="Monlix Offerwall"
+              title="BitcoTasks Offerwall"
               className="w-full"
+              scrolling="yes"
             />
           </div>
         </div>
@@ -172,7 +170,7 @@ MONLIX_SECRET_KEY=your_monlix_secret_key`}
           <ul className="grid gap-3 text-xs md:text-sm text-white/60 font-medium">
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Gunakan data asli dan jujur saat mengisi survei. Jawaban asal-asalan akan mengakibatkan penolakan hadiah dari pihak Monlix.</span>
+              <span>Gunakan data asli dan jujur saat mengisi survei. Jawaban asal-asalan akan mengakibatkan penolakan hadiah dari pihak BitcoTasks.</span>
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
@@ -184,7 +182,7 @@ MONLIX_SECRET_KEY=your_monlix_secret_key`}
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Jika Anda mengalami masalah mengenai poin yang belum masuk setelah menyelesaikan tugas, silakan klik tombol bantuan/support langsung di dalam widget Monlix.</span>
+              <span>Jika Anda mengalami masalah mengenai poin yang belum masuk setelah menyelesaikan tugas, silakan klik tombol bantuan/support langsung di dalam widget BitcoTasks.</span>
             </li>
           </ul>
         </div>
