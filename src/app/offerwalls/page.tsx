@@ -10,16 +10,121 @@ import {
   Info, 
   CheckCircle2, 
   ShieldCheck,
-  MousePointer2
+  MousePointer2,
+  FileText
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
+
+// Subcomponent to handle CPX Research lifecycle
+function CPXWidget({ userId }: { userId: string }) {
+  const appId = process.env.NEXT_PUBLIC_CPX_RESEARCH_APP_ID || ""
+
+  useEffect(() => {
+    if (!userId || !appId || appId === "0") return
+
+    // Configure CPX parameters globally on window
+    ;(window as any).config = {
+      general_config: {
+        app_id: parseInt(appId, 10),
+        ext_user_id: userId,
+        email: "",
+        username: "",
+        secure_hash: "",
+        subid_1: "",
+        subid_2: ""
+      },
+      style_config: {
+        text_color: "#ffffff",
+        survey_box: {
+          topbar_background_color: "#a855f7", // purple-500
+          box_background_color: "#18181b", // zinc-900
+          rounded_borders: true,
+          stars_filled: "#fbbf24" // amber-400
+        }
+      },
+      script_config: [
+        {
+          div_id: "cpx-fullscreen",
+          theme_style: 1, // Full Content Widget
+          order_by: 2,
+          limit_surveys: 12
+        }
+      ],
+      debug: false,
+      useIFrame: true
+    }
+
+    // Append script tag dynamically
+    const script = document.createElement("script")
+    script.src = "https://cdn.cpx-research.com/assets/js/script_tag_v2.0.js"
+    script.async = true
+    document.body.appendChild(script)
+
+    return () => {
+      // Cleanup script & config on unmount
+      if (document.body.contains(script)) {
+        document.body.removeChild(script)
+      }
+      delete (window as any).config
+      const container = document.getElementById("cpx-fullscreen")
+      if (container) {
+        container.innerHTML = ""
+      }
+    }
+  }, [userId, appId])
+
+  if (!appId || appId === "0") {
+    return (
+      <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
+        <div className="space-y-4 text-center max-w-2xl mx-auto">
+          <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-bold text-white uppercase tracking-tight">CPX Research Configuration Needed</h3>
+          <p className="text-white/60 text-sm">
+            CPX Research App ID has not been configured in the environment variables yet.
+          </p>
+          
+          <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
+            <p className="text-purple-400 font-bold"># How to enable CPX Research Offerwall:</p>
+            <p>1. Get your **App ID** and **Secure Hash** from your CPX Research Publisher dashboard.</p>
+            <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
+            <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
+{`NEXT_PUBLIC_CPX_RESEARCH_APP_ID=your_cpx_app_id
+CPX_RESEARCH_SECRET_KEY=your_cpx_secret_key`}
+            </pre>
+            <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
+          </div>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center px-4">
+        <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          CPX Research Offerwall Loaded
+        </span>
+        <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
+      </div>
+      
+      <div className="glass border border-white/10 rounded-[2rem] p-6 bg-black/20 shadow-2xl relative min-h-[500px]">
+        {/* CPX Research Container */}
+        <div id="cpx-fullscreen" className="w-full min-h-[400px]"></div>
+      </div>
+    </div>
+  )
+}
 
 export default function OfferwallsPage() {
   const router = useRouter()
   const { id: userId } = useStore()
   const [apiKey, setApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
+  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx">("bitcotasks")
 
   useEffect(() => {
     // Load the public BitcoTasks API Key from env
@@ -52,6 +157,30 @@ export default function OfferwallsPage() {
         <p className="text-white/60 font-medium italic">Complete surveys, install apps, and complete online tasks to earn massive points!</p>
       </div>
 
+      {/* PROVIDER SWITCHER TABS */}
+      <div className="flex justify-center md:justify-start gap-4 border-b border-white/5 pb-2">
+        <button
+          onClick={() => setActiveTab("bitcotasks")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "bitcotasks"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          BitcoTasks
+        </button>
+        <button
+          onClick={() => setActiveTab("cpx")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "cpx"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          CPX Research Surveys
+        </button>
+      </div>
+
       {/* EXPLANATION CARDS */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Card 1: Provider Name */}
@@ -59,10 +188,12 @@ export default function OfferwallsPage() {
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
-              <span className="text-2xl font-black font-mono text-amber-400">BitcoTasks</span>
+              <span className="text-2xl font-black font-mono text-amber-400">
+                {activeTab === "bitcotasks" ? "BitcoTasks" : "CPX Research"}
+              </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <Gamepad2 className="w-6 h-6" />
+              {activeTab === "bitcotasks" ? <Gamepad2 className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
             </div>
           </CardContent>
         </Card>
@@ -72,7 +203,9 @@ export default function OfferwallsPage() {
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Conversion Rate</span>
-              <span className="text-2xl font-black font-mono text-cyan-400">200,000 Pts / $1</span>
+              <span className="text-2xl font-black font-mono text-cyan-400">
+                {activeTab === "bitcotasks" ? "200,000 Pts / $1" : "Dynamic Payout"}
+              </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
               <Coins className="w-6 h-6" />
@@ -94,7 +227,7 @@ export default function OfferwallsPage() {
         </Card>
       </div>
 
-      {/* USER CHECK */}
+      {/* USER & CONFIG INTEGRATION */}
       {!userId ? (
         <Card className="glass border-white/10 rounded-[2rem] p-8 text-center space-y-6">
           <div className="max-w-md mx-auto space-y-4">
@@ -113,51 +246,56 @@ export default function OfferwallsPage() {
             </Button>
           </div>
         </Card>
-      ) : !apiKey ? (
-        // Guide to setup when API key is missing
-        <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
-          <div className="space-y-4 text-center max-w-2xl mx-auto">
-            <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <ShieldCheck className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-bold text-white uppercase tracking-tight">Offerwall Configuration Needed</h3>
-            <p className="text-white/60 text-sm">
-              BitcoTasks API key has not been configured in the environment variables yet.
-            </p>
-            
-            <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
-              <p className="text-purple-400 font-bold"># How to enable BitcoTasks Offerwall:</p>
-              <p>1. Get your **API Key** (Website Key) and **Secret Key** from your BitcoTasks Publisher dashboard.</p>
-              <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
-              <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
+      ) : activeTab === "bitcotasks" ? (
+        !apiKey ? (
+          // Guide to setup when BitcoTasks API key is missing
+          <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
+            <div className="space-y-4 text-center max-w-2xl mx-auto">
+              <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-tight">Offerwall Configuration Needed</h3>
+              <p className="text-white/60 text-sm">
+                BitcoTasks API key has not been configured in the environment variables yet.
+              </p>
+              
+              <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
+                <p className="text-purple-400 font-bold"># How to enable BitcoTasks Offerwall:</p>
+                <p>1. Get your **API Key** (Website Key) and **Secret Key** from your BitcoTasks Publisher dashboard.</p>
+                <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
+                <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
 {`NEXT_PUBLIC_BITCOTASKS_API_KEY=your_bitcotasks_api_key
 BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
-              </pre>
-              <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
+                </pre>
+                <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          // IFRAME INTEGRATION
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-4">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                BitcoTasks Offerwall Loaded
+              </span>
+              <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
+            </div>
+            
+            <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
+              <iframe 
+                src={`https://bitcotasks.com/offerwall/${apiKey}/${userId}`}
+                style={{ width: "100%", height: "800px", border: "none" }}
+                title="BitcoTasks Offerwall"
+                className="w-full"
+                scrolling="yes"
+              />
             </div>
           </div>
-        </Card>
+        )
       ) : (
-        // IFRAME INTEGRATION
-        <div className="space-y-4">
-          <div className="flex justify-between items-center px-4">
-            <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              BitcoTasks Offerwall Loaded
-            </span>
-            <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
-          </div>
-          
-          <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
-            <iframe 
-              src={`https://bitcotasks.com/offerwall/${apiKey}/${userId}`}
-              style={{ width: "100%", height: "800px", border: "none" }}
-              title="BitcoTasks Offerwall"
-              className="w-full"
-              scrolling="yes"
-            />
-          </div>
-        </div>
+        // CPX Research dynamic widget
+        <CPXWidget userId={userId} />
       )}
 
       {/* FOOTER RULES */}
@@ -170,7 +308,7 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
           <ul className="grid gap-3 text-xs md:text-sm text-white/60 font-medium">
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Use real and honest information when completing surveys. Random or fake answers will result in reward rejection by BitcoTasks.</span>
+              <span>Use real and honest information when completing surveys. Random or fake answers will result in reward rejection by providers.</span>
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
@@ -182,7 +320,7 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>If you experience issues with points not being credited after completing a task, please click the support/help button directly inside the BitcoTasks widget.</span>
+              <span>If you experience issues with points not being credited after completing a task, please click the support/help button directly inside the offerwall widget.</span>
             </li>
           </ul>
         </div>
