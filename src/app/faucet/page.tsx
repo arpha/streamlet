@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/providers/AuthProvider"
 import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
 import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { motion, AnimatePresence } from "framer-motion"
@@ -70,8 +71,24 @@ function FaucetContent() {
   const { id: userId, setBalance, xp } = useStore()
   const supabase = createClient()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, authLoading, router])
 
   const cooldownMinutes = 10
+
+  if (authLoading || !user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   const getFaucetBonus = (baseReward: number, userXp: number) => {
     if (userXp < 0) return -Math.floor(baseReward * 0.5)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { 
   Trophy, 
@@ -21,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
+import { useAuth } from "@/components/providers/AuthProvider"
 
 interface Cycle {
   id: number
@@ -50,8 +52,26 @@ interface PastWinner {
 
 export default function LeaderboardPage() {
   const { id: userId, isAdmin } = useStore()
-  
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, authLoading, router])
+
   const [loading, setLoading] = useState(true)
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
+        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
+      </div>
+    )
+  }
   const [activeTab, setActiveTab] = useState<'shortlink' | 'referral' | 'faucet'>('shortlink')
   
   const [cycle, setCycle] = useState<Cycle | null>(null)

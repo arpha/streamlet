@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Wallet, History, Send, Info, AlertTriangle, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { useStore } from "@/store/useStore"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { toast } from "sonner"
@@ -50,11 +51,28 @@ const POINTS_TO_USD = 0.000005
 
 export default function WithdrawPage() {
   const { balance, setBalance } = useStore()
-  const { supabase, user } = useAuth()
+  const { supabase, user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, authLoading, router])
 
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null)
   const [pointsInput, setPointsInput] = useState("")
   const [email, setEmail] = useState("")
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
+        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
+      </div>
+    )
+  }
   const [submitting, setSubmitting] = useState(false)
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)

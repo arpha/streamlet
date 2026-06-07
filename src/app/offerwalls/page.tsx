@@ -16,6 +16,7 @@ import {
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
+import { useAuth } from "@/components/providers/AuthProvider"
 
 // Subcomponent to handle CPX Research lifecycle
 function CPXWidget({ userId }: { userId: string }) {
@@ -123,11 +124,19 @@ CPX_RESEARCH_SECRET_KEY=your_cpx_secret_key`}
 export default function OfferwallsPage() {
   const router = useRouter()
   const { id: userId } = useStore()
+  const { user, loading: authLoading } = useAuth()
   const [apiKey, setApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx">("bitcotasks")
   const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
   const [cpxEarnings, setCpxEarnings] = useState<number>(0)
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login")
+    }
+  }, [user, authLoading, router])
 
   useEffect(() => {
     // Load the public BitcoTasks API Key from env
@@ -176,7 +185,7 @@ export default function OfferwallsPage() {
     router.push("/auth/login")
   }
 
-  if (loading) {
+  if (authLoading || !user || loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
