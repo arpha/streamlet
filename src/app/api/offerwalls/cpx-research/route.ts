@@ -125,18 +125,45 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     return new NextResponse("ERROR: Hash mismatch", { status: 400 })
   }
 
-  // 6b. Check status: 1 = completed, 2 = canceled/screened out
-  // If status is present and not "1", we ignore it (but return "ok" to avoid retries)
-  if (status && status !== "1") {
-    console.log(`[CPX Research Debug] Ignored: Non-completed status: ${status} for transaction: ${transId}`)
-    return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
-  }
-
   // 7. Validate UUID format for userId (user ID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(userId)) {
     console.warn(`[CPX Research Debug] Blocked: Invalid UUID format for userId: ${userId}`)
     return new NextResponse("ERROR: Invalid user_id format", { status: 400 })
+  }
+
+  // 7b. Check status or type for cancellation (status = "2" or type = "canceled")
+  const reqType = req.nextUrl.searchParams.get("type") || ""
+  const isCanceled = (status === "2") || (reqType === "canceled")
+
+  if (isCanceled) {
+    try {
+      const supabase = await getServerSupabase()
+      const { data, error: rpcError } = await supabase.rpc("process_offerwall_cancellation", {
+        p_user_id: userId,
+        p_provider: "cpx-research",
+        p_transaction_id: transId,
+        p_reward_points: parseInt(amountLocal, 10),
+        p_payout_usd: parseFloat(amountUsd)
+      })
+
+      if (rpcError) {
+        console.error("[CPX Research Debug] process_offerwall_cancellation RPC error:", rpcError)
+        return new NextResponse(`ERROR: ${rpcError.message}`, { status: 500 })
+      }
+
+      console.log(`[CPX Research Debug] Cancellation Processed: Deducted ${amountLocal} points from user ${userId}. Transaction: ${transId}`)
+      return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
+    } catch (error: any) {
+      console.error("[CPX Research Debug] Cancellation execution crash:", error)
+      return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
+    }
+  }
+
+  // 7c. Ignore other non-completed status (e.g. status !== "1")
+  if (status && status !== "1") {
+    console.log(`[CPX Research Debug] Ignored status: ${status} for transaction: ${transId}`)
+    return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   }
 
   try {
