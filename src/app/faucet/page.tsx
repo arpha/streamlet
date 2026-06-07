@@ -82,13 +82,7 @@ function FaucetContent() {
 
   const cooldownMinutes = 10
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
-      </div>
-    )
-  }
+
 
   const getFaucetBonus = (baseReward: number, userXp: number) => {
     if (userXp < 0) return -Math.floor(baseReward * 0.5)
@@ -294,6 +288,14 @@ function FaucetContent() {
     }
   }, [timeLeft])
 
+
+  if (authLoading || !user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

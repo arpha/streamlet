@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   ChevronDown,
   Loader2,
-  Coins
+  Coins,
+  Gamepad2
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,7 @@ interface LeaderboardUser {
 interface PastWinner {
   id: number
   cycle_id: number
-  leaderboard_type: 'shortlink' | 'referral' | 'faucet'
+  leaderboard_type: 'faucet_shortlink' | 'referral' | 'offerwall'
   username: string
   score: number
   rank: number
@@ -64,20 +65,13 @@ export default function LeaderboardPage() {
 
   const [loading, setLoading] = useState(true)
 
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
-        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
-      </div>
-    )
-  }
-  const [activeTab, setActiveTab] = useState<'shortlink' | 'referral' | 'faucet'>('shortlink')
+
+  const [activeTab, setActiveTab] = useState<'faucet_shortlink' | 'offerwall' | 'referral'>('faucet_shortlink')
   
   const [cycle, setCycle] = useState<Cycle | null>(null)
-  const [shortlinkList, setShortlinkList] = useState<LeaderboardUser[]>([])
+  const [faucetShortlinkList, setFaucetShortlinkList] = useState<LeaderboardUser[]>([])
+  const [offerwallList, setOfferwallList] = useState<LeaderboardUser[]>([])
   const [referralList, setReferralList] = useState<LeaderboardUser[]>([])
-  const [faucetList, setFaucetList] = useState<LeaderboardUser[]>([])
   
   const [pastCycles, setPastCycles] = useState<Cycle[]>([])
   const [pastWinners, setPastWinners] = useState<PastWinner[]>([])
@@ -99,9 +93,9 @@ export default function LeaderboardPage() {
             start_at: data.start_at,
             end_at: data.end_at
           })
-          setShortlinkList(data.shortlink_leaderboard || [])
+          setFaucetShortlinkList(data.faucet_shortlink_leaderboard || [])
+          setOfferwallList(data.offerwall_leaderboard || [])
           setReferralList(data.referral_leaderboard || [])
-          setFaucetList(data.faucet_leaderboard || [])
           setPastCycles(data.past_cycles || [])
           setPastWinners(data.past_winners || [])
           
@@ -147,7 +141,11 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer)
   }, [cycle])
 
-  const activeList = activeTab === 'shortlink' ? shortlinkList : activeTab === 'referral' ? referralList : faucetList
+  const activeList = activeTab === 'faucet_shortlink' 
+    ? faucetShortlinkList 
+    : activeTab === 'offerwall' 
+    ? offerwallList 
+    : referralList
 
   // Helper values for podium
   const rank1 = activeList.find(u => u.rank === 1)
@@ -157,12 +155,12 @@ export default function LeaderboardPage() {
 
   // Past winners for selection
   const filteredPastWinners = pastWinners.filter(w => w.cycle_id === selectedPastCycleId)
-  const pastShortlinkWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'shortlink')
+  const pastFaucetShortlinkWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'faucet_shortlink')
   const pastReferralWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'referral')
-  const pastFaucetWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'faucet')
+  const pastOfferwallWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'offerwall')
 
-  const getPrizeForRank = (tab: 'shortlink' | 'referral' | 'faucet', rank: number) => {
-    if (tab === 'faucet') {
+  const getPrizeForRank = (tab: 'faucet_shortlink' | 'offerwall' | 'referral', rank: number) => {
+    if (tab === 'faucet_shortlink') {
       if (rank === 1) return 200000
       if (rank === 2) return 150000
       if (rank === 3) return 100000
@@ -180,6 +178,15 @@ export default function LeaderboardPage() {
       const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
       return pool[rank - 1] || 0
     }
+  }
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
+        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
+      </div>
+    )
   }
 
   if (loading) {
@@ -265,26 +272,26 @@ export default function LeaderboardPage() {
       <div className="flex justify-center">
         <div className="inline-flex p-1.5 bg-white/[0.02] border border-white/5 rounded-2xl gap-2">
           <button
-            onClick={() => setActiveTab('shortlink')}
+            onClick={() => setActiveTab('faucet_shortlink')}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-              activeTab === 'shortlink'
-                ? "bg-primary text-white shadow-lg shadow-primary/30"
-                : "text-white/40 hover:text-white"
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            Shortlinks
-          </button>
-          <button
-            onClick={() => setActiveTab('faucet')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-              activeTab === 'faucet'
+              activeTab === 'faucet_shortlink'
                 ? "bg-primary text-white shadow-lg shadow-primary/30"
                 : "text-white/40 hover:text-white"
             }`}
           >
             <Coins className="w-4 h-4" />
-            Faucet
+            Faucet & Shortlink
+          </button>
+          <button
+            onClick={() => setActiveTab('offerwall')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+              activeTab === 'offerwall'
+                ? "bg-primary text-white shadow-lg shadow-primary/30"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4" />
+            Offerwalls
           </button>
           <button
             onClick={() => setActiveTab('referral')}
@@ -443,14 +450,14 @@ export default function LeaderboardPage() {
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
               <Coins className="w-5 h-5 text-purple-400" />
-              FAUCET RULES
+              FAUCET & SHORTLINK RULES
             </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How faucet leaderboard scores are calculated.</CardDescription>
+            <CardDescription className="text-white/40 font-medium italic">How faucet & shortlink leaderboard scores are calculated.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Faucet leaderboard is calculated based on the total points earned from completing faucet claims during the active cycle.</p>
+              <p>Faucet & Shortlink leaderboard is calculated based on the total combined points earned from completing faucet claims and shortlink visits during the active cycle.</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
@@ -458,7 +465,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Points earned from referral commissions are **not included** in the Faucet Leaderboard score.</p>
+              <p>Points earned from referral commissions are **not included** in this Leaderboard score.</p>
             </div>
           </CardContent>
         </Card>
@@ -466,23 +473,19 @@ export default function LeaderboardPage() {
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              SHORTLINK RULES
+              <Gamepad2 className="w-5 h-5 text-purple-400" />
+              OFFERWALL RULES
             </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How shortlink leaderboard scores are calculated.</CardDescription>
+            <CardDescription className="text-white/40 font-medium italic">How offerwall leaderboard scores are calculated.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Shortlink leaderboard is calculated based on the total points earned from completing shortlink visits from any provider.</p>
+              <p>Offerwall leaderboard is calculated based on the total points earned from completing offerwall tasks and surveys from any provider.</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +5%, Platinum +10%, Diamond +15%).</p>
-            </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Points earned from referral commissions are **not included** in the Shortlink Leaderboard score.</p>
+              <p>Commissions earned from your referrals completing offerwalls are **not included** in this Leaderboard score.</p>
             </div>
           </CardContent>
         </Card>
@@ -541,17 +544,17 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* PAST FAUCET WINNERS */}
+            {/* PAST FAUCET & SHORTLINK WINNERS */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 px-2">
                 <Coins className="w-4 h-4" />
-                Faucet Winners (Cycle #{selectedPastCycleId})
+                Faucet & Shortlink Winners (Cycle #{selectedPastCycleId})
               </h4>
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
-                {pastFaucetWinners.length === 0 ? (
+                {pastFaucetShortlinkWinners.length === 0 ? (
                   <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
                 ) : (
-                  pastFaucetWinners.map((winner) => (
+                  pastFaucetShortlinkWinners.map((winner) => (
                     <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>
@@ -573,17 +576,17 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* PAST SHORTLINK WINNERS */}
+            {/* PAST OFFERWALL WINNERS */}
             <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5 px-2">
-                <TrendingUp className="w-4 h-4" />
-                Shortlink Winners (Cycle #{selectedPastCycleId})
+              <h4 className="text-xs font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5 px-2">
+                <Gamepad2 className="w-4 h-4" />
+                Offerwall Winners (Cycle #{selectedPastCycleId})
               </h4>
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
-                {pastShortlinkWinners.length === 0 ? (
+                {pastOfferwallWinners.length === 0 ? (
                   <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
                 ) : (
-                  pastShortlinkWinners.map((winner) => (
+                  pastOfferwallWinners.map((winner) => (
                     <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>

@@ -65,14 +65,7 @@ export default function WithdrawPage() {
   const [pointsInput, setPointsInput] = useState("")
   const [email, setEmail] = useState("")
 
-  if (authLoading || !user) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
-        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
-      </div>
-    )
-  }
+
   const [submitting, setSubmitting] = useState(false)
   const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
@@ -193,6 +186,15 @@ export default function WithdrawPage() {
   useEffect(() => {
     loadHistory()
   }, [loadHistory])
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3 text-white">
+        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
+        <span className="text-xs font-bold uppercase tracking-wider text-white/40">Verifying session...</span>
+      </div>
+    )
+  }
 
   const handleMax = () => {
     setPointsInput(String(balance))

@@ -59,11 +59,11 @@ function HomeContent() {
   
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [leaderboardRanks, setLeaderboardRanks] = useState<{
-    shortlink_rank: number | null;
-    faucet_rank: number | null;
+    faucet_shortlink_rank: number | null;
+    offerwall_rank: number | null;
     referral_rank: number | null;
-    shortlink_points: number;
-    faucet_points: number;
+    faucet_shortlink_points: number;
+    offerwall_points: number;
     referral_count: number;
   } | null>(null)
 
@@ -443,21 +443,21 @@ function HomeContent() {
               🏆 Your active ranks:
             </div>
             
-            {/* Faucet Rank */}
+            {/* Faucet & Shortlink Rank */}
             <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30 transition-all group">
               <Coins className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-white/60">Faucet:</span>
+              <span className="text-xs font-bold text-white/60">Faucet & Shortlink:</span>
               <span className="text-xs font-black text-purple-400">
-                {leaderboardRanks.faucet_rank ? `#${leaderboardRanks.faucet_rank}` : 'Unranked'}
+                {leaderboardRanks.faucet_shortlink_rank ? `#${leaderboardRanks.faucet_shortlink_rank}` : 'Unranked'}
               </span>
             </Link>
 
-            {/* Shortlink Rank */}
-            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-500/30 transition-all group">
-              <Link2 className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-white/60">Shortlink:</span>
-              <span className="text-xs font-black text-cyan-400">
-                {leaderboardRanks.shortlink_rank ? `#${leaderboardRanks.shortlink_rank}` : 'Unranked'}
+            {/* Offerwall Rank */}
+            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all group">
+              <Gamepad2 className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white/60">Offerwall:</span>
+              <span className="text-xs font-black text-amber-400">
+                {leaderboardRanks.offerwall_rank ? `#${leaderboardRanks.offerwall_rank}` : 'Unranked'}
               </span>
             </Link>
 

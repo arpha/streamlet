@@ -17,7 +17,8 @@ import {
   ChevronRight,
   TrendingUp,
   Users,
-  Coins
+  Coins,
+  Gamepad2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,7 +35,7 @@ interface Cycle {
 interface Winner {
   id: number
   cycle_id: number
-  leaderboard_type: 'shortlink' | 'referral' | 'faucet'
+  leaderboard_type: 'faucet_shortlink' | 'referral' | 'offerwall'
   username: string
   score: number
   rank: number
@@ -291,22 +292,22 @@ export default function AdminLeaderboardPage() {
                             {/* Type Column */}
                             <td className="p-5">
                               <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                                winner.leaderboard_type === 'shortlink'
-                                  ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                  : winner.leaderboard_type === 'faucet'
+                                winner.leaderboard_type === 'faucet_shortlink'
                                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                  : winner.leaderboard_type === 'offerwall'
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                   : "bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20"
                               }`}>
-                                {winner.leaderboard_type === 'shortlink' && (
-                                  <>
-                                    <TrendingUp className="w-3 h-3" />
-                                    Shortlink
-                                  </>
-                                )}
-                                {winner.leaderboard_type === 'faucet' && (
+                                {winner.leaderboard_type === 'faucet_shortlink' && (
                                   <>
                                     <Coins className="w-3 h-3" />
-                                    Faucet
+                                    Faucet & Shortlink
+                                  </>
+                                )}
+                                {winner.leaderboard_type === 'offerwall' && (
+                                  <>
+                                    <Gamepad2 className="w-3 h-3" />
+                                    Offerwall
                                   </>
                                 )}
                                 {winner.leaderboard_type === 'referral' && (
