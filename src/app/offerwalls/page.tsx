@@ -10,16 +10,24 @@ import {
   Info, 
   CheckCircle2, 
   ShieldCheck,
-  MousePointer2
+  MousePointer2,
+  History,
+  Loader2,
+  RefreshCw
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase"
 
 export default function OfferwallsPage() {
   const router = useRouter()
   const { id: userId } = useStore()
+  const supabase = createClient()
+  
   const [apiKey, setApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
+  const [claims, setClaims] = useState<any[]>([])
+  const [loadingClaims, setLoadingClaims] = useState<boolean>(true)
 
   useEffect(() => {
     // Load the public BitcoTasks API Key from env
@@ -27,6 +35,39 @@ export default function OfferwallsPage() {
     setApiKey(key)
     setLoading(false)
   }, [])
+
+  const loadClaims = async () => {
+    if (!userId) {
+      setLoadingClaims(false)
+      return
+    }
+    setLoadingClaims(true)
+    try {
+      const { data, error } = await supabase
+        .from("offerwall_claims")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10)
+      
+      if (error) {
+        console.error("Error loading offerwall claims:", error)
+      } else if (data) {
+        setClaims(data)
+      }
+    } catch (err) {
+      console.error("Exception loading offerwall claims:", err)
+    } finally {
+      setLoadingClaims(false)
+    }
+  }
+
+  useEffect(() => {
+    if (userId) {
+      loadClaims()
+    } else {
+      setLoadingClaims(false)
+    }
+  }, [userId])
 
   const handleLoginRedirect = () => {
     router.push("/auth/login")
@@ -158,6 +199,93 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
             />
           </div>
         </div>
+      )}
+
+      {/* OFFERWALL HISTORY */}
+      {userId && (
+        <Card className="glass border-white/10 rounded-[2rem] overflow-hidden relative group">
+          <div className="p-6 md:p-8 space-y-6">
+            <div className="flex justify-between items-center">
+              <h4 className="text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
+                <History className="w-5 h-5 text-purple-400" />
+                Offerwall History
+              </h4>
+              <Button
+                onClick={loadClaims}
+                disabled={loadingClaims}
+                size="sm"
+                variant="ghost"
+                className="text-white/60 hover:text-white hover:bg-white/5 rounded-xl gap-2 text-xs"
+              >
+                {loadingClaims ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                Refresh
+              </Button>
+            </div>
+
+            {loadingClaims ? (
+              <div className="flex items-center justify-center py-12 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-muted-foreground text-sm">Loading history...</span>
+              </div>
+            ) : claims.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-2 opacity-50">
+                <History className="w-12 h-12 text-muted-foreground" />
+                <p className="text-muted-foreground font-medium">No offerwall completions yet.</p>
+                <p className="text-xs text-muted-foreground">Complete tasks above to see your history.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {claims.map((claim) => (
+                  <div
+                    key={claim.id}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                        <Coins className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white flex items-center flex-wrap gap-x-2">
+                          <span>+{claim.points_reward?.toLocaleString()} Points</span>
+                          {claim.payout_usd > 0 && (
+                            <span className="text-xs text-cyan-400 font-medium">
+                              (≈ ${Number(claim.payout_usd).toFixed(4)} USD)
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-white/40 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
+                          <span className="capitalize font-semibold text-purple-400/80">{claim.provider}</span>
+                          <span>•</span>
+                          <span>
+                            {new Date(claim.created_at).toLocaleString("en-US", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          <span>•</span>
+                          <span className="bg-white/5 px-1.5 py-0.5 rounded text-[9px] font-mono text-white/60">
+                            Tx ID: {claim.transaction_id}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-emerald-400 capitalize">{claim.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* FOOTER RULES */}
