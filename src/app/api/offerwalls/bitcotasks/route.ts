@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSupabase } from "@/lib/supabase-server"
 import crypto from "crypto"
 
+// Helper to normalize keys by lowercasing and stripping HTML encoded 'amp;' prefix
+function normalizeKey(key: string): string {
+  let clean = key.toLowerCase()
+  if (clean.startsWith("amp;")) {
+    clean = clean.substring(4)
+  }
+  return clean
+}
+
 async function handleRequest(req: NextRequest, isPost: boolean) {
   let subId: string | null = null
   let transId: string | null = null
@@ -11,10 +20,10 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
   console.log(`[BitcoTasks Debug] Incoming ${isPost ? "POST" : "GET"} request:`, req.url)
 
-  // 1. Read query parameters in a case-insensitive manner
+  // 1. Read query parameters in a case-insensitive, amp-stripped manner
   const queryParams: Record<string, string> = {}
   req.nextUrl.searchParams.forEach((val, key) => {
-    queryParams[key.toLowerCase()] = val
+    queryParams[normalizeKey(key)] = val
   })
 
   subId = queryParams["subid"] || queryParams["userid"] || queryParams["uid"]
@@ -23,7 +32,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   payout = queryParams["payout"] || queryParams["usd"]
   signature = queryParams["signature"] || queryParams["sig"]
 
-  console.log("[BitcoTasks Debug] Query params extracted (case-insensitive):", { subId, transId, reward, payout, signature })
+  console.log("[BitcoTasks Debug] Query params extracted (normalized):", { subId, transId, reward, payout, signature })
 
   // 2. If it is a POST request and we are missing parameters, read them from the request body
   if (isPost) {
@@ -35,7 +44,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
         const body = await req.json()
         const bodyParams: Record<string, any> = {}
         Object.keys(body).forEach(k => {
-          bodyParams[k.toLowerCase()] = body[k]
+          bodyParams[normalizeKey(k)] = body[k]
         })
         console.log("[BitcoTasks Debug] JSON Body:", JSON.stringify(bodyParams))
 
@@ -51,7 +60,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
         const formData = await req.formData()
         const formParams: Record<string, string> = {}
         formData.forEach((val, key) => {
-          formParams[key.toLowerCase()] = String(val)
+          formParams[normalizeKey(key)] = String(val)
         })
         console.log("[BitcoTasks Debug] Form Data Body:", JSON.stringify(formParams))
 
