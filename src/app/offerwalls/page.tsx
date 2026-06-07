@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase"
 
 // Subcomponent to handle CPX Research lifecycle
 function CPXWidget({ userId }: { userId: string }) {
@@ -125,6 +126,8 @@ export default function OfferwallsPage() {
   const [apiKey, setApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx">("bitcotasks")
+  const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
+  const [cpxEarnings, setCpxEarnings] = useState<number>(0)
 
   useEffect(() => {
     // Load the public BitcoTasks API Key from env
@@ -132,6 +135,42 @@ export default function OfferwallsPage() {
     setApiKey(key)
     setLoading(false)
   }, [])
+
+  useEffect(() => {
+    if (!userId) return
+
+    async function fetchEarnings() {
+      const supabase = createClient()
+      
+      // Fetch BitcoTasks earnings
+      const { data: bitcoData, error: bitcoErr } = await supabase
+        .from("offerwall_claims")
+        .select("points_reward")
+        .eq("user_id", userId)
+        .eq("provider", "bitcotasks")
+        .eq("status", "completed")
+
+      if (!bitcoErr && bitcoData) {
+        const total = bitcoData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
+        setBitcotasksEarnings(total)
+      }
+
+      // Fetch CPX Research earnings
+      const { data: cpxData, error: cpxErr } = await supabase
+        .from("offerwall_claims")
+        .select("points_reward")
+        .eq("user_id", userId)
+        .eq("provider", "cpx-research")
+        .eq("status", "completed")
+
+      if (!cpxErr && cpxData) {
+        const total = cpxData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
+        setCpxEarnings(total)
+      }
+    }
+
+    fetchEarnings()
+  }, [userId])
 
   const handleLoginRedirect = () => {
     router.push("/auth/login")
@@ -198,13 +237,16 @@ export default function OfferwallsPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Conversion Rate */}
+        {/* Card 2: Total Earnings */}
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Conversion Rate</span>
+              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Total Earnings</span>
               <span className="text-2xl font-black font-mono text-cyan-400">
-                {activeTab === "bitcotasks" ? "200,000 Pts / $1" : "Dynamic Payout"}
+                {activeTab === "bitcotasks" 
+                  ? `${bitcotasksEarnings.toLocaleString()} Pts` 
+                  : `${cpxEarnings.toLocaleString()} Pts`
+                }
               </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
