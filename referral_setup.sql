@@ -233,7 +233,7 @@ END;
 $$;
 
 
--- 6. Fungsi RPC untuk mengambil statistik publik website (jumlah user, total earned)
+-- 6. Fungsi RPC untuk mengambil statistik publik website
 CREATE OR REPLACE FUNCTION public.get_public_stats()
 RETURNS JSON
 SECURITY DEFINER
@@ -243,21 +243,45 @@ AS $$
 DECLARE
   v_total_users INT;
   v_total_earned NUMERIC;
+  v_total_paid_usd NUMERIC;
 BEGIN
-  -- 1. Hitung total user
+  -- A. Hitung total user
   SELECT COUNT(*) INTO v_total_users FROM public.profiles;
 
-  -- 2. Hitung total earned (dari faucet_claims + komisi referal)
-  -- Kita hitung total koin yang sudah didistribusikan melalui Faucet Claims
-  -- plus komisi referral (25% dari klaim yang memiliki referrer)
-  SELECT COALESCE(SUM(amount), 0) + COALESCE(SUM(CASE WHEN p.referred_by_id IS NOT NULL THEN FLOOR(c.amount * 0.25) ELSE 0 END), 0)
-  INTO v_total_earned
-  FROM public.faucet_claims c
-  LEFT JOIN public.profiles p ON c.user_id = p.id;
+  -- B. Hitung total earned dari Faucet, Shortlink, Offerwall dan komisi referral masing-masing
+  SELECT (
+    -- Faucet (Claims + Referral Commission)
+    (SELECT COALESCE(SUM(amount), 0) FROM public.faucet_claims) +
+    (SELECT COALESCE(SUM(FLOOR(c.amount * 0.25)), 0) 
+     FROM public.faucet_claims c
+     JOIN public.profiles p ON c.user_id = p.id
+     WHERE p.referred_by_id IS NOT NULL) +
+    
+    -- Shortlink (Claims + Referral Commission)
+    (SELECT COALESCE(SUM(points_reward), 0) FROM public.shortlink_claims WHERE status = 'completed') +
+    (SELECT COALESCE(SUM(FLOOR(c.points_reward * 0.10)), 0)
+     FROM public.shortlink_claims c
+     JOIN public.profiles p ON c.user_id = p.id
+     WHERE c.status = 'completed' AND p.referred_by_id IS NOT NULL) +
+    
+    -- Offerwall (Claims + Referral Commission)
+    (SELECT COALESCE(SUM(points_reward), 0) FROM public.offerwall_claims WHERE status = 'completed') +
+    (SELECT COALESCE(SUM(FLOOR(c.points_reward * 0.10)), 0)
+     FROM public.offerwall_claims c
+     JOIN public.profiles p ON c.user_id = p.id
+     WHERE c.status = 'completed' AND p.referred_by_id IS NOT NULL)
+  ) INTO v_total_earned;
+
+  -- C. Hitung total paid out in USD dari withdrawals dengan status 'completed'
+  SELECT COALESCE(SUM(usd_value), 0)
+  INTO v_total_paid_usd
+  FROM public.withdrawals
+  WHERE status = 'completed';
 
   RETURN json_build_object(
     'total_users', v_total_users,
-    'total_earned', v_total_earned
+    'total_earned', v_total_earned,
+    'total_paid_usd', v_total_paid_usd
   );
 END;
 $$;
