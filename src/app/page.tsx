@@ -109,13 +109,13 @@ function HomeContent() {
   const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [blogCards, setBlogCards] = useState<any[]>([])
   const [weeklyEarnings, setWeeklyEarnings] = useState<any[]>([
-    { name: 'Mon', points: 0, heightPercent: 5 },
-    { name: 'Tue', points: 0, heightPercent: 5 },
-    { name: 'Wed', points: 0, heightPercent: 5 },
-    { name: 'Thu', points: 0, heightPercent: 5 },
-    { name: 'Fri', points: 0, heightPercent: 5 },
-    { name: 'Sat', points: 0, heightPercent: 5 },
-    { name: 'Sun', points: 0, heightPercent: 5 },
+    { name: 'Mon', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Tue', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Wed', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Thu', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Fri', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Sat', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
+    { name: 'Sun', total: 0, faucet: 0, shortlink: 0, offerwall: 0, faucetPercent: 0, shortlinkPercent: 0, offerwallPercent: 0, totalHeight: 5 },
   ])
 
   const [decayTimeLeft, setDecayTimeLeft] = useState<number>(0)
@@ -306,12 +306,33 @@ function HomeContent() {
         })
 
         if (!weeklyError && weeklyData) {
-          const maxPoints = Math.max(...weeklyData.map((d: any) => d.points), 100)
-          const chartData = weeklyData.map((day: any) => ({
-            name: day.day_name,
-            points: day.points,
-            heightPercent: Math.max(Math.min((day.points / maxPoints) * 100, 100), 5)
-          }))
+          const maxPoints = Math.max(...weeklyData.map((d: any) => 
+            ((d.faucet || 0) + (d.shortlink || 0) + (d.offerwall || 0))
+          ), 100)
+          
+          const chartData = weeklyData.map((day: any) => {
+            const faucet = day.faucet || 0
+            const shortlink = day.shortlink || 0
+            const offerwall = day.offerwall || 0
+            const total = faucet + shortlink + offerwall
+            const totalHeight = Math.max(Math.min((total / maxPoints) * 100, 100), 5)
+            
+            const faucetPercent = total > 0 ? (faucet / total) * totalHeight : 0
+            const shortlinkPercent = total > 0 ? (shortlink / total) * totalHeight : 0
+            const offerwallPercent = total > 0 ? (offerwall / total) * totalHeight : 0
+
+            return {
+              name: day.day_name,
+              total,
+              faucet,
+              shortlink,
+              offerwall,
+              faucetPercent,
+              shortlinkPercent,
+              offerwallPercent,
+              totalHeight
+            }
+          })
           setWeeklyEarnings(chartData)
         }
 
@@ -625,8 +646,24 @@ function HomeContent() {
       {/* Charts & History */}
       <div className="grid gap-8 md:grid-cols-5">
         <Card className="glass md:col-span-3 rounded-[2.5rem] border-white/10 overflow-hidden group">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-8 py-6">
-            <CardTitle className="text-xl font-bold text-white uppercase italic">Earning Performance</CardTitle>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 px-8 py-6">
+            <div className="flex flex-col gap-1.5">
+              <CardTitle className="text-xl font-bold text-white uppercase italic">Earning Performance</CardTitle>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                  Faucet
+                </span>
+                <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  Shortlink
+                </span>
+                <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Offerwall
+                </span>
+              </div>
+            </div>
             <Button variant="ghost" size="sm" className="text-xs font-bold hover:bg-white/10 text-white/60 rounded-xl">Weekly View</Button>
           </CardHeader>
           <CardContent className="h-[300px] flex flex-col items-center justify-between p-8">
@@ -634,16 +671,62 @@ function HomeContent() {
               {weeklyEarnings.map((item, i) => (
                 <div key={i} className="w-full h-full relative group/bar flex items-end">
                   {/* Hover Tooltip */}
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[10px] font-black px-2 py-1 rounded-[0.5rem] opacity-0 group-hover/bar:opacity-100 transition-all duration-300 pointer-events-none shadow-lg shadow-purple-500/20 whitespace-nowrap z-30">
-                    +{item.points} Pts
+                  <div className="absolute -top-28 left-1/2 -translate-x-1/2 bg-[#020617] border border-white/10 text-white text-[10px] p-3 rounded-2xl opacity-0 group-hover/bar:opacity-100 transition-all duration-300 pointer-events-none shadow-2xl shadow-black/80 whitespace-nowrap z-30 flex flex-col gap-1.5 min-w-[120px]">
+                    <span className="font-black text-white border-b border-white/10 pb-1 mb-0.5 block">Total: +{item.total} Pts</span>
+                    <span className="flex items-center justify-between gap-4 text-purple-400 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                        Faucet
+                      </span>
+                      <span>{item.faucet}</span>
+                    </span>
+                    <span className="flex items-center justify-between gap-4 text-cyan-400 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                        Shortlink
+                      </span>
+                      <span>{item.shortlink}</span>
+                    </span>
+                    <span className="flex items-center justify-between gap-4 text-amber-400 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        Offerwall
+                      </span>
+                      <span>{item.offerwall}</span>
+                    </span>
                   </div>
 
                   <motion.div 
                     initial={{ height: 0 }}
-                    animate={{ height: `${item.heightPercent}%` }}
+                    animate={{ height: `${item.totalHeight}%` }}
                     transition={{ delay: i * 0.1, duration: 1 }}
-                    className="w-full bg-primary/40 hover:bg-primary/80 rounded-t-xl transition-all relative z-10"
-                  />
+                    className="w-full flex flex-col overflow-hidden rounded-t-xl transition-all relative z-10"
+                  >
+                    {item.total > 0 ? (
+                      <>
+                        {item.offerwall > 0 && (
+                          <div 
+                            style={{ height: `${(item.offerwall / item.total) * 100}%` }} 
+                            className="w-full bg-amber-500/80 hover:bg-amber-500 transition-colors"
+                          />
+                        )}
+                        {item.shortlink > 0 && (
+                          <div 
+                            style={{ height: `${(item.shortlink / item.total) * 100}%` }} 
+                            className="w-full bg-cyan-500/80 hover:bg-cyan-500 transition-colors"
+                          />
+                        )}
+                        {item.faucet > 0 && (
+                          <div 
+                            style={{ height: `${(item.faucet / item.total) * 100}%` }} 
+                            className="w-full bg-purple-500/80 hover:bg-purple-500 transition-colors"
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full bg-white/5 rounded-t-xl" />
+                    )}
+                  </motion.div>
                   <div className="absolute inset-0 bg-primary opacity-0 group-hover/bar:opacity-30 blur-2xl transition-opacity pointer-events-none" />
                 </div>
               ))}

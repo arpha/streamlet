@@ -1,5 +1,5 @@
 -- ====================================================================
--- SKRIP UPDATE MIGRASI GRAPH MINGGUAN (USER EARNINGS + REFERRAL COMMISSION)
+-- SKRIP UPDATE MIGRASI GRAPH MINGGUAN (USER EARNINGS BREAKDOWN)
 -- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
 -- ====================================================================
 
@@ -13,7 +13,7 @@ DECLARE
   v_result JSON;
 BEGIN
   -- Generate deretan 7 hari terakhir (dari 6 hari lalu sampai hari ini)
-  -- dan hitung gabungan pendapatan faucet, shortlink, serta komisi referral.
+  -- dan hitung gabungan pendapatan faucet, shortlink, serta offerwall (termasuk komisi referral masing-masing).
   WITH days AS (
     SELECT generate_series(
       (now() - interval '6 days')::date,
@@ -40,6 +40,16 @@ BEGIN
       AND completed_at >= (now() - interval '7 days')
     GROUP BY 1
   ),
+  user_offerwall AS (
+    SELECT 
+      created_at::date AS earning_date,
+      COALESCE(SUM(points_reward), 0) AS amount
+    FROM public.offerwall_claims
+    WHERE user_id = p_user_id
+      AND status = 'completed'
+      AND created_at >= (now() - interval '7 days')
+    GROUP BY 1
+  ),
   ref_ids AS (
     SELECT id 
     FROM public.profiles
@@ -63,24 +73,33 @@ BEGIN
     WHERE c.status = 'completed'
       AND c.completed_at >= (now() - interval '7 days')
     GROUP BY 1
+  ),
+  ref_offerwall AS (
+    SELECT 
+      c.created_at::date AS earning_date,
+      COALESCE(SUM(FLOOR(c.points_reward * 0.10)), 0) AS amount
+    FROM public.offerwall_claims c
+    JOIN ref_ids r ON c.user_id = r.id
+    WHERE c.status = 'completed'
+      AND c.created_at >= (now() - interval '7 days')
+    GROUP BY 1
   )
   SELECT json_agg(
     json_build_object(
       'date', d.earning_date,
-      'day_name', to_char(d.earning_date, 'Dy'), -- Hasil: 'Mon', 'Tue', 'Wed', dll.
-      'points', (
-        COALESCE(uf.amount, 0) + 
-        COALESCE(us.amount, 0) + 
-        COALESCE(rf.amount, 0) + 
-        COALESCE(rs.amount, 0)
-      )::INT
+      'day_name', to_char(d.earning_date, 'Dy'),
+      'faucet', (COALESCE(uf.amount, 0) + COALESCE(rf.amount, 0))::INT,
+      'shortlink', (COALESCE(us.amount, 0) + COALESCE(rs.amount, 0))::INT,
+      'offerwall', (COALESCE(uow.amount, 0) + COALESCE(row.amount, 0))::INT
     ) ORDER BY d.earning_date
   ) INTO v_result
   FROM days d
   LEFT JOIN user_faucet uf ON d.earning_date = uf.earning_date
   LEFT JOIN user_shortlink us ON d.earning_date = us.earning_date
+  LEFT JOIN user_offerwall uow ON d.earning_date = uow.earning_date
   LEFT JOIN ref_faucet rf ON d.earning_date = rf.earning_date
-  LEFT JOIN ref_shortlink rs ON d.earning_date = rs.earning_date;
+  LEFT JOIN ref_shortlink rs ON d.earning_date = rs.earning_date
+  LEFT JOIN ref_offerwall row ON d.earning_date = row.earning_date;
 
   RETURN COALESCE(v_result, '[]'::JSON);
 END;
