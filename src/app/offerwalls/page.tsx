@@ -126,14 +126,14 @@ export default function OfferwallsPage() {
             </p>
             
             <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
-              <p className="text-purple-400 font-bold"># Cara mengaktifkan BitcoTasks Offerwall:</p>
-              <p>1. Dapatkan **API Key** (Website Key) dan **Secret Key** dari dashboard BitcoTasks Publisher Anda.</p>
-              <p>2. Tambahkan variabel berikut ke berkas <code className="text-cyan-400">.env.local</code> Anda:</p>
+              <p className="text-purple-400 font-bold"># How to enable BitcoTasks Offerwall:</p>
+              <p>1. Get your **API Key** (Website Key) and **Secret Key** from your BitcoTasks Publisher dashboard.</p>
+              <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
               <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
 {`NEXT_PUBLIC_BITCOTASKS_API_KEY=your_bitcotasks_api_key
 BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
               </pre>
-              <p className="mt-2 text-white/40">3. Restart server dev Anda untuk menerapkan perubahan env.</p>
+              <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
             </div>
           </div>
         </Card>
@@ -165,24 +165,24 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
         <div className="p-6 md:p-8 space-y-4">
           <h4 className="text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-purple-400" />
-            Aturan & Panduan Offerwalls
+            Offerwalls Rules & Guidelines
           </h4>
           <ul className="grid gap-3 text-xs md:text-sm text-white/60 font-medium">
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Gunakan data asli dan jujur saat mengisi survei. Jawaban asal-asalan akan mengakibatkan penolakan hadiah dari pihak BitcoTasks.</span>
+              <span>Use real and honest information when completing surveys. Random or fake answers will result in reward rejection by BitcoTasks.</span>
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Dilarang menggunakan VPN, Proxy, atau alat pemalsu lokasi lainnya. Pelanggaran akan berakibat pada pembekuan akun permanen.</span>
+              <span>Using VPNs, Proxies, or other location spoofing tools is strictly prohibited. Violations will result in a permanent account suspension.</span>
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Hadiah poin membutuhkan waktu pemrosesan dari beberapa menit hingga 24 jam tergantung jenis tugas (misalnya, instalasi game memerlukan verifikasi pencapaian level).</span>
+              <span>Point rewards may take anywhere from a few minutes up to 24 hours to process depending on the task type (e.g. game installations require level completion verification).</span>
             </li>
             <li className="flex gap-2.5 items-start">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-              <span>Jika Anda mengalami masalah mengenai poin yang belum masuk setelah menyelesaikan tugas, silakan klik tombol bantuan/support langsung di dalam widget BitcoTasks.</span>
+              <span>If you experience issues with points not being credited after completing a task, please click the support/help button directly inside the BitcoTasks widget.</span>
             </li>
           </ul>
         </div>
