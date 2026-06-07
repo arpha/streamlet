@@ -333,12 +333,12 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
               <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
             </div>
             
-            <div className="glass border border-white/10 rounded-[2rem] overflow-x-auto bg-black/20 shadow-2xl relative">
+            <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
               <iframe 
                 src={`https://bitcotasks.com/offerwall/${apiKey}/${userId}`}
                 style={{ width: "100%", height: "800px", border: "none" }}
                 title="BitcoTasks Offerwall"
-                className="w-full min-w-[768px] md:min-w-0"
+                className="w-full"
                 scrolling="yes"
               />
             </div>
