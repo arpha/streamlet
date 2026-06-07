@@ -40,10 +40,16 @@ export async function GET() {
       const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
       total_users = count || 0
 
-      const { data: claimsSum } = await supabase.from('faucet_claims').select('amount')
-      if (claimsSum) {
-        total_earned = claimsSum.reduce((sum, item) => sum + (item.amount || 0), 0)
-      }
+      const { data: faucetClaims } = await supabase.from('faucet_claims').select('amount')
+      const faucetSum = faucetClaims ? faucetClaims.reduce((sum, item) => sum + (item.amount || 0), 0) : 0
+
+      const { data: shortlinkClaims } = await supabase.from('shortlink_claims').select('points_reward').eq('status', 'completed')
+      const shortlinkSum = shortlinkClaims ? shortlinkClaims.reduce((sum, item) => sum + (item.points_reward || 0), 0) : 0
+
+      const { data: offerwallClaims } = await supabase.from('offerwall_claims').select('points_reward').eq('status', 'completed')
+      const offerwallSum = offerwallClaims ? offerwallClaims.reduce((sum, item) => sum + (item.points_reward || 0), 0) : 0
+
+      total_earned = faucetSum + shortlinkSum + offerwallSum
     } else if (publicStats) {
       total_users = publicStats.total_users || 0
       total_earned = publicStats.total_earned || 0
