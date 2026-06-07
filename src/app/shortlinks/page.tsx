@@ -283,6 +283,9 @@ function ShortlinksContent() {
               <span className="text-2xl font-black font-mono text-cyan-400">
                 {loadingStats ? "..." : `${completedToday} Claims`}
               </span>
+              <span className="text-[9px] text-white/35 font-bold block mt-0.5">
+                Resets daily at 07:00 AM WIB (00:00 UTC)
+              </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
               <Link2 className="w-6 h-6" />
@@ -341,7 +344,10 @@ function ShortlinksContent() {
         <Card className="glass border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
           <CardHeader className="p-8 pb-4">
             <CardTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Available Shortlinks</CardTitle>
-            <CardDescription className="text-white/50 font-medium">Click Visit & Claim, pass the shortlink challenge, and get redirected back to automatically claim your rewards.</CardDescription>
+            <CardDescription className="text-white/50 font-medium">
+              Click Visit & Claim, pass the shortlink challenge, and get redirected back to automatically claim your rewards. 
+              Daily limit resets at <strong className="text-cyan-400">07:00 AM WIB (00:00 UTC)</strong>.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-6 animate-none">
             {providers.map((p, idx) => (
