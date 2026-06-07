@@ -6,13 +6,13 @@ export async function GET(req: NextRequest) {
   const visitId = req.nextUrl.searchParams.get("visit_id")
 
   if (!visitId) {
-    return NextResponse.redirect(new URL("/shortlinks?status=error&message=Missing visit ID", origin))
+    return NextResponse.redirect(new URL("/?status=error&message=Missing visit ID", origin))
   }
 
   // Regex check to ensure visitId is a valid UUID
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(visitId)) {
-    return NextResponse.redirect(new URL("/shortlinks?status=error&message=Invalid visit ID format", origin))
+    return NextResponse.redirect(new URL("/?status=error&message=Invalid visit ID format", origin))
   }
 
   try {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     if (claimError || !claim) {
       console.error("Failed to fetch shortlink claim:", claimError)
       return NextResponse.redirect(
-        new URL(`/shortlinks?status=error&message=${encodeURIComponent("Shortlink claim not found")}`, origin)
+        new URL(`/?status=error&message=${encodeURIComponent("Shortlink claim not found")}`, origin)
       )
     }
 
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     if (rpcError) {
       console.error("complete_shortlink_visit RPC error:", rpcError)
       return NextResponse.redirect(
-        new URL(`/shortlinks?status=error&message=${encodeURIComponent(rpcError.message || "Failed to process reward in database")}`, origin)
+        new URL(`/?status=error&message=${encodeURIComponent(rpcError.message || "Failed to process reward in database")}`, origin)
       )
     }
 
@@ -62,18 +62,18 @@ export async function GET(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.redirect(
-        new URL(`/shortlinks?status=error&message=${encodeURIComponent(result.message || "Validation failed")}`, origin)
+        new URL(`/?status=error&message=${encodeURIComponent(result.message || "Validation failed")}`, origin)
       )
     }
 
-    // Success! Redirect to shortlinks dashboard with success query parameters
+    // Success! Redirect to home dashboard with success query parameters
     return NextResponse.redirect(
-      new URL(`/shortlinks?status=success&reward=${result.reward_given || 500}`, origin)
+      new URL(`/?status=success&reward=${result.reward_given || 500}`, origin)
     )
   } catch (error: any) {
     console.error("Shortlink callback route error:", error)
     return NextResponse.redirect(
-      new URL(`/shortlinks?status=error&message=${encodeURIComponent(error.message || "Internal server error")}`, origin)
+      new URL(`/?status=error&message=${encodeURIComponent(error.message || "Internal server error")}`, origin)
     )
   }
 }

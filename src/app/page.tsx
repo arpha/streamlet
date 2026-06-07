@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2 } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,8 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { LandingPage } from "@/components/landing/LandingPage"
 import { createClient } from "@/lib/supabase"
 import { formatDistanceToNow } from 'date-fns'
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 const container = {
   hidden: { opacity: 0 },
@@ -49,12 +51,45 @@ function getLevelInfo(xp: number) {
   return { ...LEVELS[0], progress: 0, xp: cappedXp, nextLevel: LEVELS[1] }
 }
 
-export default function Home() {
+function HomeContent() {
   const { balance, username, id: userId, xp, lastDecayCheckedAt } = useStore()
   const { user, loading } = useAuth()
   const supabase = createClient()
+  const searchParams = useSearchParams()
   
   const [isGuideOpen, setIsGuideOpen] = useState(false)
+
+  // Parse callback status from query parameters
+  useEffect(() => {
+    if (!userId) return
+
+    const status = searchParams.get("status")
+    const reward = searchParams.get("reward")
+    const message = searchParams.get("message")
+
+    if (status === "success") {
+      const rewardAmount = reward ? parseInt(reward) : 500
+      toast.success(message || `Successfully completed shortlink and earned ${rewardAmount} Points!`, {
+        icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+      })
+      // Clear URL parameters
+      const url = new URL(window.location.href)
+      url.searchParams.delete("status")
+      url.searchParams.delete("reward")
+      url.searchParams.delete("message")
+      window.history.replaceState({}, "", url.pathname + url.search)
+    } else if (status === "error") {
+      toast.error(message || "Failed to complete shortlink.", {
+        icon: <AlertCircle className="w-5 h-5 text-rose-400" />
+      })
+      // Clear URL parameters
+      const url = new URL(window.location.href)
+      url.searchParams.delete("status")
+      url.searchParams.delete("reward")
+      url.searchParams.delete("message")
+      window.history.replaceState({}, "", url.pathname + url.search)
+    }
+  }, [searchParams, userId])
   
   const [statsData, setStatsData] = useState({
     totalClaims: 0,
@@ -747,5 +782,17 @@ export default function Home() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#020617]">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }
