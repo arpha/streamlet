@@ -90,10 +90,12 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     hash = cleanValue(queryParams["hash"] || queryParams["secure_hash"] || queryParams["signature"] || queryParams["sig"])
   }
 
+  const status = cleanValue(bodyParams["status"] || queryParams["status"])
+
   // Default USD payout value to 0 if missing
   amountUsd = amountUsd || "0"
 
-  console.log("[CPX Research Debug] Final values for processing:", { userId, transId, amountLocal, amountUsd, hash })
+  console.log("[CPX Research Debug] Final values for processing:", { userId, transId, amountLocal, amountUsd, hash, status })
 
   // 4. Verify that the request includes all required parameters
   if (!userId || !transId || !amountLocal || !hash) {
@@ -121,6 +123,13 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   if (computedHash !== hash.toLowerCase()) {
     console.warn(`[CPX Research Debug] Blocked: Hash mismatch. Received: ${hash}, Computed: ${computedHash}`)
     return new NextResponse("ERROR: Hash mismatch", { status: 400 })
+  }
+
+  // 6b. Check status: 1 = completed, 2 = canceled/screened out
+  // If status is present and not "1", we ignore it (but return "ok" to avoid retries)
+  if (status && status !== "1") {
+    console.log(`[CPX Research Debug] Ignored: Non-completed status: ${status} for transaction: ${transId}`)
+    return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   }
 
   // 7. Validate UUID format for userId (user ID)
