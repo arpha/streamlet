@@ -11,6 +11,16 @@ function normalizeKey(key: string): string {
   return clean
 }
 
+// Helper to clean values and discard literal placeholders like {sub_id}
+function cleanValue(val: string | null | undefined): string | null {
+  if (!val) return null
+  const trimmed = val.trim()
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return null // Treat literal placeholders as missing
+  }
+  return trimmed
+}
+
 async function handleRequest(req: NextRequest, isPost: boolean) {
   let subId: string | null = null
   let transId: string | null = null
@@ -26,15 +36,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     queryParams[normalizeKey(key)] = val
   })
 
-  subId = queryParams["subid"] || queryParams["userid"] || queryParams["uid"]
-  transId = queryParams["transid"] || queryParams["transactionid"] || queryParams["txid"]
-  reward = queryParams["reward"] || queryParams["rewardvalue"] || queryParams["points"]
-  payout = queryParams["payout"] || queryParams["usd"]
-  signature = queryParams["signature"] || queryParams["sig"]
-
-  console.log("[BitcoTasks Debug] Query params extracted (normalized):", { subId, transId, reward, payout, signature })
-
-  // 2. If it is a POST request and we are missing parameters, read them from the request body
+  // 2. Read POST body if it is a POST request (prioritized)
+  let bodyParams: Record<string, string> = {}
   if (isPost) {
     try {
       const contentType = req.headers.get("content-type") || ""
@@ -42,37 +45,49 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
       if (contentType.includes("application/json")) {
         const body = await req.json()
-        const bodyParams: Record<string, any> = {}
         Object.keys(body).forEach(k => {
-          bodyParams[normalizeKey(k)] = body[k]
+          bodyParams[normalizeKey(k)] = body[k] !== undefined ? String(body[k]) : ""
         })
         console.log("[BitcoTasks Debug] JSON Body:", JSON.stringify(bodyParams))
-
-        subId = subId || (bodyParams["subid"] !== undefined ? String(bodyParams["subid"]) : null) || (bodyParams["userid"] !== undefined ? String(bodyParams["userid"]) : null) || (bodyParams["uid"] !== undefined ? String(bodyParams["uid"]) : null)
-        transId = transId || (bodyParams["transid"] !== undefined ? String(bodyParams["transid"]) : null) || (bodyParams["transactionid"] !== undefined ? String(bodyParams["transactionid"]) : null) || (bodyParams["txid"] !== undefined ? String(bodyParams["txid"]) : null)
-        reward = reward || (bodyParams["reward"] !== undefined ? String(bodyParams["reward"]) : null) || (bodyParams["rewardvalue"] !== undefined ? String(bodyParams["rewardvalue"]) : null) || (bodyParams["points"] !== undefined ? String(bodyParams["points"]) : null)
-        payout = payout || (bodyParams["payout"] !== undefined ? String(bodyParams["payout"]) : null) || (bodyParams["usd"] !== undefined ? String(bodyParams["usd"]) : null)
-        signature = signature || (bodyParams["signature"] !== undefined ? String(bodyParams["signature"]) : null) || (bodyParams["sig"] !== undefined ? String(bodyParams["sig"]) : null)
       } else if (
         contentType.includes("application/x-www-form-urlencoded") ||
         contentType.includes("multipart/form-data")
       ) {
         const formData = await req.formData()
-        const formParams: Record<string, string> = {}
         formData.forEach((val, key) => {
-          formParams[normalizeKey(key)] = String(val)
+          bodyParams[normalizeKey(key)] = String(val)
         })
-        console.log("[BitcoTasks Debug] Form Data Body:", JSON.stringify(formParams))
-
-        subId = subId || formParams["subid"] || formParams["userid"] || formParams["uid"]
-        transId = transId || formParams["transid"] || formParams["transactionid"] || formParams["txid"]
-        reward = reward || formParams["reward"] || formParams["rewardvalue"] || formParams["points"]
-        payout = payout || formParams["payout"] || formParams["usd"]
-        signature = signature || formParams["signature"] || formParams["sig"]
+        console.log("[BitcoTasks Debug] Form Data Body:", JSON.stringify(bodyParams))
       }
     } catch (e: any) {
       console.warn("[BitcoTasks Debug] Failed to parse POST body:", e.message)
     }
+  }
+
+  // 3. Extract parameters with cleanValue (prioritizing bodyParams for POST, then queryParams)
+  subId = cleanValue(bodyParams["subid"] || bodyParams["userid"] || bodyParams["uid"])
+  if (!subId) {
+    subId = cleanValue(queryParams["subid"] || queryParams["userid"] || queryParams["uid"])
+  }
+
+  transId = cleanValue(bodyParams["transid"] || bodyParams["transactionid"] || bodyParams["txid"])
+  if (!transId) {
+    transId = cleanValue(queryParams["transid"] || queryParams["transactionid"] || queryParams["txid"])
+  }
+
+  reward = cleanValue(bodyParams["reward"] || bodyParams["rewardvalue"] || bodyParams["points"])
+  if (!reward) {
+    reward = cleanValue(queryParams["reward"] || queryParams["rewardvalue"] || queryParams["points"])
+  }
+
+  payout = cleanValue(bodyParams["payout"] || bodyParams["usd"])
+  if (!payout) {
+    payout = cleanValue(queryParams["payout"] || queryParams["usd"])
+  }
+
+  signature = cleanValue(bodyParams["signature"] || bodyParams["sig"])
+  if (!signature) {
+    signature = cleanValue(queryParams["signature"] || queryParams["sig"])
   }
 
   // Set default payout value to 0 if not provided
@@ -80,20 +95,20 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
   console.log("[BitcoTasks Debug] Final values for processing:", { subId, transId, reward, payout, signature })
 
-  // 3. Verify that the request includes all required parameters
+  // 4. Verify that the request includes all required parameters
   if (!subId || !transId || !reward || !signature) {
     console.warn("[BitcoTasks Debug] Blocked: Missing required parameters")
     return new NextResponse("ERROR: Missing required parameters", { status: 400 })
   }
 
-  // 4. Validate the secret key configured on the server
+  // 5. Validate the secret key configured on the server
   const secretKey = process.env.BITCOTASKS_SECRET_KEY
   if (!secretKey) {
     console.error("[BitcoTasks Debug] Blocked: BITCOTASKS_SECRET_KEY is not configured in .env.local")
     return new NextResponse("ERROR: BitcoTasks integration is disabled on this server", { status: 500 })
   }
 
-  // 5. Verify the MD5 signature: md5(subId . transId . reward . secretKey)
+  // 6. Verify the MD5 signature: md5(subId . transId . reward . secretKey)
   const dataToHash = `${subId}${transId}${reward}${secretKey}`
   const computedSignature = crypto.createHash("md5").update(dataToHash).digest("hex")
 
@@ -108,7 +123,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     return new NextResponse("ERROR: Signature mismatch", { status: 400 })
   }
 
-  // 6. Validate UUID format for subId (user ID)
+  // 7. Validate UUID format for subId (user ID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(subId)) {
     console.warn(`[BitcoTasks Debug] Blocked: Invalid UUID format for subId: ${subId}`)
@@ -118,7 +133,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   try {
     const supabase = await getServerSupabase()
 
-    // 7. Call RPC to safely complete the claim and credit the user
+    // 8. Call RPC to safely complete the claim and credit the user
     const { data, error: rpcError } = await supabase.rpc("process_offerwall_completion", {
       p_user_id: subId,
       p_provider: "bitcotasks",
