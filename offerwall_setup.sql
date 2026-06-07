@@ -64,10 +64,10 @@ BEGIN
   INSERT INTO public.offerwall_claims (user_id, provider, transaction_id, points_reward, payout_usd, status)
   VALUES (p_user_id, p_provider, p_transaction_id, p_reward_points, p_payout_usd, 'completed');
 
-  -- 3. Tambahkan poin ke user dan berikan 100 XP
+  -- 3. Tambahkan poin ke user dan berikan 15 XP
   UPDATE public.profiles
   SET balance = balance + p_reward_points,
-      xp = xp + 100
+      xp = xp + 15
   WHERE id = p_user_id
   RETURNING balance INTO v_new_balance;
 
@@ -212,10 +212,10 @@ BEGIN
   SET status = 'canceled'
   WHERE provider = p_provider AND transaction_id = p_transaction_id;
 
-  -- 3. Potong poin dari user dan kurangi 100 XP
+  -- 3. Potong poin dari user dan kurangi 15 XP
   UPDATE public.profiles
   SET balance = GREATEST(0, balance - p_reward_points),
-      xp = GREATEST(0, xp - 100)
+      xp = GREATEST(0, xp - 15)
   WHERE id = p_user_id
   RETURNING balance INTO v_new_balance;
 
