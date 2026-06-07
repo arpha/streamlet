@@ -461,7 +461,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +5%, Platinum +10%, Diamond +15%).</p>
+              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />

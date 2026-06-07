@@ -86,17 +86,19 @@ function FaucetContent() {
 
   const getFaucetBonus = (baseReward: number, userXp: number) => {
     if (userXp < 0) return -Math.floor(baseReward * 0.5)
-    if (userXp >= 100000) return Math.ceil(baseReward * 0.15)
-    if (userXp >= 10000) return Math.ceil(baseReward * 0.10)
-    if (userXp >= 1000) return Math.ceil(baseReward * 0.05)
+    if (userXp >= 1000000) return Math.ceil(baseReward * 0.15)
+    if (userXp >= 100000) return Math.ceil(baseReward * 0.10)
+    if (userXp >= 10000) return Math.ceil(baseReward * 0.06)
+    if (userXp >= 1000) return Math.ceil(baseReward * 0.03)
     return 0
   }
 
   const getLevelBadgeInfo = (userXp: number) => {
     if (userXp < 0) return { name: "Mud", bonus: "-50%", color: "text-amber-500 bg-amber-950/20 border-amber-900/30", icon: Award }
-    if (userXp >= 100000) return { name: "Diamond", bonus: "+15%", color: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20", icon: Gem }
-    if (userXp >= 10000) return { name: "Platinum", bonus: "+10%", color: "text-indigo-200 bg-indigo-300/10 border-indigo-300/20", icon: Crown }
-    if (userXp >= 1000) return { name: "Silver", bonus: "+5%", color: "text-slate-300 bg-slate-300/10 border-slate-300/20", icon: Award }
+    if (userXp >= 1000000) return { name: "Diamond", bonus: "+15%", color: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20", icon: Gem }
+    if (userXp >= 100000) return { name: "Platinum", bonus: "+10%", color: "text-indigo-200 bg-indigo-300/10 border-indigo-300/20", icon: Crown }
+    if (userXp >= 10000) return { name: "Gold", bonus: "+6%", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20", icon: Award }
+    if (userXp >= 1000) return { name: "Silver", bonus: "+3%", color: "text-slate-300 bg-slate-300/10 border-slate-300/20", icon: Award }
     return null
   }
 
