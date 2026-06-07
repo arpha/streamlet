@@ -175,7 +175,7 @@ export default function LeaderboardPage() {
       if (rank >= 16 && rank <= 20) return 15000
       return 0
     } else {
-      const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
+      const pool = [75000, 50000, 37500, 25000, 18750, 12500, 10000, 8750, 7500, 5000]
       return pool[rank - 1] || 0
     }
   }
@@ -208,7 +208,7 @@ export default function LeaderboardPage() {
             COMPETITION ARENA
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase">STREAMLET LEADERBOARD</h2>
-          <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 300,000 points!</p>
+          <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 200,000 points!</p>
         </div>
 
         {isAdmin && (
@@ -509,7 +509,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Prizes are automatically logged at the end of the 30-day cycle, and rankings will reset. Referrals from past cycles are not carried over.</p>
+              <p>Prizes are automatically logged at the end of the 7-day cycle, and rankings will reset. Referrals from past cycles are not carried over.</p>
             </div>
           </CardContent>
         </Card>

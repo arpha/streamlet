@@ -184,7 +184,7 @@ export default function AdminLeaderboardPage() {
         <div className="glass border-white/10 rounded-[2.5rem] p-20 text-center flex flex-col items-center justify-center">
           <Clock className="w-16 h-16 text-white/10 mb-4" />
           <h4 className="text-lg font-black uppercase text-white/60">No completed cycles yet</h4>
-          <p className="text-white/40 text-sm mt-1 max-w-md">Winner data will appear here after the first leaderboard cycle (30 days) ends and resets automatically.</p>
+          <p className="text-white/40 text-sm mt-1 max-w-md">Winner data will appear here after the first leaderboard cycle (7 days) ends and resets automatically.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
