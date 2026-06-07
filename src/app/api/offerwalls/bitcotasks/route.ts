@@ -2,27 +2,64 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSupabase } from "@/lib/supabase-server"
 import crypto from "crypto"
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const subId = searchParams.get("subId")
-  const transId = searchParams.get("transId")
-  const reward = searchParams.get("reward")
-  const payout = searchParams.get("payout") || "0"
-  const signature = searchParams.get("signature")
+async function handleRequest(req: NextRequest, isPost: boolean) {
+  let subId: string | null = null
+  let transId: string | null = null
+  let reward: string | null = null
+  let payout: string | null = null
+  let signature: string | null = null
 
-  // 1. Verify that the request includes all required parameters
+  // 1. First, try reading parameters from the query string (GET/POST query params)
+  const { searchParams } = req.nextUrl
+  subId = searchParams.get("subId")
+  transId = searchParams.get("transId")
+  reward = searchParams.get("reward")
+  payout = searchParams.get("payout")
+  signature = searchParams.get("signature")
+
+  // 2. If it is a POST request and we are missing parameters, read them from the request body
+  if (isPost && (!subId || !transId || !reward || !signature)) {
+    try {
+      const contentType = req.headers.get("content-type") || ""
+      if (contentType.includes("application/json")) {
+        const body = await req.json()
+        subId = subId || body.subId
+        transId = transId || body.transId
+        reward = reward || (body.reward !== undefined ? String(body.reward) : null)
+        payout = payout || (body.payout !== undefined ? String(body.payout) : null)
+        signature = signature || body.signature
+      } else if (
+        contentType.includes("application/x-www-form-urlencoded") ||
+        contentType.includes("multipart/form-data")
+      ) {
+        const formData = await req.formData()
+        subId = subId || (formData.get("subId") as string)
+        transId = transId || (formData.get("transId") as string)
+        reward = reward || (formData.get("reward") as string)
+        payout = payout || (formData.get("payout") as string)
+        signature = signature || (formData.get("signature") as string)
+      }
+    } catch (e) {
+      console.warn("Failed to parse POST body in BitcoTasks postback:", e)
+    }
+  }
+
+  // Set default payout value to 0 if not provided
+  payout = payout || "0"
+
+  // 3. Verify that the request includes all required parameters
   if (!subId || !transId || !reward || !signature) {
     return new NextResponse("ERROR: Missing required parameters", { status: 400 })
   }
 
-  // 2. Validate the secret key configured on the server
+  // 4. Validate the secret key configured on the server
   const secretKey = process.env.BITCOTASKS_SECRET_KEY
   if (!secretKey) {
     console.error("BitcoTasks secret key not configured on server.")
     return new NextResponse("ERROR: BitcoTasks integration is disabled on this server", { status: 500 })
   }
 
-  // 3. Verify the MD5 signature: md5(subId . transId . reward . secretKey)
+  // 5. Verify the MD5 signature: md5(subId . transId . reward . secretKey)
   const dataToHash = `${subId}${transId}${reward}${secretKey}`
   const computedSignature = crypto.createHash("md5").update(dataToHash).digest("hex")
 
@@ -31,7 +68,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse("ERROR: Signature mismatch", { status: 400 })
   }
 
-  // 4. Validate UUID format for subId (user ID)
+  // 6. Validate UUID format for subId (user ID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(subId)) {
     return new NextResponse("ERROR: Invalid subId format", { status: 400 })
@@ -40,7 +77,7 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await getServerSupabase()
 
-    // 5. Call RPC to safely complete the claim and credit the user
+    // 7. Call RPC to safely complete the claim and credit the user
     const { data, error: rpcError } = await supabase.rpc("process_offerwall_completion", {
       p_user_id: subId,
       p_provider: "bitcotasks",
@@ -70,4 +107,12 @@ export async function GET(req: NextRequest) {
     console.error("BitcoTasks postback route error:", error)
     return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  return handleRequest(req, false)
+}
+
+export async function POST(req: NextRequest) {
+  return handleRequest(req, true)
 }
