@@ -58,6 +58,14 @@ function HomeContent() {
   const searchParams = useSearchParams()
   
   const [isGuideOpen, setIsGuideOpen] = useState(false)
+  const [leaderboardRanks, setLeaderboardRanks] = useState<{
+    shortlink_rank: number | null;
+    faucet_rank: number | null;
+    referral_rank: number | null;
+    shortlink_points: number;
+    faucet_points: number;
+    referral_count: number;
+  } | null>(null)
 
   // Parse callback status from query parameters
   useEffect(() => {
@@ -306,6 +314,20 @@ function HomeContent() {
           }))
           setWeeklyEarnings(chartData)
         }
+
+        // 8. Fetch user leaderboard ranks
+        try {
+          const { data: ranksData, error: ranksError } = await supabase.rpc("get_user_leaderboard_ranks", {
+            p_user_id: userId
+          })
+          if (!ranksError && ranksData) {
+            setLeaderboardRanks(ranksData)
+          } else {
+            console.warn("get_user_leaderboard_ranks RPC failed (sql migration might be missing):", ranksError)
+          }
+        } catch (e) {
+          console.warn("Failed to fetch user leaderboard ranks:", e)
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
@@ -389,6 +411,45 @@ function HomeContent() {
           </h2>
           <p className="text-white/70 text-lg font-bold">Ready to grow your crypto portfolio today?</p>
         </motion.div>
+
+        {leaderboardRanks && (
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-wrap items-center gap-3 bg-white/[0.02] border border-white/10 rounded-3xl p-4 md:p-5 backdrop-blur-md shadow-lg"
+          >
+            <div className="text-xs font-black text-white/40 uppercase tracking-widest mr-2 block w-full sm:w-auto">
+              🏆 Your active ranks:
+            </div>
+            
+            {/* Faucet Rank */}
+            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30 transition-all group">
+              <Coins className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white/60">Faucet:</span>
+              <span className="text-xs font-black text-purple-400">
+                {leaderboardRanks.faucet_rank ? `#${leaderboardRanks.faucet_rank}` : 'Unranked'}
+              </span>
+            </Link>
+
+            {/* Shortlink Rank */}
+            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-500/30 transition-all group">
+              <Link2 className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white/60">Shortlink:</span>
+              <span className="text-xs font-black text-cyan-400">
+                {leaderboardRanks.shortlink_rank ? `#${leaderboardRanks.shortlink_rank}` : 'Unranked'}
+              </span>
+            </Link>
+
+            {/* Referral Rank */}
+            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/20 hover:bg-fuchsia-500/20 hover:border-fuchsia-500/30 transition-all group">
+              <Users className="w-3.5 h-3.5 text-fuchsia-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white/60">Referral:</span>
+              <span className="text-xs font-black text-fuchsia-400">
+                {leaderboardRanks.referral_rank ? `#${leaderboardRanks.referral_rank}` : 'Unranked'}
+              </span>
+            </Link>
+          </motion.div>
+        )}
       </div>
 
       {/* LEVEL & XP CARD */}
