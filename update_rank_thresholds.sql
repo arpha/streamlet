@@ -177,7 +177,102 @@ END;
 $$;
 
 
--- 3. Perbarui fungsi complete_shortlink_visit untuk menggunakan aturan bonus yang baru
+-- 3a. Perbarui fungsi start_shortlink_visit dengan reset UTC jam 7:00 WIB (00:00 UTC)
+CREATE OR REPLACE FUNCTION public.start_shortlink_visit(
+  p_user_id UUID,
+  p_provider TEXT,
+  p_reward INT,
+  p_ip_address TEXT DEFAULT NULL,
+  p_user_agent TEXT DEFAULT NULL,
+  p_device_fingerprint TEXT DEFAULT NULL
+)
+RETURNS JSON
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_completed_today_provider INT;
+  v_last_completion TIMESTAMP WITH TIME ZONE;
+  v_visit_id UUID;
+  v_limit INT;
+BEGIN
+  -- Set limit berdasarkan aturan pembagian baru (reset jam 7 waktu GMT+7 / 00:00 UTC)
+  IF p_provider = 'shrinkme' THEN
+    v_limit := 1;
+  ELSIF p_provider = 'exeio' THEN
+    v_limit := 2;
+  ELSIF p_provider = 'fclc' THEN
+    v_limit := 2;
+  ELSIF p_provider = 'cuty' THEN
+    v_limit := 1;
+  ELSE
+    v_limit := 5; -- default fallback jika ada provider lain
+  END IF;
+
+  -- 1. Hitung klaim sukses sejak jam 7 pagi GMT+7 (00:00 UTC) hari ini untuk provider ini
+  SELECT COUNT(*) INTO v_completed_today_provider
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = p_provider
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  IF v_completed_today_provider >= v_limit THEN
+    RETURN json_build_object('success', false, 'message', 'Daily limit reached for ' || p_provider || ' (Max ' || v_limit || ' per day)');
+  END IF;
+
+  -- 2. Cek cooldown 30 menit (hanya untuk provider dengan limit > 1, per provider)
+  IF v_limit > 1 THEN
+    SELECT completed_at INTO v_last_completion
+    FROM public.shortlink_claims
+    WHERE user_id = p_user_id
+      AND provider = p_provider
+      AND status = 'completed'
+      ORDER BY completed_at DESC
+      LIMIT 1;
+
+    IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+      RETURN json_build_object(
+        'success', false, 
+        'message', 'Cooldown in progress for ' || p_provider || '. Please wait 30 minutes between visits.'
+      );
+    END IF;
+  END IF;
+
+  -- 3. Hapus visit pending lama
+  DELETE FROM public.shortlink_claims
+  WHERE user_id = p_user_id 
+    AND status = 'pending'
+    AND created_at < (now() - interval '1 hour');
+
+  -- 4. Buat visit baru
+  INSERT INTO public.shortlink_claims (
+    user_id, 
+    provider, 
+    points_reward, 
+    status, 
+    ip_address,
+    user_agent,
+    device_fingerprint
+  )
+  VALUES (
+    p_user_id, 
+    p_provider, 
+    p_reward, 
+    'pending', 
+    p_ip_address,
+    p_user_agent,
+    p_device_fingerprint
+  )
+  RETURNING id INTO v_visit_id;
+
+  RETURN json_build_object('success', true, 'visit_id', v_visit_id);
+END;
+$$;
+
+
+-- 3b. Perbarui fungsi complete_shortlink_visit dengan aturan bonus yang baru dan reset UTC jam 7:00 WIB
 CREATE OR REPLACE FUNCTION public.complete_shortlink_visit(
   p_visit_id UUID,
   p_callback_ip TEXT DEFAULT NULL,
@@ -238,13 +333,15 @@ BEGIN
     v_reward := v_reward + CEIL(v_reward * 0.03);
   END IF;
 
-  -- Set limit berdasarkan provider
+  -- Set limit berdasarkan provider (reset jam 7 waktu GMT+7 / 00:00 UTC)
   IF v_provider = 'shrinkme' THEN
     v_limit := 1;
   ELSIF v_provider = 'exeio' THEN
-    v_limit := 1;
+    v_limit := 2;
   ELSIF v_provider = 'fclc' THEN
-    v_limit := 3;
+    v_limit := 2;
+  ELSIF v_provider = 'cuty' THEN
+    v_limit := 1;
   ELSE
     v_limit := 5;
   END IF;
@@ -255,22 +352,25 @@ BEGIN
   WHERE user_id = v_user_id
     AND provider = v_provider
     AND status = 'completed'
-    AND completed_at >= (now() - interval '24 hours');
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
   IF v_completed_today_provider >= v_limit THEN
-    RETURN json_build_object('success', false, 'message', 'Daily limit reached for ' || v_provider || ' (Max ' || v_limit || ' per 24 hours)');
+    RETURN json_build_object('success', false, 'message', 'Daily limit reached for ' || v_provider || ' (Max ' || v_limit || ' per day)');
   END IF;
 
-  -- 3. Double-check cooldown 30 menit
-  SELECT completed_at INTO v_last_completion
-  FROM public.shortlink_claims
-  WHERE user_id = v_user_id
-    AND status = 'completed'
-    ORDER BY completed_at DESC
-    LIMIT 1;
+  -- 3. Double-check cooldown 30 menit (hanya untuk provider dengan limit > 1, per provider)
+  IF v_limit > 1 THEN
+    SELECT completed_at INTO v_last_completion
+    FROM public.shortlink_claims
+    WHERE user_id = v_user_id
+      AND provider = v_provider
+      AND status = 'completed'
+      ORDER BY completed_at DESC
+      LIMIT 1;
 
-  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
-    RETURN json_build_object('success', false, 'message', 'Cooldown active. Please wait 30 minutes.');
+    IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+      RETURN json_build_object('success', false, 'message', 'Cooldown active for ' || v_provider || '. Please wait.');
+    END IF;
   END IF;
 
   -- 4. Tandai visit selesai
@@ -310,6 +410,109 @@ BEGIN
     'message', 'Successfully claimed ' || v_reward || ' Points & 10 XP!',
     'new_balance', v_new_balance,
     'reward_given', v_reward
+  );
+END;
+$$;
+
+
+-- 3c. Perbarui fungsi get_user_shortlink_stats berdasarkan reset UTC jam 7:00 WIB (00:00 UTC)
+CREATE OR REPLACE FUNCTION public.get_user_shortlink_stats(
+  p_user_id UUID
+)
+RETURNS JSON
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_completed_today INT;
+  v_completed_shrinkme INT;
+  v_completed_exeio INT;
+  v_completed_fclc INT;
+  v_completed_cuty INT;
+  v_last_completion TIMESTAMP WITH TIME ZONE;
+  v_cooldown_exeio INT := 0;
+  v_cooldown_fclc INT := 0;
+  v_total_earned BIGINT;
+BEGIN
+  -- 1. Total klaim selesai hari ini (semua provider) sejak jam 7 pagi GMT+7 (00:00 UTC)
+  SELECT COUNT(*) INTO v_completed_today
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  -- 2. Hitung berdasarkan masing-masing provider sejak jam 7 pagi GMT+7 (00:00 UTC)
+  SELECT COUNT(*) INTO v_completed_shrinkme
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'shrinkme'
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  SELECT COUNT(*) INTO v_completed_exeio
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'exeio'
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  SELECT COUNT(*) INTO v_completed_fclc
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'fclc'
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  SELECT COUNT(*) INTO v_completed_cuty
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'cuty'
+    AND status = 'completed'
+    AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
+
+  -- 3. Hitung sisa cooldown per provider (hanya jika limit > 1)
+  -- FC.LC
+  SELECT completed_at INTO v_last_completion
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'fclc'
+    AND status = 'completed'
+    ORDER BY completed_at DESC
+    LIMIT 1;
+
+  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+    v_cooldown_fclc := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
+  END IF;
+
+  -- Exe.io
+  SELECT completed_at INTO v_last_completion
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'exeio'
+    AND status = 'completed'
+    ORDER BY completed_at DESC
+    LIMIT 1;
+
+  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+    v_cooldown_exeio := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
+  END IF;
+
+  -- 4. Hitung total pendapatan dari shortlinks
+  SELECT COALESCE(SUM(points_reward), 0) INTO v_total_earned
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND status = 'completed';
+
+  RETURN json_build_object(
+    'completed_today', v_completed_today,
+    'completed_shrinkme', v_completed_shrinkme,
+    'completed_exeio', v_completed_exeio,
+    'completed_fclc', v_completed_fclc,
+    'completed_cuty', v_completed_cuty,
+    'cooldown_exeio', v_cooldown_exeio,
+    'cooldown_fclc', v_cooldown_fclc,
+    'total_earned', v_total_earned
   );
 END;
 $$;
