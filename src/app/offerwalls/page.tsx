@@ -126,10 +126,12 @@ export default function OfferwallsPage() {
   const { id: userId } = useStore()
   const { user, loading: authLoading } = useAuth()
   const [apiKey, setApiKey] = useState<string>("")
+  const [theoremreachApiKey, setTheoremreachApiKey] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx">("bitcotasks")
+  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx" | "theoremreach">("bitcotasks")
   const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
   const [cpxEarnings, setCpxEarnings] = useState<number>(0)
+  const [theoremreachEarnings, setTheoremreachEarnings] = useState<number>(0)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -142,6 +144,11 @@ export default function OfferwallsPage() {
     // Load the public BitcoTasks API Key from env
     const key = process.env.NEXT_PUBLIC_BITCOTASKS_API_KEY || ""
     setApiKey(key)
+
+    // Load the public TheoremReach API Key from env
+    const trKey = process.env.NEXT_PUBLIC_THEOREMREACH_API_KEY || ""
+    setTheoremreachApiKey(trKey)
+
     setLoading(false)
   }, [])
 
@@ -175,6 +182,19 @@ export default function OfferwallsPage() {
       if (!cpxErr && cpxData) {
         const total = cpxData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
         setCpxEarnings(total)
+      }
+
+      // Fetch TheoremReach earnings
+      const { data: trData, error: trErr } = await supabase
+        .from("offerwall_claims")
+        .select("points_reward")
+        .eq("user_id", userId)
+        .eq("provider", "theoremreach")
+        .eq("status", "completed")
+
+      if (!trErr && trData) {
+        const total = trData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
+        setTheoremreachEarnings(total)
       }
     }
 
@@ -227,6 +247,16 @@ export default function OfferwallsPage() {
         >
           CPX Research Surveys
         </button>
+        <button
+          onClick={() => setActiveTab("theoremreach")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "theoremreach"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          TheoremReach Surveys
+        </button>
       </div>
 
       {/* EXPLANATION CARDS */}
@@ -237,7 +267,7 @@ export default function OfferwallsPage() {
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
               <span className="text-2xl font-black font-mono text-amber-400">
-                {activeTab === "bitcotasks" ? "BitcoTasks" : "CPX Research"}
+                {activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : "TheoremReach"}
               </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
@@ -254,7 +284,9 @@ export default function OfferwallsPage() {
               <span className="text-2xl font-black font-mono text-cyan-400">
                 {activeTab === "bitcotasks" 
                   ? `${bitcotasksEarnings.toLocaleString()} Pts` 
-                  : `${cpxEarnings.toLocaleString()} Pts`
+                  : activeTab === "cpx"
+                  ? `${cpxEarnings.toLocaleString()} Pts`
+                  : `${theoremreachEarnings.toLocaleString()} Pts`
                 }
               </span>
             </div>
@@ -338,6 +370,53 @@ BITCOTASKS_SECRET_KEY=your_bitcotasks_secret_key`}
                 src={`https://bitcotasks.com/offerwall/${apiKey}/${userId}`}
                 style={{ width: "100%", height: "800px", border: "none" }}
                 title="BitcoTasks Offerwall"
+                className="w-full"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        )
+      ) : activeTab === "theoremreach" ? (
+        !theoremreachApiKey ? (
+          // Guide to setup when TheoremReach API key is missing
+          <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
+            <div className="space-y-4 text-center max-w-2xl mx-auto">
+              <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-tight">Offerwall Configuration Needed</h3>
+              <p className="text-white/60 text-sm">
+                TheoremReach API key has not been configured in the environment variables yet.
+              </p>
+              
+              <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
+                <p className="text-purple-400 font-bold"># How to enable TheoremReach Offerwall:</p>
+                <p>1. Get your **API Key** (App API Key) and **Secret Key** from your TheoremReach Publisher dashboard.</p>
+                <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
+                <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
+{`NEXT_PUBLIC_THEOREMREACH_API_KEY=your_theoremreach_api_key
+THEOREMREACH_SECRET_KEY=your_theoremreach_secret_key`}
+                </pre>
+                <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          // IFRAME INTEGRATION
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-4">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                TheoremReach Offerwall Loaded
+              </span>
+              <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
+            </div>
+            
+            <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
+              <iframe 
+                src={`https://theoremreach.com/respondent_entry/direct?api_key=${theoremreachApiKey}&user_id=${userId}`}
+                style={{ width: "100%", height: "800px", border: "none" }}
+                title="TheoremReach Offerwall"
                 className="w-full"
                 scrolling="yes"
               />
