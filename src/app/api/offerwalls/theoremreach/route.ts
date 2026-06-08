@@ -25,13 +25,12 @@ function cleanValue(val: string | null | undefined): string | null {
 }
 
 // Verify signature supporting HMAC-SHA1 (base64url as per TheoremReach docs)
-function verifyTheoremReachSignature(
+function getDebugSignatureDetails(
   url: string,
   secretKey: string,
   receivedSignature: string
-): boolean {
+) {
   try {
-    // 1. Remove the signature/hash parameters from the URL string
     let urlWithoutSig = url
     const sigParams = ["hash", "signature", "sig", "enc"]
     
@@ -39,50 +38,33 @@ function verifyTheoremReachSignature(
       const regex = new RegExp(`[?&]${param}=[^&]*`, "i")
       urlWithoutSig = urlWithoutSig.replace(regex, "")
     }
-    // Clean up trailing symbols
     urlWithoutSig = urlWithoutSig.replace(/\?&/, "?").replace(/\?$/, "")
 
-    // 2. Compute RFC 2104-compliant HMAC signature with the SHA-1 hash algorithm
     const hmacBase64 = crypto
       .createHmac("sha1", secretKey)
       .update(urlWithoutSig)
       .digest("base64")
 
-    // 3. Substitute characters as specified in TheoremReach docs:
-    // + -> -
-    // / -> _
-    // = -> empty string (base64url format)
     const computedHash = hmacBase64
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=/g, "")
 
-    console.log("[TheoremReach Debug] HMAC-SHA1 Verification details:", {
-      urlWithoutSig,
-      receivedSignature,
-      computedHash
-    })
-
-    if (computedHash === receivedSignature) {
-      console.log("[TheoremReach Debug] Signature verified using RFC 2104 HMAC-SHA1 URL Base64Url")
-      return true
-    }
-
-    // 4. Fallbacks for other possible hashing config formats
     const computedHashHex = crypto
       .createHmac("sha1", secretKey)
       .update(urlWithoutSig)
       .digest("hex")
 
-    if (computedHashHex.toLowerCase() === receivedSignature.toLowerCase()) {
-      console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 URL Hex")
-      return true
+    return {
+      urlWithoutSig,
+      receivedSignature,
+      computedHash,
+      computedHashHex,
+      isValid: computedHash === receivedSignature || computedHashHex.toLowerCase() === receivedSignature.toLowerCase()
     }
   } catch (error: any) {
-    console.error("[TheoremReach Debug] Signature verification error:", error)
+    return { error: error.message }
   }
-
-  return false
 }
 
 async function handleRequest(req: NextRequest, isPost: boolean) {
@@ -94,8 +76,6 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   let status: string | null = null
   let reversal: string | null = null
   let debug: string | null = null
-
-  console.log(`[TheoremReach Debug] Incoming ${isPost ? "POST" : "GET"} request:`, req.url)
 
   // 1. Read query parameters case-insensitively
   const queryParams: Record<string, string> = {}
@@ -128,19 +108,19 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   }
 
   // 3. Extract parameters (prioritizing bodyParams, then queryParams)
-  userId = cleanValue(bodyParams["user_id"] || bodyParams["ext_user_id"] || bodyParams["uid"] || bodyParams["subid"])
+  userId = cleanValue(bodyParams["user_id"] || bodyParams["ext_user_id"] || bodyParams["uid"] || bodyParams["subid"] || bodyParams["tr_user_id"])
   if (!userId) {
-    userId = cleanValue(queryParams["user_id"] || queryParams["ext_user_id"] || queryParams["uid"] || queryParams["subid"])
+    userId = cleanValue(queryParams["user_id"] || queryParams["ext_user_id"] || queryParams["uid"] || queryParams["subid"] || queryParams["tr_user_id"])
   }
 
-  transId = cleanValue(bodyParams["tx_id"] || bodyParams["trans_id"] || bodyParams["transaction_id"] || bodyParams["transid"] || bodyParams["txid"])
+  transId = cleanValue(bodyParams["tx_id"] || bodyParams["trans_id"] || bodyParams["transaction_id"] || bodyParams["transid"] || bodyParams["txid"] || bodyParams["tr_tx_id"])
   if (!transId) {
-    transId = cleanValue(queryParams["tx_id"] || queryParams["trans_id"] || queryParams["transaction_id"] || queryParams["transid"] || queryParams["txid"])
+    transId = cleanValue(queryParams["tx_id"] || queryParams["trans_id"] || queryParams["transaction_id"] || queryParams["transid"] || queryParams["txid"] || queryParams["tr_tx_id"])
   }
 
-  amountLocal = cleanValue(bodyParams["reward"] || bodyParams["amount_local"] || bodyParams["points"] || bodyParams["amount"])
+  amountLocal = cleanValue(bodyParams["reward"] || bodyParams["amount_local"] || bodyParams["points"] || bodyParams["amount"] || bodyParams["tr_reward"])
   if (!amountLocal) {
-    amountLocal = cleanValue(queryParams["reward"] || queryParams["amount_local"] || queryParams["points"] || queryParams["amount"])
+    amountLocal = cleanValue(queryParams["reward"] || queryParams["amount_local"] || queryParams["points"] || queryParams["amount"] || queryParams["tr_reward"])
   }
 
   amountUsd = cleanValue(bodyParams["currency"] || bodyParams["amount_usd"] || bodyParams["payout"] || bodyParams["usd"] || bodyParams["payout_usd"])
@@ -153,44 +133,35 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     hash = cleanValue(queryParams["hash"] || queryParams["signature"] || queryParams["sig"] || queryParams["secure_hash"] || queryParams["enc"])
   }
 
-  status = cleanValue(bodyParams["status"] || queryParams["status"])
+  status = cleanValue(bodyParams["status"] || queryParams["status"] || bodyParams["tr_status"] || queryParams["tr_status"])
   reversal = cleanValue(bodyParams["reversal"] || queryParams["reversal"])
   debug = cleanValue(bodyParams["debug"] || queryParams["debug"])
 
-  // Default USD payout value to 0 if missing
   amountUsd = amountUsd || "0"
 
-  console.log("[TheoremReach Debug] Extracted values:", { userId, transId, amountLocal, amountUsd, hash, status, reversal, debug })
-
   if (!userId || !transId || !amountLocal || !hash) {
-    console.warn("[TheoremReach Debug] Blocked: Missing required parameters")
     return new NextResponse("ERROR: Missing required parameters", { status: 400 })
   }
 
-  // 4. Validate the secret key
   const secretKey = process.env.THEOREMREACH_SECRET_KEY
   if (!secretKey) {
-    console.error("[TheoremReach Debug] Blocked: THEOREMREACH_SECRET_KEY is not configured")
     return new NextResponse("ERROR: TheoremReach integration is disabled on this server", { status: 500 })
   }
 
   // 5. Verify the signature
-  const isSignatureValid = verifyTheoremReachSignature(req.url, secretKey, hash)
-  if (!isSignatureValid) {
-    console.warn(`[TheoremReach Debug] Blocked: Signature mismatch. Received signature: ${hash}`)
-    return new NextResponse("ERROR: Signature mismatch", { status: 400 })
+  const sigDetails = getDebugSignatureDetails(req.url, secretKey, hash)
+  if (!sigDetails.isValid) {
+    return new NextResponse(JSON.stringify({ error: "Signature mismatch", details: sigDetails }), { status: 400, headers: { "Content-Type": "application/json" } })
   }
 
   // 6. Short-circuit if debug = true (TheoremReach test request)
   if (debug === "true" || debug === "1") {
-    console.log(`[TheoremReach Debug] Success (DEBUG MODE): Bypassed DB credit for user: ${userId}. Reward: ${amountLocal} Pts. Transaction: ${transId}`)
     return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   }
 
   // 7. Validate UUID format for userId
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(userId)) {
-    console.warn(`[TheoremReach Debug] Blocked: Invalid UUID format for userId: ${userId}`)
     return new NextResponse("ERROR: Invalid user_id format", { status: 400 })
   }
 
@@ -209,14 +180,11 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
       })
 
       if (rpcError) {
-        console.error("[TheoremReach Debug] process_offerwall_cancellation RPC error:", rpcError)
         return new NextResponse(`ERROR: ${rpcError.message}`, { status: 500 })
       }
 
-      console.log(`[TheoremReach Debug] Cancellation Processed: Deducted ${amountLocal} points from user ${userId}. Transaction: ${transId}`)
       return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
     } catch (error: any) {
-      console.error("[TheoremReach Debug] Cancellation execution crash:", error)
       return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
     }
   }
@@ -233,22 +201,17 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     })
 
     if (rpcError) {
-      console.error("[TheoremReach Debug] process_offerwall_completion RPC error:", rpcError)
       return new NextResponse(`ERROR: ${rpcError.message}`, { status: 500 })
     }
 
     const result = data as { success: boolean; message?: string; new_balance?: number }
 
     if (!result.success) {
-      console.warn("[TheoremReach Debug] process_offerwall_completion declined claim:", result.message)
-      // Return HTTP 200 "ok" even on duplicate transaction so TheoremReach stops retrying
       return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
     }
 
-    console.log(`[TheoremReach Debug] Success: Credited ${amountLocal} points to user ${userId}. Transaction: ${transId}`)
     return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   } catch (error: any) {
-    console.error("[TheoremReach Debug] Route execution crash:", error)
     return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
   }
 }
