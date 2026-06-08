@@ -20,18 +20,21 @@ ALTER TABLE public.user_messages ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_messages TO authenticated;
 
 -- 3. Policy: User bisa melihat (SELECT) pesan miliknya sendiri
+DROP POLICY IF EXISTS "Users can view their own messages" ON public.user_messages;
 CREATE POLICY "Users can view their own messages"
 ON public.user_messages
 FOR SELECT
 USING (auth.uid() = user_id);
 
 -- 4. Policy: User bisa mengupdate pesan miliknya sendiri (misal: is_read = true)
+DROP POLICY IF EXISTS "Users can update their own messages" ON public.user_messages;
 CREATE POLICY "Users can update their own messages"
 ON public.user_messages
 FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- 5. Policy: Admin bisa melakukan apa saja (ALL)
+DROP POLICY IF EXISTS "Admins can do everything on user_messages" ON public.user_messages;
 CREATE POLICY "Admins can do everything on user_messages"
 ON public.user_messages
 FOR ALL

@@ -81,7 +81,7 @@ export function MessageModal({ message, isOpen, onClose, onMarkAsRead }: Message
           </div>
         </DialogHeader>
 
-        <div className="relative z-10 py-6">
+        <div className="relative z-10 py-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
           <div className="text-white/80 leading-relaxed whitespace-pre-wrap text-sm">
             {message.content}
           </div>
