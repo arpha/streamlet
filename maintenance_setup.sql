@@ -1,30 +1,30 @@
 -- ====================================================================
--- SKRIP SETUP MODE PEMELIHARAAN (MAINTENANCE MODE)
--- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
+-- MAINTENANCE MODE SETUP SCRIPT
+-- Run this script in the Supabase Dashboard SQL Editor.
 -- ====================================================================
 
--- 1. Buat tabel system_settings jika belum ada
+-- 1. Create system_settings table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.system_settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Aktifkan Row Level Security (RLS)
+-- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
--- 3. Berikan hak akses
+-- 3. Grant permissions
 GRANT SELECT ON public.system_settings TO anon, authenticated;
 GRANT ALL ON public.system_settings TO authenticated;
 
--- 4. Buat Kebijakan RLS
+-- 4. Create RLS Policies
 
--- Kebijakan A: Semua orang (bahkan anonim) dapat membaca data konfigurasi
+-- Policy A: Anyone (including anonymous users) can view settings
 DROP POLICY IF EXISTS "Anyone can view system settings" ON public.system_settings;
 CREATE POLICY "Anyone can view system settings" ON public.system_settings
   FOR SELECT USING (true);
 
--- Kebijakan B: Hanya Admin yang dapat memperbarui pengaturan
+-- Policy B: Only Admins can modify settings
 DROP POLICY IF EXISTS "Only Admins can modify system settings" ON public.system_settings;
 CREATE POLICY "Only Admins can modify system settings" ON public.system_settings
   FOR ALL TO authenticated
@@ -41,7 +41,7 @@ CREATE POLICY "Only Admins can modify system settings" ON public.system_settings
     )
   );
 
--- 5. Masukkan data awal (seed)
+-- 5. Seed initial data
 INSERT INTO public.system_settings (key, value)
-VALUES ('maintenance_mode', '{"enabled": false, "message": "Kami sedang melakukan pemeliharaan sistem. Silakan kembali beberapa saat lagi."}'::jsonb)
+VALUES ('maintenance_mode', '{"enabled": false, "message": "We are currently performing scheduled system maintenance. Please check back shortly."}'::jsonb)
 ON CONFLICT (key) DO NOTHING;

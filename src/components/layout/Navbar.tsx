@@ -39,7 +39,7 @@ export function Navbar() {
         .update({
           value: {
             enabled: nextState,
-            message: maintenance.message || "Kami sedang melakukan pemeliharaan sistem. Silakan kembali beberapa saat lagi."
+            message: maintenance.message || "We are currently performing scheduled system maintenance. Please check back shortly."
           }
         })
         .eq("key", "maintenance_mode")
@@ -51,9 +51,9 @@ export function Navbar() {
         enabled: nextState
       })
 
-      toast.success(nextState ? "Mode Pemeliharaan Diaktifkan!" : "Mode Pemeliharaan Dinonaktifkan!")
+      toast.success(nextState ? "Maintenance mode enabled!" : "Maintenance mode disabled!")
     } catch (e: any) {
-      toast.error("Gagal mengubah mode pemeliharaan: " + e.message)
+      toast.error("Failed to change maintenance mode: " + e.message)
     }
   }
 

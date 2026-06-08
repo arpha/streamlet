@@ -62,18 +62,18 @@ export function MaintenanceView({ message }: MaintenanceViewProps) {
           {/* Main Title */}
           <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-4 flex items-center justify-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
-            Sistem Maintenance
+            System Maintenance
           </h1>
 
           {/* Custom message */}
           <p className="text-white/60 font-medium leading-relaxed mb-8">
-            {message || "Kami sedang melakukan pemeliharaan sistem secara berkala untuk meningkatkan kenyamanan Anda bermain dan klaim hadiah. Silakan kembali lagi beberapa saat lagi."}
+            {message || "We are currently performing scheduled system maintenance to improve your gaming and reward claiming experience. Please check back shortly."}
           </p>
 
           <div className="border-t border-white/5 pt-6 space-y-4">
             <div className="flex items-center justify-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 py-2 px-4 rounded-xl">
               <ShieldAlert className="w-4 h-4" />
-              Kembali segera setelah selesai
+              Will be back online soon
             </div>
 
             <Button 
@@ -82,7 +82,7 @@ export function MaintenanceView({ message }: MaintenanceViewProps) {
               className="w-full rounded-2xl glass border-white/10 hover:bg-rose-500/10 hover:text-rose-400 text-white/50 h-11 flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-all"
             >
               <LogOut className="w-4 h-4" />
-              Keluar Akun (Logout)
+              Log Out
             </Button>
           </div>
         </div>
