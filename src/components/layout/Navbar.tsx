@@ -1,6 +1,7 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox } from "lucide-react"
+import { useState, useEffect } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,14 +16,48 @@ import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 
+import { MessageModal } from "@/components/messages/MessageModal"
+
 export function Navbar() {
-  const { username, toggleSidebar, isAdmin } = useStore()
+  const { username, toggleSidebar, isAdmin, id: userId } = useStore()
   const supabase = createClient()
   const router = useRouter()
+
+  const [messages, setMessages] = useState<any[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [selectedMessage, setSelectedMessage] = useState<any | null>(null)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/auth/login")
+  }
+
+  const fetchMessages = async () => {
+    if (!userId) return
+    try {
+      const { data, error } = await supabase
+        .from('user_messages')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      
+      if (error) throw error
+      setMessages(data || [])
+      setUnreadCount(data?.filter(m => !m.is_read).length || 0)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(() => {
+    fetchMessages()
+    // Optional: add realtime subscription for new messages here
+  }, [userId])
+
+  const handleMarkAsRead = (id: string) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: true } : m))
+    setUnreadCount(prev => Math.max(0, prev - 1))
   }
   
   return (
@@ -55,10 +90,57 @@ export function Navbar() {
           </svg>
         </a>
 
-        <Button variant="ghost" size="icon" className="relative text-white/70 hover:text-white glass border-white/10 h-10 w-10 rounded-xl">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full neon-glow shadow-[0_0_8px_rgba(147,51,234,0.8)]" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative text-white/70 hover:text-white glass border-white/10 h-10 w-10 rounded-xl">
+              <MessageSquare className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full neon-glow shadow-[0_0_8px_rgba(244,63,94,0.8)] animate-pulse" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80 glass border-white/10 rounded-2xl mt-2 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden" align="end">
+            <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
+              <span className="font-black text-sm text-white uppercase tracking-widest">Messages</span>
+              {unreadCount > 0 && (
+                <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/20 text-[10px] px-2 py-0">
+                  {unreadCount} New
+                </Badge>
+              )}
+            </div>
+            <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+              {messages.length === 0 ? (
+                <div className="p-8 text-center flex flex-col items-center text-white/30">
+                  <Inbox className="w-8 h-8 mb-2 opacity-50" />
+                  <span className="text-xs font-bold uppercase tracking-widest">No messages</span>
+                </div>
+              ) : (
+                messages.map(msg => (
+                  <div 
+                    key={msg.id}
+                    onClick={() => setSelectedMessage(msg)}
+                    className="p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className={`text-sm font-bold truncate ${!msg.is_read ? 'text-white' : 'text-white/60'}`}>
+                        {msg.title}
+                      </h4>
+                      {!msg.is_read && (
+                        <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0 mt-1.5" />
+                      )}
+                    </div>
+                    <p className="text-xs text-white/40 line-clamp-1 mt-1 font-medium group-hover:text-white/60 transition-colors">
+                      {msg.content}
+                    </p>
+                    <p className="text-[9px] text-white/30 font-black uppercase mt-2">
+                      {new Date(msg.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger className="h-auto px-2 py-1.5 pr-5 rounded-2xl glass border-white/10 hover:bg-white/10 transition-all flex items-center gap-3 group cursor-pointer">
@@ -101,15 +183,26 @@ export function Navbar() {
               <span className="font-bold uppercase text-xs tracking-widest">Settings</span>
             </DropdownMenuItem>
             {isAdmin && (
-              <DropdownMenuItem 
-                onClick={() => router.push("/admin/blog")}
-                className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-purple-500/10 text-purple-400 focus:text-purple-300 transition-all"
-              >
-                <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/20">
-                  <FileText className="w-4 h-4 text-purple-400" />
-                </div>
-                <span className="font-bold uppercase text-xs tracking-widest">Admin Blog</span>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem 
+                  onClick={() => router.push("/admin/blog")}
+                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-purple-500/10 text-purple-400 focus:text-purple-300 transition-all"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/20">
+                    <FileText className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <span className="font-bold uppercase text-xs tracking-widest">Admin Blog</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => router.push("/admin/messages")}
+                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-emerald-500/10 text-emerald-400 focus:text-emerald-300 transition-all mt-1"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <span className="font-bold uppercase text-xs tracking-widest">Admin Messages</span>
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuSeparator className="bg-white/10 mx-2" />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-rose-500/10 text-rose-400 focus:text-rose-400 transition-all">
@@ -121,6 +214,13 @@ export function Navbar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <MessageModal 
+        message={selectedMessage} 
+        isOpen={!!selectedMessage} 
+        onClose={() => setSelectedMessage(null)}
+        onMarkAsRead={handleMarkAsRead}
+      />
     </header>
   )
 }

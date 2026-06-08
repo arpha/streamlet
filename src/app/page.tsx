@@ -9,6 +9,7 @@ import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { LandingPage } from "@/components/landing/LandingPage"
+import { MessageModal } from "@/components/messages/MessageModal"
 import { createClient } from "@/lib/supabase"
 import { formatDistanceToNow } from 'date-fns'
 import { useSearchParams } from "next/navigation"
@@ -67,6 +68,9 @@ function HomeContent() {
     offerwall_points: number;
     referral_count: number;
   } | null>(null)
+
+  const [autoOpenMessage, setAutoOpenMessage] = useState<any | null>(null)
+  const [isAutoMessageOpen, setIsAutoMessageOpen] = useState(false)
 
   // Parse callback status from query parameters
   useEffect(() => {
@@ -159,6 +163,20 @@ function HomeContent() {
       if (!userId) return
 
       try {
+        // Fetch unread messages for auto-popup
+        const { data: unreadMsgs } = await supabase
+          .from('user_messages')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_read', false)
+          .order('created_at', { ascending: true })
+          .limit(1)
+
+        if (unreadMsgs && unreadMsgs.length > 0) {
+          setAutoOpenMessage(unreadMsgs[0])
+          setIsAutoMessageOpen(true)
+        }
+
         // 1. Fetch Faucet claims
         const { count: faucetCount } = await supabase
           .from('faucet_claims')
@@ -419,6 +437,14 @@ function HomeContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-10">
+      <MessageModal 
+        message={autoOpenMessage}
+        isOpen={isAutoMessageOpen}
+        onClose={() => {
+          setIsAutoMessageOpen(false)
+          setAutoOpenMessage(null)
+        }}
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
