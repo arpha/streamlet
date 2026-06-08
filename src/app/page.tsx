@@ -3,13 +3,14 @@
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle, CalendarCheck } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { LandingPage } from "@/components/landing/LandingPage"
 import { MessageModal } from "@/components/messages/MessageModal"
+import { DailyCheckinModal } from "@/components/dashboard/DailyCheckinModal"
 import { createClient } from "@/lib/supabase"
 import { formatDistanceToNow } from 'date-fns'
 import { useSearchParams } from "next/navigation"
@@ -54,7 +55,7 @@ function getLevelInfo(xp: number) {
 }
 
 function HomeContent() {
-  const { balance, username, id: userId, xp, lastDecayCheckedAt } = useStore()
+  const { balance, username, id: userId, xp, lastDecayCheckedAt, lastCheckinAt, checkinStreak, setLastCheckinAt, setCheckinStreak } = useStore()
   const { user, loading } = useAuth()
   const supabase = createClient()
   const searchParams = useSearchParams()
@@ -71,6 +72,7 @@ function HomeContent() {
 
   const [autoOpenMessage, setAutoOpenMessage] = useState<any | null>(null)
   const [isAutoMessageOpen, setIsAutoMessageOpen] = useState(false)
+  const [isDailyCheckinOpen, setIsDailyCheckinOpen] = useState(false)
 
   // Parse callback status from query parameters
   useEffect(() => {
@@ -163,18 +165,41 @@ function HomeContent() {
       if (!userId) return
 
       try {
-        // Fetch unread messages for auto-popup
-        const { data: unreadMsgs } = await supabase
-          .from('user_messages')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('is_read', false)
-          .order('created_at', { ascending: true })
-          .limit(1)
+        // Fetch latest profile to sync checkin status and event tickets
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('last_checkin_at, checkin_streak, event_tickets')
+          .eq('id', userId)
+          .single()
 
-        if (unreadMsgs && unreadMsgs.length > 0) {
-          setAutoOpenMessage(unreadMsgs[0])
-          setIsAutoMessageOpen(true)
+        if (profile) {
+          setLastCheckinAt(profile.last_checkin_at)
+          setCheckinStreak(profile.checkin_streak)
+          useStore.getState().setEventTickets(profile.event_tickets)
+        }
+
+        // Check if user has checked in today (since 00:00 UTC / 07:00 WIB)
+        const todayStart = new Date()
+        todayStart.setUTCHours(0, 0, 0, 0)
+        const lastCheckin = profile?.last_checkin_at ? new Date(profile.last_checkin_at) : null
+        const hasCheckedInToday = lastCheckin && lastCheckin >= todayStart
+
+        if (!hasCheckedInToday) {
+          setIsDailyCheckinOpen(true)
+        } else {
+          // Fetch unread messages for auto-popup if already checked in today
+          const { data: unreadMsgs } = await supabase
+            .from('user_messages')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_read', false)
+            .order('created_at', { ascending: true })
+            .limit(1)
+
+          if (unreadMsgs && unreadMsgs.length > 0) {
+            setAutoOpenMessage(unreadMsgs[0])
+            setIsAutoMessageOpen(true)
+          }
         }
 
         // 1. Fetch Faucet claims
@@ -435,8 +460,38 @@ function HomeContent() {
     },
   ]
 
+  const handleCloseDailyCheckin = async () => {
+    setIsDailyCheckinOpen(false)
+    try {
+      const { data: unreadMsgs } = await supabase
+        .from('user_messages')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_read', false)
+        .order('created_at', { ascending: true })
+        .limit(1)
+
+      if (unreadMsgs && unreadMsgs.length > 0) {
+        setAutoOpenMessage(unreadMsgs[0])
+        setIsAutoMessageOpen(true)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-10">
+      <DailyCheckinModal
+        isOpen={isDailyCheckinOpen}
+        onClose={handleCloseDailyCheckin}
+        lastCheckinAt={lastCheckinAt}
+        streak={checkinStreak}
+        onCheckinSuccess={(newStreak, lastCheckin) => {
+          setCheckinStreak(newStreak)
+          setLastCheckinAt(lastCheckin)
+        }}
+      />
       <MessageModal 
         message={autoOpenMessage}
         isOpen={isAutoMessageOpen}
@@ -457,7 +512,16 @@ function HomeContent() {
           <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-none mb-2 text-white drop-shadow-md">
             Welcome back, <span className="gradient-text uppercase">{username || 'Guest'}</span>
           </h2>
-          <p className="text-white/70 text-lg font-bold">Ready to grow your crypto portfolio today?</p>
+          <div className="flex flex-wrap items-center gap-3 mt-1">
+            <p className="text-white/70 text-lg font-bold">Ready to grow your crypto portfolio today?</p>
+            <button
+              onClick={() => setIsDailyCheckinOpen(true)}
+              className="px-4 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/5"
+            >
+              <CalendarCheck className="w-4 h-4" />
+              Daily Check-in
+            </button>
+          </div>
         </motion.div>
 
         {leaderboardRanks && (

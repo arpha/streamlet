@@ -30,6 +30,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             balance: profile?.balance || 0,
             xp: profile?.xp || 0,
             isAdmin: profile?.is_admin || false,
+            eventTickets: profile?.event_tickets || 0,
+            lastCheckinAt: profile?.last_checkin_at || null,
+            checkinStreak: profile?.checkin_streak || 0,
             lastDecayCheckedAt: profile?.last_decay_checked_at
           }
           setUser(userData)

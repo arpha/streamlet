@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation"
 import { MessageModal } from "@/components/messages/MessageModal"
 
 export function Navbar() {
-  const { username, toggleSidebar, isAdmin, id: userId } = useStore()
+  const { username, toggleSidebar, isAdmin, id: userId, eventTickets } = useStore()
   const supabase = createClient()
   const router = useRouter()
 
@@ -173,6 +173,18 @@ export function Navbar() {
                 <User className="w-4 h-4" />
               </div>
               <span className="font-bold uppercase text-xs tracking-widest">My Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-default gap-3 p-3 rounded-xl focus:bg-white/5 text-white/70 transition-all">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/20">
+                <Package className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-[9px] text-white/30 font-black uppercase tracking-widest mb-1">Storage</span>
+                <span className="font-bold text-xs text-white flex items-center gap-1.5">
+                  <Ticket className="w-3.5 h-3.5 text-amber-400" />
+                  {eventTickets} Tiket Event
+                </span>
+              </div>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-white/10 text-white/70 focus:text-white transition-all">
               <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center border border-white/5">
