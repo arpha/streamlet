@@ -25,11 +25,11 @@ function cleanValue(val: string | null | undefined): string | null {
 }
 
 // Verify signature supporting HMAC-SHA1 (base64url as per TheoremReach docs)
-function verifyTheoremReachSignature(
+function getDebugSignatureDetails(
   url: string,
   secretKey: string,
   receivedSignature: string
-): boolean {
+) {
   try {
     const urlVariations = [
       url,
@@ -58,6 +58,7 @@ function verifyTheoremReachSignature(
       }
     } catch(e) {}
 
+    const tested: any[] = []
     for (const currentUrl of urlVariations) {
       const regex = new RegExp(`[?&]${sigParamName}=[^&]*`, "i")
       let urlWithoutSig = currentUrl.replace(regex, "")
@@ -71,26 +72,16 @@ function verifyTheoremReachSignature(
         .replace(/\//g, "_")
         .replace(/=/g, "")
 
+      tested.push({ urlWithoutSig, hmacBase64 })
+
       if (hmacBase64 === receivedSignature) {
-        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Base64url with URL:", urlWithoutSig)
-        return true
-      }
-
-      const hmacHex = crypto
-        .createHmac("sha1", secretKey)
-        .update(urlWithoutSig)
-        .digest("hex")
-
-      if (hmacHex.toLowerCase() === receivedSignature.toLowerCase()) {
-        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Hex with URL:", urlWithoutSig)
-        return true
+        return { tested, isValid: true, matchedUrl: urlWithoutSig }
       }
     }
+    return { tested, isValid: false }
   } catch (error: any) {
-    console.error("[TheoremReach Debug] Signature verification error:", error)
+    return { error: error.message }
   }
-
-  return false
 }
 
 async function handleRequest(req: NextRequest, isPost: boolean) {
@@ -102,8 +93,6 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   let status: string | null = null
   let reversal: string | null = null
   let debug: string | null = null
-
-  console.log(`[TheoremReach Debug] Incoming ${isPost ? "POST" : "GET"} request:`, req.url)
 
   // 1. Read query parameters case-insensitively
   const queryParams: Record<string, string> = {}
@@ -206,38 +195,51 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
 
   amountUsd = amountUsd || "0"
 
-  console.log("[TheoremReach Debug] Extracted values:", { userId, transId, amountLocal, amountUsd, hash, status, reversal, debug })
-
   if (!userId || !transId || !amountLocal || !hash) {
-    console.warn("[TheoremReach Debug] Blocked: Missing required parameters")
-    return new NextResponse("ERROR: Missing required parameters", { status: 400 })
+    return new NextResponse(JSON.stringify({
+      error: "Missing required parameters",
+      userId,
+      transId,
+      amountLocal,
+      hash,
+      queryParams,
+      bodyParams
+    }), { status: 400, headers: { "Content-Type": "application/json" } })
   }
 
   const secretKey = process.env.THEOREMREACH_SECRET_KEY
   if (!secretKey) {
-    console.error("[TheoremReach Debug] Blocked: THEOREMREACH_SECRET_KEY is not configured")
     return new NextResponse("ERROR: TheoremReach integration is disabled on this server", { status: 500 })
   }
 
   // 5. Verify the signature (using req.nextUrl.toString() to ensure absolute URL)
   const absoluteUrl = req.nextUrl.toString()
-  const isSignatureValid = verifyTheoremReachSignature(absoluteUrl, secretKey, hash)
-  if (!isSignatureValid) {
-    console.warn(`[TheoremReach Debug] Blocked: Signature mismatch. Received signature: ${hash}`)
-    return new NextResponse("ERROR: Signature mismatch", { status: 400 })
+  const sigDetails = getDebugSignatureDetails(absoluteUrl, secretKey, hash)
+  if (!sigDetails.isValid) {
+    return new NextResponse(JSON.stringify({
+      error: "Signature mismatch",
+      reqUrl: req.url,
+      absoluteUrl,
+      userId,
+      transId,
+      amountLocal,
+      hash,
+      details: sigDetails
+    }), { status: 400, headers: { "Content-Type": "application/json" } })
   }
 
   // 6. Short-circuit if debug = true (TheoremReach test request)
   if (debug === "true" || debug === "1") {
-    console.log(`[TheoremReach Debug] Success (DEBUG MODE): Bypassed DB credit for user: ${userId}. Reward: ${amountLocal} Pts. Transaction: ${transId}`)
     return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   }
 
   // 7. Validate UUID format for userId
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(userId)) {
-    console.warn(`[TheoremReach Debug] Blocked: Invalid UUID format for userId: ${userId}`)
-    return new NextResponse("ERROR: Invalid user_id format", { status: 400 })
+    return new NextResponse(JSON.stringify({
+      error: "Invalid user_id format",
+      userId
+    }), { status: 400, headers: { "Content-Type": "application/json" } })
   }
 
   // 8. Check if it's a cancellation/reversal (reversal=true or status=0)
@@ -255,14 +257,11 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
       })
 
       if (rpcError) {
-        console.error("[TheoremReach Debug] process_offerwall_cancellation RPC error:", rpcError)
         return new NextResponse(`ERROR: ${rpcError.message}`, { status: 500 })
       }
 
-      console.log(`[TheoremReach Debug] Cancellation Processed: Deducted ${amountLocal} points from user ${userId}. Transaction: ${transId}`)
       return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
     } catch (error: any) {
-      console.error("[TheoremReach Debug] Cancellation execution crash:", error)
       return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
     }
   }
@@ -279,21 +278,17 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     })
 
     if (rpcError) {
-      console.error("[TheoremReach Debug] process_offerwall_completion RPC error:", rpcError)
       return new NextResponse(`ERROR: ${rpcError.message}`, { status: 500 })
     }
 
     const result = data as { success: boolean; message?: string; new_balance?: number }
 
     if (!result.success) {
-      console.warn("[TheoremReach Debug] process_offerwall_completion declined claim:", result.message)
       return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
     }
 
-    console.log(`[TheoremReach Debug] Success: Credited ${amountLocal} points to user ${userId}. Transaction: ${transId}`)
     return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   } catch (error: any) {
-    console.error("[TheoremReach Debug] Route execution crash:", error)
     return new NextResponse(`ERROR: ${error.message || "Internal server error"}`, { status: 500 })
   }
 }
