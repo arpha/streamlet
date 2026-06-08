@@ -77,9 +77,9 @@ export function DailyCheckinModal({
         setEventTickets(data.new_tickets)
 
         // Tampilkan feedback sukses
-        toast.success(`Check-in Hari ke-${data.streak_day} Berhasil!`, {
-          description: `Kamu mendapatkan +${data.reward_xp} XP${
-            data.reward_tickets > 0 ? ` & +${data.reward_tickets} Tiket Event!` : "!"
+        toast.success(`Day ${data.streak_day} Check-in Successful!`, {
+          description: `You received +${data.reward_xp} XP${
+            data.reward_tickets > 0 ? ` & +${data.reward_tickets} Event Ticket!` : "!"
           }`,
           icon: <Sparkles className="w-5 h-5 text-amber-400" />,
         })
@@ -90,11 +90,11 @@ export function DailyCheckinModal({
           onClose()
         }, 1500)
       } else {
-        toast.error(data?.message || "Gagal melakukan absen harian.")
+        toast.error(data?.message || "Failed to claim daily check-in.")
       }
     } catch (err: any) {
       console.error(err)
-      toast.error(err.message || "Terjadi kesalahan koneksi.")
+      toast.error(err.message || "Connection error occurred.")
     } finally {
       setLoading(false)
       setClaimingDay(null)
@@ -117,7 +117,7 @@ export function DailyCheckinModal({
             Daily Check-in
           </DialogTitle>
           <DialogDescription className="text-white/60 font-medium text-xs">
-            Absen harian untuk mengumpulkan XP dan klaim Tiket Event pada hari ke-7!
+            Check-in daily to collect XP and claim an Event Ticket on Day 7!
           </DialogDescription>
         </DialogHeader>
 
@@ -163,7 +163,7 @@ export function DailyCheckinModal({
                 {/* Indikator Active */}
                 {isActive && (
                   <span className="absolute -top-1.5 -right-1 px-1.5 py-0.5 rounded-md bg-amber-500 text-[8px] font-black text-black uppercase tracking-widest animate-pulse">
-                    Klaim
+                    Claim
                   </span>
                 )}
               </div>
@@ -200,7 +200,7 @@ export function DailyCheckinModal({
                     Day 7 Grand Reward
                   </span>
                   <span className="text-sm font-black text-white mt-1 flex items-center gap-1.5">
-                    +{r7.xp} XP & +1 Tiket Event
+                    +{r7.xp} XP & +1 Event Ticket
                   </span>
                 </div>
               </div>
@@ -229,7 +229,7 @@ export function DailyCheckinModal({
             onClick={onClose}
             className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-widest transition-all border border-white/5 hover:border-white/10"
           >
-            Tutup
+            Close
           </button>
         </div>
 

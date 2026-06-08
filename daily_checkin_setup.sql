@@ -68,7 +68,7 @@ BEGIN
 
     -- Validasi: Jika sudah klaim hari ini (sejak 00:00 UTC)
     IF v_last_checkin IS NOT NULL AND v_last_checkin >= v_today_start THEN
-        RETURN json_build_object('success', false, 'message', 'Anda sudah melakukan absen harian hari ini.');
+        RETURN json_build_object('success', false, 'message', 'You have already claimed your daily check-in today.');
     END IF;
 
     -- Tentukan streak baru
@@ -119,7 +119,7 @@ BEGIN
 
     RETURN json_build_object(
         'success', true,
-        'message', 'Absen harian berhasil diklaim!',
+        'message', 'Daily check-in claimed successfully!',
         'streak_day', v_new_streak,
         'reward_xp', v_xp,
         'reward_tickets', v_tickets,
