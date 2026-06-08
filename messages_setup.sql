@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS public.user_messages (
 -- 2. Mengaktifkan Row Level Security (RLS)
 ALTER TABLE public.user_messages ENABLE ROW LEVEL SECURITY;
 
+-- 2b. Berikan hak akses (GRANT) ke role authenticated (user yang login)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_messages TO authenticated;
+
 -- 3. Policy: User bisa melihat (SELECT) pesan miliknya sendiri
 CREATE POLICY "Users can view their own messages"
 ON public.user_messages
