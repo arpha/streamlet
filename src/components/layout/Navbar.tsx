@@ -91,13 +91,11 @@ export function Navbar() {
         </a>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-white/70 hover:text-white glass border-white/10 h-10 w-10 rounded-xl">
-              <MessageSquare className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full neon-glow shadow-[0_0_8px_rgba(244,63,94,0.8)] animate-pulse" />
-              )}
-            </Button>
+          <DropdownMenuTrigger className="relative text-white/70 hover:text-white glass border-white/10 h-10 w-10 rounded-xl flex items-center justify-center cursor-pointer">
+            <MessageSquare className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full neon-glow shadow-[0_0_8px_rgba(244,63,94,0.8)] animate-pulse" />
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-80 glass border-white/10 rounded-2xl mt-2 p-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden" align="end">
             <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
