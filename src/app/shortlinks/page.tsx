@@ -157,7 +157,6 @@ function ShortlinksContent() {
       description: "ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.",
       cooldown: "30 Mins",
       points: getAdjustedPoints(250),
-      xp: 10,
       gradient: "from-purple-500 to-fuchsia-600",
       limit: 1,
       completed: completedShrinkme,
@@ -172,7 +171,6 @@ function ShortlinksContent() {
       description: "Exe.io is a popular high-paying shortlink network. Complete the short captcha step to claim your reward points.",
       cooldown: "30 Mins",
       points: getAdjustedPoints(100),
-      xp: 10,
       gradient: "from-blue-500 to-cyan-600",
       limit: 2,
       completed: completedExeio,
@@ -187,7 +185,6 @@ function ShortlinksContent() {
       description: "FC.LC is a fast and simple shortlink service with a high payout rate. Complete the quick steps to receive your reward.",
       cooldown: "30 Mins",
       points: getAdjustedPoints(100),
-      xp: 10,
       gradient: "from-emerald-500 to-teal-600",
       limit: 2,
       completed: completedFclc,
@@ -202,7 +199,6 @@ function ShortlinksContent() {
       description: "Cuty.io is a fast and secure shortlink service. Complete the verification steps to claim your reward points.",
       cooldown: "30 Mins",
       points: getAdjustedPoints(200),
-      xp: 10,
       gradient: "from-orange-500 to-amber-600",
       limit: 1,
       completed: completedCuty,
@@ -400,9 +396,6 @@ function ShortlinksContent() {
                       <span className="text-xs text-white/40 font-bold uppercase block tracking-wider">Reward</span>
                       <span className="text-2xl font-black font-mono text-fuchsia-400">
                         +{p.points} Points
-                      </span>
-                      <span className="text-[10px] text-emerald-400 font-bold uppercase block">
-                        +{p.xp} XP
                       </span>
                     </div>
 
