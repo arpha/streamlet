@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Loader2, Plus, Trash2, Edit2, CheckCircle2, Flame, Link2, Coins, Users, Trophy } from "lucide-react"
+import { Loader2, Plus, Trash2, Edit2, CheckCircle2, Flame, Link2, Coins, Users, Trophy, Calendar } from "lucide-react"
 import { toast } from "sonner"
 
 interface Task {
@@ -20,6 +20,8 @@ interface Task {
   reward_xp: number
   period: string
   is_active: boolean
+  start_at: string | null
+  end_at: string | null
 }
 
 export default function AdminTasksPage() {
@@ -40,6 +42,8 @@ export default function AdminTasksPage() {
   const [rewardXp, setRewardXp] = useState(10)
   const [period, setPeriod] = useState("daily")
   const [isActive, setIsActive] = useState(true)
+  const [startAt, setStartAt] = useState("")
+  const [endAt, setEndAt] = useState("")
 
   useEffect(() => {
     if (!isAdmin) {
@@ -66,6 +70,13 @@ export default function AdminTasksPage() {
     }
   }
 
+  const toDateTimeLocal = (isoString: string | null) => {
+    if (!isoString) return ""
+    const d = new Date(isoString)
+    const pad = (num: number) => String(num).padStart(2, "0")
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title) {
@@ -83,6 +94,8 @@ export default function AdminTasksPage() {
         reward_xp: Number(rewardXp),
         period,
         is_active: isActive,
+        start_at: startAt ? new Date(startAt).toISOString() : null,
+        end_at: endAt ? new Date(endAt).toISOString() : null,
         updated_at: new Date().toISOString(),
       }
 
@@ -112,6 +125,8 @@ export default function AdminTasksPage() {
       setRewardXp(10)
       setPeriod("daily")
       setIsActive(true)
+      setStartAt("")
+      setEndAt("")
 
       fetchTasks()
     } catch (e: any) {
@@ -130,6 +145,8 @@ export default function AdminTasksPage() {
     setRewardXp(task.reward_xp)
     setPeriod(task.period)
     setIsActive(task.is_active)
+    setStartAt(toDateTimeLocal(task.start_at))
+    setEndAt(toDateTimeLocal(task.end_at))
   }
 
   const handleDelete = async (id: string) => {
@@ -274,6 +291,28 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
+              {/* Date Schedule (start_at & end_at) */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Start Date (Optional)</label>
+                  <Input
+                    type="datetime-local"
+                    value={startAt}
+                    onChange={(e) => setStartAt(e.target.value)}
+                    className="rounded-xl border-white/10 bg-white/5 text-white text-xs"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40">End Date (Optional)</label>
+                  <Input
+                    type="datetime-local"
+                    value={endAt}
+                    onChange={(e) => setEndAt(e.target.value)}
+                    className="rounded-xl border-white/10 bg-white/5 text-white text-xs"
+                  />
+                </div>
+              </div>
+
               {/* Period */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Reset Period</label>
@@ -325,6 +364,8 @@ export default function AdminTasksPage() {
                     onClick={() => {
                       setEditingId(null)
                       setTitle("")
+                      setStartAt("")
+                      setEndAt("")
                     }}
                     className="rounded-xl hover:bg-white/5 text-white/60"
                   >
@@ -350,6 +391,7 @@ export default function AdminTasksPage() {
                   <th className="pb-3">Type</th>
                   <th className="pb-3">Target</th>
                   <th className="pb-3">Reward</th>
+                  <th className="pb-3">Schedule</th>
                   <th className="pb-3">Period</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3 text-right">Actions</th>
@@ -362,7 +404,7 @@ export default function AdminTasksPage() {
                     <td className="py-4">
                       <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]">
                         {getTaskIcon(task.task_type)}
-                        {task.task_type.replace("_", " ")}
+                        {task.task_type.replace(/_/g, " ")}
                       </div>
                     </td>
                     <td className="py-4 font-mono font-bold">{task.target_count}</td>
@@ -371,6 +413,26 @@ export default function AdminTasksPage() {
                         <span className="text-amber-400">+{task.reward_points} Pts</span>
                         <span className="text-cyan-400">+{task.reward_xp} XP</span>
                       </div>
+                    </td>
+                    <td className="py-4 text-[10px] text-white/55">
+                      {task.start_at || task.end_at ? (
+                        <div className="flex flex-col gap-1">
+                          {task.start_at && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-emerald-400 shrink-0" />
+                              {new Date(task.start_at).toLocaleString()}
+                            </span>
+                          )}
+                          {task.end_at && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-rose-400 shrink-0" />
+                              {new Date(task.end_at).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-white/30 italic">Always Active</span>
+                      )}
                     </td>
                     <td className="py-4">
                       <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${
@@ -405,7 +467,7 @@ export default function AdminTasksPage() {
                 ))}
                 {tasks.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center py-8 text-white/30 font-bold">
+                    <td colSpan={8} className="text-center py-8 text-white/30 font-bold">
                       No tasks created yet.
                     </td>
                   </tr>

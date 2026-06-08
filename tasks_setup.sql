@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS public.tasks (
   reward_xp INTEGER NOT NULL,
   period TEXT NOT NULL, -- daily, weekly
   is_active BOOLEAN NOT NULL DEFAULT true,
+  start_at TIMESTAMP WITH TIME ZONE, -- nullable, scheduled start
+  end_at TIMESTAMP WITH TIME ZONE,   -- nullable, scheduled end
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -183,6 +185,8 @@ BEGIN
     ) AS claimed
   FROM public.tasks t
   WHERE t.is_active = true
+    AND (t.start_at IS NULL OR t.start_at <= v_now)
+    AND (t.end_at IS NULL OR t.end_at >= v_now)
   ORDER BY t.period ASC, t.reward_points DESC;
 END;
 $$;
@@ -205,13 +209,19 @@ DECLARE
   v_claimed BOOLEAN;
   v_new_balance NUMERIC;
 BEGIN
-  -- 1. Fetch task details
-  SELECT * INTO v_task FROM public.tasks WHERE id = p_task_id AND is_active = true;
+  v_now := now() AT TIME ZONE 'UTC';
+
+  -- 1. Fetch task details (with scheduling checks)
+  SELECT * INTO v_task FROM public.tasks 
+  WHERE id = p_task_id 
+    AND is_active = true
+    AND (start_at IS NULL OR start_at <= v_now)
+    AND (end_at IS NULL OR end_at >= v_now);
+
   IF NOT FOUND THEN
-    RETURN json_build_object('success', false, 'message', 'Task not found or is inactive');
+    RETURN json_build_object('success', false, 'message', 'Task not found, inactive or out of schedule');
   END IF;
 
-  v_now := now() AT TIME ZONE 'UTC';
   v_period_start := CASE WHEN v_task.period = 'daily' THEN date_trunc('day', v_now) ELSE date_trunc('week', v_now) END;
 
   -- 2. Check if already claimed
