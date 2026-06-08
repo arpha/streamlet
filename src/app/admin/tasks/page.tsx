@@ -173,6 +173,8 @@ export default function AdminTasksPage() {
         return <Coins className="w-4 h-4 text-amber-400" />
       case "referrals":
         return <Users className="w-4 h-4 text-fuchsia-400" />
+      case "daily_tasks_completed":
+        return <CheckCircle2 className="w-4 h-4 text-emerald-400" />
       default:
         return <Trophy className="w-4 h-4 text-primary" />
     }
@@ -234,6 +236,7 @@ export default function AdminTasksPage() {
                   <option value="shortlink_claims" className="bg-[#020617]">Shortlink Claims</option>
                   <option value="offerwall_points" className="bg-[#020617]">Offerwall Points Earned</option>
                   <option value="referrals" className="bg-[#020617]">Referrals Invited</option>
+                  <option value="daily_tasks_completed" className="bg-[#020617]">Completed Daily Tasks</option>
                 </select>
               </div>
 

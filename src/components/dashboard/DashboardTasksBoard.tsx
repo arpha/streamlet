@@ -134,6 +134,8 @@ export function DashboardTasksBoard() {
         return <Coins className="w-5 h-5 text-amber-400" />
       case "referrals":
         return <Users className="w-5 h-5 text-fuchsia-400" />
+      case "daily_tasks_completed":
+        return <CheckCircle2 className="w-5 h-5 text-emerald-400" />
       default:
         return <Trophy className="w-5 h-5 text-primary" />
     }

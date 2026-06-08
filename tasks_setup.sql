@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
-  task_type TEXT NOT NULL, -- faucet_claims, shortlink_claims, offerwall_points, referrals
+  task_type TEXT NOT NULL, -- faucet_claims, shortlink_claims, offerwall_points, referrals, daily_tasks_completed
   target_count INTEGER NOT NULL,
   reward_points INTEGER NOT NULL,
   reward_xp INTEGER NOT NULL,
@@ -125,6 +125,13 @@ BEGIN
           WHERE pr.referred_by_id = p_user_id
             AND pr.created_at >= (CASE WHEN t.period = 'daily' THEN v_today_start ELSE v_week_start END)
         )
+        WHEN t.task_type = 'daily_tasks_completed' THEN (
+          SELECT COUNT(*)::INTEGER FROM public.user_task_claims utc
+          JOIN public.tasks pt ON utc.task_id = pt.id
+          WHERE utc.user_id = p_user_id
+            AND pt.period = 'daily'
+            AND utc.claimed_at >= (CASE WHEN t.period = 'daily' THEN v_today_start ELSE v_week_start END)
+        )
         ELSE 0
       END,
       0
@@ -154,6 +161,13 @@ BEGIN
             SELECT COUNT(*)::INTEGER FROM public.profiles pr
             WHERE pr.referred_by_id = p_user_id
               AND pr.created_at >= (CASE WHEN t.period = 'daily' THEN v_today_start ELSE v_week_start END)
+          )
+          WHEN t.task_type = 'daily_tasks_completed' THEN (
+            SELECT COUNT(*)::INTEGER FROM public.user_task_claims utc
+            JOIN public.tasks pt ON utc.task_id = pt.id
+            WHERE utc.user_id = p_user_id
+              AND pt.period = 'daily'
+              AND utc.claimed_at >= (CASE WHEN t.period = 'daily' THEN v_today_start ELSE v_week_start END)
           )
           ELSE 0
         END,
@@ -228,6 +242,13 @@ BEGIN
       SELECT COUNT(*)::INTEGER FROM public.profiles
       WHERE referred_by_id = p_user_id AND created_at >= v_period_start
     )
+    WHEN v_task.task_type = 'daily_tasks_completed' THEN (
+      SELECT COUNT(*)::INTEGER FROM public.user_task_claims utc
+      JOIN public.tasks pt ON utc.task_id = pt.id
+      WHERE utc.user_id = p_user_id
+        AND pt.period = 'daily'
+        AND utc.claimed_at >= v_period_start
+    )
     ELSE 0
   END;
 
@@ -262,6 +283,7 @@ VALUES
   ('Claim Faucet 10 Times', 'faucet_claims', 10, 600, 25, 'daily', true),
   ('Complete 5 Shortlinks', 'shortlink_claims', 5, 1000, 50, 'daily', true),
   ('Earn 2000 Points from Offerwalls', 'offerwall_points', 2000, 1500, 100, 'daily', true),
-  ('Refer 5 Active Users', 'referrals', 5, 5000, 300, 'weekly', true),
-  ('Complete 30 Shortlinks', 'shortlink_claims', 30, 7500, 400, 'weekly', true)
+  ('Complete 5 Daily Tasks this Week', 'daily_tasks_completed', 5, 2000, 100, 'weekly', true),
+  ('Complete 10 Daily Tasks this Week', 'daily_tasks_completed', 10, 5000, 250, 'weekly', true),
+  ('Complete 15 Daily Tasks this Week', 'daily_tasks_completed', 15, 10000, 500, 'weekly', true)
 ON CONFLICT DO NOTHING;
