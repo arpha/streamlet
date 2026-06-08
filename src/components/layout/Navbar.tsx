@@ -216,12 +216,7 @@ export function Navbar() {
                 </span>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-white/10 text-white/70 focus:text-white transition-all">
-              <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center border border-white/5">
-                <Settings className="w-4 h-4" />
-              </div>
-              <span className="font-bold uppercase text-xs tracking-widest">Settings</span>
-            </DropdownMenuItem>
+
             {isAdmin && (
               <>
                 <DropdownMenuItem 
