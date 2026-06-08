@@ -124,35 +124,74 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     }
   }
 
-  // 3. Extract parameters (prioritizing bodyParams, then queryParams)
-  userId = cleanValue(bodyParams["user_id"] || bodyParams["ext_user_id"] || bodyParams["uid"] || bodyParams["subid"] || bodyParams["tr_user_id"])
-  if (!userId) {
-    userId = cleanValue(queryParams["user_id"] || queryParams["ext_user_id"] || queryParams["uid"] || queryParams["subid"] || queryParams["tr_user_id"])
-  }
+  // 3. Extract parameters case-by-case (properly handling fallbacks by cleaning first)
+  userId = cleanValue(bodyParams["user_id"]) ||
+           cleanValue(bodyParams["ext_user_id"]) ||
+           cleanValue(bodyParams["uid"]) ||
+           cleanValue(bodyParams["subid"]) ||
+           cleanValue(bodyParams["tr_user_id"]) ||
+           cleanValue(queryParams["user_id"]) ||
+           cleanValue(queryParams["ext_user_id"]) ||
+           cleanValue(queryParams["uid"]) ||
+           cleanValue(queryParams["subid"]) ||
+           cleanValue(queryParams["tr_user_id"])
 
-  transId = cleanValue(bodyParams["tx_id"] || bodyParams["trans_id"] || bodyParams["transaction_id"] || bodyParams["transid"] || bodyParams["txid"] || bodyParams["tr_tx_id"])
-  if (!transId) {
-    transId = cleanValue(queryParams["tx_id"] || queryParams["trans_id"] || queryParams["transaction_id"] || queryParams["transid"] || queryParams["txid"] || queryParams["tr_tx_id"])
-  }
+  transId = cleanValue(bodyParams["tx_id"]) ||
+            cleanValue(bodyParams["trans_id"]) ||
+            cleanValue(bodyParams["transaction_id"]) ||
+            cleanValue(bodyParams["transid"]) ||
+            cleanValue(bodyParams["txid"]) ||
+            cleanValue(bodyParams["tr_tx_id"]) ||
+            cleanValue(queryParams["tx_id"]) ||
+            cleanValue(queryParams["trans_id"]) ||
+            cleanValue(queryParams["transaction_id"]) ||
+            cleanValue(queryParams["transid"]) ||
+            cleanValue(queryParams["txid"]) ||
+            cleanValue(queryParams["tr_tx_id"])
 
-  amountLocal = cleanValue(bodyParams["reward"] || bodyParams["amount_local"] || bodyParams["points"] || bodyParams["amount"] || bodyParams["tr_reward"])
-  if (!amountLocal) {
-    amountLocal = cleanValue(queryParams["reward"] || queryParams["amount_local"] || queryParams["points"] || queryParams["amount"] || queryParams["tr_reward"])
-  }
+  amountLocal = cleanValue(bodyParams["reward"]) ||
+                cleanValue(bodyParams["amount_local"]) ||
+                cleanValue(bodyParams["points"]) ||
+                cleanValue(bodyParams["amount"]) ||
+                cleanValue(bodyParams["tr_reward"]) ||
+                cleanValue(queryParams["reward"]) ||
+                cleanValue(queryParams["amount_local"]) ||
+                cleanValue(queryParams["points"]) ||
+                cleanValue(queryParams["amount"]) ||
+                cleanValue(queryParams["tr_reward"])
 
-  amountUsd = cleanValue(bodyParams["currency"] || bodyParams["amount_usd"] || bodyParams["payout"] || bodyParams["usd"] || bodyParams["payout_usd"])
-  if (!amountUsd) {
-    amountUsd = cleanValue(queryParams["currency"] || queryParams["amount_usd"] || queryParams["payout"] || queryParams["usd"] || queryParams["payout_usd"])
-  }
+  amountUsd = cleanValue(bodyParams["currency"]) ||
+              cleanValue(bodyParams["amount_usd"]) ||
+              cleanValue(bodyParams["payout"]) ||
+              cleanValue(bodyParams["usd"]) ||
+              cleanValue(bodyParams["payout_usd"]) ||
+              cleanValue(queryParams["currency"]) ||
+              cleanValue(queryParams["amount_usd"]) ||
+              cleanValue(queryParams["payout"]) ||
+              cleanValue(queryParams["usd"]) ||
+              cleanValue(queryParams["payout_usd"])
 
-  hash = cleanValue(bodyParams["hash"] || bodyParams["signature"] || bodyParams["sig"] || bodyParams["secure_hash"] || bodyParams["enc"])
-  if (!hash) {
-    hash = cleanValue(queryParams["hash"] || queryParams["signature"] || queryParams["sig"] || queryParams["secure_hash"] || queryParams["enc"])
-  }
+  hash = cleanValue(bodyParams["hash"]) ||
+         cleanValue(bodyParams["signature"]) ||
+         cleanValue(bodyParams["sig"]) ||
+         cleanValue(bodyParams["secure_hash"]) ||
+         cleanValue(bodyParams["enc"]) ||
+         cleanValue(queryParams["hash"]) ||
+         cleanValue(queryParams["signature"]) ||
+         cleanValue(queryParams["sig"]) ||
+         cleanValue(queryParams["secure_hash"]) ||
+         cleanValue(queryParams["enc"])
 
-  status = cleanValue(bodyParams["status"] || queryParams["status"] || bodyParams["tr_status"] || queryParams["tr_status"])
-  reversal = cleanValue(bodyParams["reversal"] || queryParams["reversal"])
-  debug = cleanValue(bodyParams["debug"] || queryParams["debug"])
+  status = cleanValue(bodyParams["status"]) ||
+           cleanValue(queryParams["status"]) ||
+           cleanValue(bodyParams["tr_status"]) ||
+           cleanValue(queryParams["tr_status"])
+
+  reversal = cleanValue(bodyParams["reversal"]) ||
+             cleanValue(queryParams["reversal"])
+
+  debug = cleanValue(bodyParams["debug"]) ||
+          cleanValue(queryParams["debug"])
 
   amountUsd = amountUsd || "0"
 
