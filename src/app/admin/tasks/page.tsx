@@ -294,7 +294,18 @@ export default function AdminTasksPage() {
               {/* Date Schedule (start_at & end_at) */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Start Date (Optional)</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Start Date (Optional)</label>
+                    {startAt && (
+                      <button
+                        type="button"
+                        onClick={() => setStartAt("")}
+                        className="text-[9px] font-bold text-rose-400 hover:text-rose-300 uppercase tracking-wider transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <Input
                     type="datetime-local"
                     value={startAt}
@@ -303,7 +314,18 @@ export default function AdminTasksPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40">End Date (Optional)</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">End Date (Optional)</label>
+                    {endAt && (
+                      <button
+                        type="button"
+                        onClick={() => setEndAt("")}
+                        className="text-[9px] font-bold text-rose-400 hover:text-rose-300 uppercase tracking-wider transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <Input
                     type="datetime-local"
                     value={endAt}
