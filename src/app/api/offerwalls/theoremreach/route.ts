@@ -24,85 +24,59 @@ function cleanValue(val: string | null | undefined): string | null {
   return trimmed
 }
 
-// Verify signature supporting multiple formats & algorithms (SHA3-256, SHA256, SHA1, MD5)
+// Verify signature supporting HMAC-SHA1 (base64url as per TheoremReach docs)
 function verifyTheoremReachSignature(
   url: string,
   secretKey: string,
   receivedSignature: string
 ): boolean {
   try {
-    // 1. Reconstruct the URL without the signature parameters to check standard URL hashing
-    const urlObj = new URL(url)
-    const sigParams = ["signature", "sig", "hash", "enc"]
-    let sigParamName = ""
-
-    for (const param of sigParams) {
-      if (urlObj.searchParams.has(param)) {
-        sigParamName = param
-      }
-    }
-
+    // 1. Remove the signature/hash parameters from the URL string
     let urlWithoutSig = url
-    if (sigParamName) {
-      // Remove signature param while preserving exact parameter order
-      const regex = new RegExp(`[?&]${sigParamName}=[^&]*`, "i")
-      urlWithoutSig = url.replace(regex, "")
-      // Clean up leading/trailing symbols
-      urlWithoutSig = urlWithoutSig.replace(/\?&/, "?").replace(/\?$/, "")
+    const sigParams = ["hash", "signature", "sig", "enc"]
+    
+    for (const param of sigParams) {
+      const regex = new RegExp(`[?&]${param}=[^&]*`, "i")
+      urlWithoutSig = urlWithoutSig.replace(regex, "")
+    }
+    // Clean up trailing symbols
+    urlWithoutSig = urlWithoutSig.replace(/\?&/, "?").replace(/\?$/, "")
+
+    // 2. Compute RFC 2104-compliant HMAC signature with the SHA-1 hash algorithm
+    const hmacBase64 = crypto
+      .createHmac("sha1", secretKey)
+      .update(urlWithoutSig)
+      .digest("base64")
+
+    // 3. Substitute characters as specified in TheoremReach docs:
+    // + -> -
+    // / -> _
+    // = -> empty string (base64url format)
+    const computedHash = hmacBase64
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "")
+
+    console.log("[TheoremReach Debug] HMAC-SHA1 Verification details:", {
+      urlWithoutSig,
+      receivedSignature,
+      computedHash
+    })
+
+    if (computedHash === receivedSignature) {
+      console.log("[TheoremReach Debug] Signature verified using RFC 2104 HMAC-SHA1 URL Base64Url")
+      return true
     }
 
-    const algorithms = ["sha3-256", "sha256", "sha1", "md5"]
+    // 4. Fallbacks for other possible hashing config formats
+    const computedHashHex = crypto
+      .createHmac("sha1", secretKey)
+      .update(urlWithoutSig)
+      .digest("hex")
 
-    for (const algo of algorithms) {
-      try {
-        // Method A: Standard TheoremReach URL Hashing ({Request URL} + {Secret Key})
-        const dataA = urlWithoutSig + secretKey
-        const hashA = crypto.createHash(algo).update(dataA).digest("hex")
-        if (hashA.toLowerCase() === receivedSignature.toLowerCase()) {
-          console.log(`[TheoremReach Debug] Signature verified using URL Hashing (Method A) with ${algo}`)
-          return true
-        }
-
-        // Method B: HMAC URL Hashing
-        const hashB = crypto.createHmac(algo, secretKey).update(urlWithoutSig).digest("hex")
-        if (hashB.toLowerCase() === receivedSignature.toLowerCase()) {
-          console.log(`[TheoremReach Debug] Signature verified using HMAC URL Hashing (Method B) with ${algo}`)
-          return true
-        }
-      } catch (e) {}
-    }
-
-    // 2. Fallback to parameter-based hashing
-    const params = urlObj.searchParams
-    const userId = params.get("user_id") || ""
-    const reward = params.get("reward") || ""
-    const txId = params.get("tx_id") || ""
-    const status = params.get("status") || ""
-
-    const parameterStrings = [
-      `${txId}-${secretKey}`, // CPX style
-      `${txId}${secretKey}`,
-      `${userId}${txId}${reward}${secretKey}`, // BitcoTasks style
-      `${userId}${reward}${txId}${status}${secretKey}`,
-      `${userId}-${reward}-${txId}-${status}-${secretKey}`
-    ]
-
-    for (const algo of algorithms) {
-      for (const data of parameterStrings) {
-        try {
-          const hashVal = crypto.createHash(algo).update(data).digest("hex")
-          if (hashVal.toLowerCase() === receivedSignature.toLowerCase()) {
-            console.log(`[TheoremReach Debug] Signature verified using Parameter Hashing (data: ${data}) with ${algo}`)
-            return true
-          }
-
-          const hmacVal = crypto.createHmac(algo, secretKey).update(data).digest("hex")
-          if (hmacVal.toLowerCase() === receivedSignature.toLowerCase()) {
-            console.log(`[TheoremReach Debug] Signature verified using Parameter HMAC (data: ${data}) with ${algo}`)
-            return true
-          }
-        } catch (e) {}
-      }
+    if (computedHashHex.toLowerCase() === receivedSignature.toLowerCase()) {
+      console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 URL Hex")
+      return true
     }
   } catch (error: any) {
     console.error("[TheoremReach Debug] Signature verification error:", error)
@@ -118,6 +92,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   let amountUsd: string | null = null
   let hash: string | null = null
   let status: string | null = null
+  let reversal: string | null = null
+  let debug: string | null = null
 
   console.log(`[TheoremReach Debug] Incoming ${isPost ? "POST" : "GET"} request:`, req.url)
 
@@ -167,22 +143,24 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     amountLocal = cleanValue(queryParams["reward"] || queryParams["amount_local"] || queryParams["points"] || queryParams["amount"])
   }
 
-  amountUsd = cleanValue(bodyParams["amount_usd"] || bodyParams["payout"] || bodyParams["usd"] || bodyParams["payout_usd"])
+  amountUsd = cleanValue(bodyParams["currency"] || bodyParams["amount_usd"] || bodyParams["payout"] || bodyParams["usd"] || bodyParams["payout_usd"])
   if (!amountUsd) {
-    amountUsd = cleanValue(queryParams["amount_usd"] || queryParams["payout"] || queryParams["usd"] || queryParams["payout_usd"])
+    amountUsd = cleanValue(queryParams["currency"] || queryParams["amount_usd"] || queryParams["payout"] || queryParams["usd"] || queryParams["payout_usd"])
   }
 
-  hash = cleanValue(bodyParams["signature"] || bodyParams["sig"] || bodyParams["hash"] || bodyParams["secure_hash"] || bodyParams["enc"])
+  hash = cleanValue(bodyParams["hash"] || bodyParams["signature"] || bodyParams["sig"] || bodyParams["secure_hash"] || bodyParams["enc"])
   if (!hash) {
-    hash = cleanValue(queryParams["signature"] || queryParams["sig"] || queryParams["hash"] || queryParams["secure_hash"] || queryParams["enc"])
+    hash = cleanValue(queryParams["hash"] || queryParams["signature"] || queryParams["sig"] || queryParams["secure_hash"] || queryParams["enc"])
   }
 
   status = cleanValue(bodyParams["status"] || queryParams["status"])
+  reversal = cleanValue(bodyParams["reversal"] || queryParams["reversal"])
+  debug = cleanValue(bodyParams["debug"] || queryParams["debug"])
 
   // Default USD payout value to 0 if missing
   amountUsd = amountUsd || "0"
 
-  console.log("[TheoremReach Debug] Extracted values:", { userId, transId, amountLocal, amountUsd, hash, status })
+  console.log("[TheoremReach Debug] Extracted values:", { userId, transId, amountLocal, amountUsd, hash, status, reversal, debug })
 
   if (!userId || !transId || !amountLocal || !hash) {
     console.warn("[TheoremReach Debug] Blocked: Missing required parameters")
@@ -203,15 +181,21 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     return new NextResponse("ERROR: Signature mismatch", { status: 400 })
   }
 
-  // 6. Validate UUID format for userId
+  // 6. Short-circuit if debug = true (TheoremReach test request)
+  if (debug === "true" || debug === "1") {
+    console.log(`[TheoremReach Debug] Success (DEBUG MODE): Bypassed DB credit for user: ${userId}. Reward: ${amountLocal} Pts. Transaction: ${transId}`)
+    return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
+  }
+
+  // 7. Validate UUID format for userId
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(userId)) {
     console.warn(`[TheoremReach Debug] Blocked: Invalid UUID format for userId: ${userId}`)
     return new NextResponse("ERROR: Invalid user_id format", { status: 400 })
   }
 
-  // 7. Check if it's a cancellation/reversal (TheoremReach status: 0 = reverse, 1 = credit)
-  const isCanceled = status === "0"
+  // 8. Check if it's a cancellation/reversal (reversal=true or status=0)
+  const isCanceled = (reversal === "true" || reversal === "1" || status === "0")
 
   if (isCanceled) {
     try {
