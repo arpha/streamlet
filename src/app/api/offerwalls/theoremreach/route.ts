@@ -31,27 +31,44 @@ function verifyTheoremReachSignature(
   receivedSignature: string
 ): boolean {
   try {
-    const sigParams = ["hash", "signature", "sig", "enc"]
-    
-    // We test multiple URL variations to account for server-side percent-encoding differences
+    // 1. Generate variations of the URL to cover encoding discrepancies
     const urlVariations = [
       url,
       url.replace(/%25/g, "%"),
       decodeURIComponent(url)
     ]
-
+    
+    // 2. Generate variations to cover www vs non-www host discrepancies
+    const hostSwappedVariations: string[] = []
     for (const currentUrl of urlVariations) {
-      let urlWithoutSig = currentUrl
-      for (const param of sigParams) {
-        // Strip the signature parameter (both exact and generic patterns)
-        const regex = new RegExp(`[?&]${param}=${receivedSignature}`, "i")
-        urlWithoutSig = urlWithoutSig.replace(regex, "")
-        const fallbackRegex = new RegExp(`[?&]${param}=[^&]*`, "i")
-        urlWithoutSig = urlWithoutSig.replace(fallbackRegex, "")
+      if (currentUrl.includes("://www.streamlet.fun")) {
+        hostSwappedVariations.push(currentUrl.replace("://www.streamlet.fun", "://streamlet.fun"))
+      } else if (currentUrl.includes("://streamlet.fun")) {
+        hostSwappedVariations.push(currentUrl.replace("://streamlet.fun", "://www.streamlet.fun"))
       }
+    }
+    urlVariations.push(...hostSwappedVariations)
+
+    // 3. Find the parameter key that has the receivedSignature value
+    let sigParamName = "hash" // default fallback
+    try {
+      const urlObj = new URL(url)
+      for (const [key, value] of urlObj.searchParams.entries()) {
+        if (value === receivedSignature) {
+          sigParamName = key
+          break
+        }
+      }
+    } catch(e) {}
+
+    // 4. Test each variation
+    for (const currentUrl of urlVariations) {
+      // ONLY strip the detected signature parameter (e.g. hash)
+      const regex = new RegExp(`[?&]${sigParamName}=[^&]*`, "i")
+      let urlWithoutSig = currentUrl.replace(regex, "")
       urlWithoutSig = urlWithoutSig.replace(/\?&/, "?").replace(/\?$/, "")
 
-      // 1. Compute RFC 2104 HMAC-SHA1
+      // Compute RFC 2104 HMAC-SHA1 Base64url
       const hmacBase64 = crypto
         .createHmac("sha1", secretKey)
         .update(urlWithoutSig)
@@ -61,18 +78,18 @@ function verifyTheoremReachSignature(
         .replace(/=/g, "")
 
       if (hmacBase64 === receivedSignature) {
-        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Base64url:", urlWithoutSig)
+        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Base64url with URL:", urlWithoutSig)
         return true
       }
 
-      // 2. Compute RFC 2104 HMAC-SHA1 Hex
+      // Compute RFC 2104 HMAC-SHA1 Hex fallback
       const hmacHex = crypto
         .createHmac("sha1", secretKey)
         .update(urlWithoutSig)
         .digest("hex")
 
       if (hmacHex.toLowerCase() === receivedSignature.toLowerCase()) {
-        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Hex:", urlWithoutSig)
+        console.log("[TheoremReach Debug] Signature verified using HMAC-SHA1 Hex with URL:", urlWithoutSig)
         return true
       }
     }
