@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase"
 import { formatDistanceToNow } from 'date-fns'
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
+import { DashboardTasksBoard } from "@/components/dashboard/DashboardTasksBoard"
 
 const container = {
   hidden: { opacity: 0 },
@@ -686,7 +687,8 @@ function HomeContent() {
         </Card>
       </motion.div>
 
-
+      {/* DAILY & WEEKLY TASKS BOARD */}
+      <DashboardTasksBoard />
 
       <motion.div 
         variants={container}
