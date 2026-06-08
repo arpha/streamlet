@@ -182,7 +182,7 @@ export function Navbar() {
                 <span className="text-[9px] text-white/30 font-black uppercase tracking-widest mb-1">Storage</span>
                 <span className="font-bold text-xs text-white flex items-center gap-1.5">
                   <Ticket className="w-3.5 h-3.5 text-amber-400" />
-                  {eventTickets} Tiket Event
+                  {eventTickets} Event Ticket{eventTickets === 1 ? "" : "s"}
                 </span>
               </div>
             </DropdownMenuItem>
