@@ -36,6 +36,22 @@ function getDebugSignatureDetails(
       url.replace(/%25/g, "%"),
       decodeURIComponent(url)
     ]
+
+    // Restore percent signs if stripped by gateway/runtime
+    const restoredPlaceholderVariations: string[] = []
+    for (const currentUrl of urlVariations) {
+      let replaced = currentUrl
+      replaced = replaced.replace(/user_id=USER_ID/g, "user_id=%USER_ID%")
+      replaced = replaced.replace(/reward=REWARD/g, "reward=%REWARD%")
+      replaced = replaced.replace(/tx_id=TRANSACTION_ID/g, "tx_id=%TRANSACTION_ID%")
+      replaced = replaced.replace(/status=STATUS/g, "status=%STATUS%")
+      replaced = replaced.replace(/signature=SIGNATURE/g, "signature=%SIGNATURE%")
+      
+      if (replaced !== currentUrl) {
+        restoredPlaceholderVariations.push(replaced)
+      }
+    }
+    urlVariations.push(...restoredPlaceholderVariations)
     
     const hostSwappedVariations: string[] = []
     for (const currentUrl of urlVariations) {
