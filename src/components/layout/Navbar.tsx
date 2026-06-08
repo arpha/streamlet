@@ -15,17 +15,47 @@ import { useStore } from "@/store/useStore"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { Switch } from "@/components/ui/switch"
+import { useMaintenance } from "@/components/providers/MaintenanceProvider"
 
 import { MessageModal } from "@/components/messages/MessageModal"
 
 export function Navbar() {
   const { username, toggleSidebar, isAdmin, id: userId, eventTickets } = useStore()
+  const { maintenance, setMaintenance } = useMaintenance()
   const supabase = createClient()
   const router = useRouter()
 
   const [messages, setMessages] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [selectedMessage, setSelectedMessage] = useState<any | null>(null)
+
+  const handleToggleMaintenance = async () => {
+    try {
+      const nextState = !maintenance.enabled
+      const { error } = await supabase
+        .from("system_settings")
+        .update({
+          value: {
+            enabled: nextState,
+            message: maintenance.message || "Kami sedang melakukan pemeliharaan sistem. Silakan kembali beberapa saat lagi."
+          }
+        })
+        .eq("key", "maintenance_mode")
+
+      if (error) throw error
+
+      setMaintenance({
+        ...maintenance,
+        enabled: nextState
+      })
+
+      toast.success(nextState ? "Mode Pemeliharaan Diaktifkan!" : "Mode Pemeliharaan Dinonaktifkan!")
+    } catch (e: any) {
+      toast.error("Gagal mengubah mode pemeliharaan: " + e.message)
+    }
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -212,6 +242,24 @@ export function Navbar() {
                   </div>
                   <span className="font-bold uppercase text-xs tracking-widest">Admin Messages</span>
                 </DropdownMenuItem>
+                <div 
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all mt-1 select-none"
+                  onClick={(e) => {
+                    // Prevent closing the dropdown when clicking the row
+                    e.stopPropagation();
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/20">
+                      <Settings className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <span className="font-bold uppercase text-xs tracking-widest text-amber-400">Maintenance</span>
+                  </div>
+                  <Switch 
+                    checked={maintenance.enabled}
+                    onCheckedChange={handleToggleMaintenance}
+                  />
+                </div>
               </>
             )}
             <DropdownMenuSeparator className="bg-white/10 mx-2" />
