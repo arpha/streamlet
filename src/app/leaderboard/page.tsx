@@ -262,7 +262,7 @@ export default function LeaderboardPage() {
             <iframe 
               data-aa='2441223' 
               src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-              style={{ border: 0, padding: 0, width: '100%', height: '90px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+              style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
             />
           </div>
         </div>
