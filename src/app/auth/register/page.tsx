@@ -37,6 +37,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [agreeTerms, setAgreeTerms] = useState(false)
 
   // Turnstile states
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
@@ -112,6 +113,11 @@ export default function RegisterPage() {
   }
 
   const onSubmit = async (values: RegisterValues) => {
+    if (!agreeTerms) {
+      toast.error("Please agree to our Terms and Conditions.")
+      return
+    }
+
     if (!turnstileToken) {
       toast.error("Please complete the security check.")
       return
@@ -319,15 +325,41 @@ export default function RegisterPage() {
                  </div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-3">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-emerald-400/80 font-bold leading-relaxed uppercase">By signing up, you agree to our terms and conditions.</p>
+              <div 
+                onClick={() => setAgreeTerms(!agreeTerms)}
+                className={`p-3 rounded-2xl border flex items-center gap-3 cursor-pointer select-none transition-all duration-300 ${
+                  agreeTerms 
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+                    : "bg-white/5 border-white/10 text-white/50 hover:bg-white/[0.08]"
+                }`}
+              >
+                <div className="relative flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <CheckCircle2 className={`w-4 h-4 transition-colors ${agreeTerms ? "text-emerald-400" : "text-white/20"}`} />
+                </div>
+                <p className="text-[10px] font-bold leading-relaxed uppercase">
+                  By signing up, you agree to our{" "}
+                  <Link 
+                    href="/terms" 
+                    target="_blank"
+                    className={`underline hover:text-cyan-300 transition-colors ${agreeTerms ? "text-emerald-400" : "text-white/60"}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms and Conditions
+                  </Link>
+                  .
+                </p>
               </div>
 
               <Button 
-                className={`w-full h-14 text-white rounded-2xl font-black text-lg neon-glow transition-all active:scale-95 gap-3 mt-4 uppercase ${turnstileToken ? 'bg-gradient-to-r from-primary to-fuchsia-600 hover:from-primary/90 hover:to-fuchsia-600/90' : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'}`} 
+                className={`w-full h-14 text-white rounded-2xl font-black text-lg neon-glow transition-all active:scale-95 gap-3 mt-4 uppercase ${turnstileToken && agreeTerms ? 'bg-gradient-to-r from-primary to-fuchsia-600 hover:from-primary/90 hover:to-fuchsia-600/90' : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/10'}`} 
                 type="submit" 
-                disabled={loading || !turnstileToken}
+                disabled={loading || !turnstileToken || !agreeTerms}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
                 Register Now
