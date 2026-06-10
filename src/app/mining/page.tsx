@@ -509,6 +509,21 @@ export default function MiningPage() {
                         {statusBadge}
                       </CardHeader>
 
+                      {/* Miner visual illustration */}
+                      <div className="relative w-full h-32 flex items-center justify-center bg-gradient-to-b from-white/[0.01] to-transparent border-b border-white/5 overflow-hidden bg-black/20">
+                        <img 
+                          src={miner.miner_type === 'coal' ? '/coal_miner.png' : miner.miner_type === 'iron' ? '/iron_miner.png' : '/gold_miner.png'} 
+                          alt={miner.miner_type}
+                          className={`w-24 h-24 object-contain transition-all duration-500 group-hover:scale-110 ${status === 'mining' ? 'animate-pulse' : 'brightness-50'}`}
+                        />
+                        {status === 'mining' && (
+                          <span className="absolute bottom-2.5 right-4 flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                        )}
+                      </div>
+
                       <CardContent className="p-6 space-y-6">
                         {/* Progress and status details */}
                         <div className="space-y-4">
@@ -670,6 +685,15 @@ export default function MiningPage() {
                         </div>
                       </div>
                     </CardHeader>
+
+                    {/* Miner visual illustration */}
+                    <div className="relative w-full h-40 flex items-center justify-center bg-gradient-to-b from-white/[0.01] to-transparent border-b border-white/5 overflow-hidden bg-black/20">
+                      <img 
+                        src={item.type === 'coal' ? '/coal_miner.png' : item.type === 'iron' ? '/iron_miner.png' : '/gold_miner.png'} 
+                        alt={item.name}
+                        className="w-32 h-32 object-contain transition-all duration-500 group-hover:scale-110"
+                      />
+                    </div>
 
                     <CardContent className="p-8 space-y-6 flex-grow flex flex-col justify-between">
                       <p className="text-white/60 text-xs font-semibold leading-relaxed">
