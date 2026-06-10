@@ -396,7 +396,7 @@ function FaucetContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 pb-10 px-4">
+    <div className="max-w-4xl mx-auto space-y-10 pb-10 px-4">
       {/* ADBLOCK DETECTOR */}
       <AdBlockDetector onDetect={setAdBlockActive} />
       {adBlockActive && <AntiAdBlockModal />}
@@ -413,17 +413,6 @@ function FaucetContent() {
         strategy="afterInteractive"
       />
 
-      {/* TOP BANNER */}
-      <div className="w-full">
-        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-          <iframe 
-            data-aa='2441223' 
-            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-            style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-      </div>
-
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-fuchsia-400 animate-pulse" />
@@ -433,18 +422,7 @@ function FaucetContent() {
         <p className="text-white/60 font-medium italic">Complete the challenge to earn {rewardAmount} points!</p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-12 items-start">
-        {/* LEFT BANNER */}
-        <div className="hidden lg:block lg:col-span-2 sticky top-24">
-          <iframe 
-            data-aa="2441223" 
-            src="//acceptable.a-ads.com/2441223/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-
-        {/* MAIN CONTENT */}
-        <div className="lg:col-span-8 space-y-8">
+      <div className="space-y-8">
           <Card className="glass relative overflow-hidden group border-white/10 rounded-[3rem] shadow-2xl">
             <div className="absolute top-0 right-0 p-10 opacity-5">
               <Coins className="w-60 h-60 text-white" />
@@ -590,27 +568,6 @@ function FaucetContent() {
               </AnimatePresence>
             </CardContent>
           </Card>
-        </div>
-
-        {/* RIGHT BANNER */}
-        <div className="hidden lg:block lg:col-span-2 sticky top-24">
-          <iframe 
-            data-aa="2441223" 
-            src="//acceptable.a-ads.com/2441223/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '120px', height: '500px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-      </div>
-
-      {/* BOTTOM BANNER */}
-      <div className="w-full">
-        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-          <iframe 
-            data-aa='2441223' 
-            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-            style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
       </div>
     </div>
   )

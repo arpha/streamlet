@@ -441,18 +441,6 @@ function ShortlinksContent() {
                   </div>
                 </div>
 
-                {/* Show AD BANNER MIDDLE only after the first item */}
-                {idx === 0 && (
-                  <div className="w-full py-2">
-                    <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-                      <iframe 
-                        data-aa='2441223' 
-                        src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-                        style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
 

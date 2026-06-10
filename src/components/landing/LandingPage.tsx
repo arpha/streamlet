@@ -251,16 +251,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* AD BANNER */}
-      <div className="w-full max-w-7xl mx-auto px-6 pt-12">
-        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-          <iframe 
-            data-aa='2441223' 
-            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-            style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-      </div>
 
       {/* Features Grid */}
       <section id="features" className="py-24 px-6">

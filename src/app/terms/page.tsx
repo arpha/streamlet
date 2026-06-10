@@ -183,16 +183,6 @@ export default function TermsPage() {
         </motion.div>
       </main>
 
-      {/* Ad Banner */}
-      <div className="w-full max-w-4xl mx-auto px-6 mb-8 relative z-10">
-        <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-          <iframe 
-            data-aa='2441223' 
-            src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-            style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-          />
-        </div>
-      </div>
 
       {/* Footer */}
       <footer className="w-full py-8 border-t border-white/5 px-6 mt-6 relative z-10">

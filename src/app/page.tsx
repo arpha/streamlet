@@ -722,19 +722,6 @@ function HomeContent() {
         ))}
       </motion.div>
 
-      {/* Ad Banner */}
-      <div className="w-full flex flex-col items-center justify-center gap-2">
-        <span className="text-[9px] font-black uppercase tracking-widest text-white/20">Sponsored Advertisement</span>
-        <div className="w-full max-w-4xl mx-auto px-6 relative z-10">
-          <div id="frame" style={{ width: '100%', margin: 'auto', position: 'relative', zIndex: 99998 }}>
-            <iframe 
-              data-aa='2441223' 
-              src='//acceptable.a-ads.com/2441223/?size=Adaptive'
-              style={{ border: 0, padding: 0, width: '70%', height: 'auto', overflow: 'hidden', display: 'block', margin: 'auto' }}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Charts & History */}
       <div className="grid gap-8 md:grid-cols-5">
