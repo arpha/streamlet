@@ -38,6 +38,31 @@ export function Sidebar() {
   const pathname = usePathname()
   const { isSidebarOpen, toggleSidebar, id: userId, balance } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
+  const [surveysAvailable, setSurveysAvailable] = useState(false)
+
+  // Check survey availability periodically
+  useEffect(() => {
+    if (!userId) {
+      setSurveysAvailable(false)
+      return
+    }
+
+    async function checkSurveys() {
+      try {
+        const res = await fetch(`/api/surveys/check?user_id=${userId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSurveysAvailable(data.surveys_available === true)
+        }
+      } catch {
+        // Silently fail — don't break sidebar
+      }
+    }
+
+    checkSurveys()
+    const interval = setInterval(checkSurveys, 5 * 60 * 1000) // every 5 minutes
+    return () => clearInterval(interval)
+  }, [userId])
 
   useEffect(() => {
     if (!userId) {
@@ -194,6 +219,13 @@ export function Sidebar() {
                     "w-6 h-6 transition-transform duration-300 group-hover:scale-110",
                     isActive ? "text-white" : ""
                   )} />
+                  {/* Pulsing green dot for Offerwalls when surveys are available */}
+                  {item.name === "Offerwalls" && surveysAvailable && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-emerald-300/50" />
+                    </span>
+                  )}
                 </div>
                 {isSidebarOpen && (
                   <motion.span 
@@ -205,6 +237,11 @@ export function Sidebar() {
                     {item.comingSoon && (
                       <span className="text-[9px] bg-white/10 text-white/50 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider">
                         Soon
+                      </span>
+                    )}
+                    {item.name === "Offerwalls" && surveysAvailable && (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider animate-pulse ml-2 flex-shrink-0">
+                        Surveys Live
                       </span>
                     )}
                     {item.name === "Faucet" && faucetCooldown > 0 && (
