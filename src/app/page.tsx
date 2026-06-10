@@ -578,7 +578,7 @@ function HomeContent() {
           <CardContent className="p-8 md:p-10 relative z-10">
             {/* HighPerformanceFormat Banner Ad */}
             <div className="w-full mb-8 flex justify-center">
-              <div id="dashboard-banner-ad" ref={(el) => {
+              <div id="db-top-frame-element" ref={(el) => {
                 if (el && !el.dataset.adLoaded) {
                   el.dataset.adLoaded = "true"
                   const configScript = document.createElement("script")
