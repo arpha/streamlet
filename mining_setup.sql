@@ -158,10 +158,13 @@ DECLARE
   v_multiplier NUMERIC;
   v_miner RECORD;
   v_end_time TIMESTAMP WITH TIME ZONE;
-  v_active_hours NUMERIC;
+  v_active_seconds NUMERIC;
   v_total_return NUMERIC;
   v_hourly_rate NUMERIC;
+  v_seconds_rate NUMERIC;
   v_reward_amount INT;
+  v_used_seconds NUMERIC;
+  v_new_last_claimed_at TIMESTAMP WITH TIME ZONE;
   v_new_balance INT;
 BEGIN
   v_user_id := auth.uid();
@@ -196,20 +199,26 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'No new mined rewards to claim at this time.');
   END IF;
 
-  -- 6. Calculate active mining hours
-  v_active_hours := EXTRACT(EPOCH FROM (v_end_time - v_miner.last_claimed_at)) / 3600.0;
-  IF v_active_hours < 0 THEN
-    v_active_hours := 0;
+  -- 6. Calculate active seconds
+  v_active_seconds := EXTRACT(EPOCH FROM (v_end_time - v_miner.last_claimed_at));
+  IF v_active_seconds < 0 THEN
+    v_active_seconds := 0;
   END IF;
 
   -- 7. Calculate payout amount
   v_total_return := v_miner.cost * v_multiplier;
   v_hourly_rate := v_total_return / 720.0;
-  v_reward_amount := FLOOR(v_active_hours * v_hourly_rate);
+  v_seconds_rate := v_hourly_rate / 3600.0;
+  v_reward_amount := FLOOR(v_active_seconds * v_seconds_rate);
 
   IF v_reward_amount <= 0 THEN
     RETURN json_build_object('success', false, 'message', 'Mined rewards are too small to claim. Please wait a bit longer.');
   END IF;
+
+  -- Calculate exactly how many seconds were used to generate this integer reward amount,
+  -- so we can carry over the unused fractional part (seconds) to the next claim!
+  v_used_seconds := v_reward_amount / v_seconds_rate;
+  v_new_last_claimed_at := v_miner.last_claimed_at + (v_used_seconds * INTERVAL '1 second');
 
   -- 8. Add rewards to user balance
   UPDATE public.profiles
@@ -217,9 +226,9 @@ BEGIN
   WHERE id = v_user_id
   RETURNING balance INTO v_new_balance;
 
-  -- 9. Update last_claimed_at timestamp
+  -- 9. Update last_claimed_at timestamp (retaining fractional remainder)
   UPDATE public.user_miners
-  SET last_claimed_at = v_end_time
+  SET last_claimed_at = v_new_last_claimed_at
   WHERE id = p_miner_id;
 
   -- 10. Log claim in history
