@@ -133,8 +133,8 @@ BEGIN
   RETURNING id INTO v_miner_id;
 
   -- 6. Log purchase activity
-  INSERT INTO public.faucet_claims (user_id, points_reward, ip_address, user_agent, details, created_at)
-  VALUES (v_user_id, -v_cost, '127.0.0.1', 'System', 'Purchased ' || p_miner_type || ' miner', now());
+  INSERT INTO public.faucet_claims (user_id, amount, claimed_at, ip_address, user_agent)
+  VALUES (v_user_id, -v_cost, now(), '127.0.0.1', 'System: Purchased ' || p_miner_type || ' miner');
 
   RETURN json_build_object(
     'success', true,
@@ -223,8 +223,8 @@ BEGIN
   WHERE id = p_miner_id;
 
   -- 10. Log claim in history
-  INSERT INTO public.faucet_claims (user_id, points_reward, ip_address, user_agent, details, created_at)
-  VALUES (v_user_id, v_reward_amount, '127.0.0.1', 'System', 'Claimed rewards from ' || v_miner.miner_type || ' miner', now());
+  INSERT INTO public.faucet_claims (user_id, amount, claimed_at, ip_address, user_agent)
+  VALUES (v_user_id, v_reward_amount, now(), '127.0.0.1', 'System: Claimed rewards from ' || v_miner.miner_type || ' miner');
 
   RETURN json_build_object(
     'success', true,
