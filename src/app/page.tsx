@@ -832,16 +832,16 @@ function HomeContent() {
                 <span key={idx} className="text-[10px] font-bold text-white/40 uppercase tracking-tighter w-full text-center">{item.name}</span>
               ))}
             </div>
-
-            {/* A-ADS Banner Ad */}
-            <div className="w-full mt-6">
-              <iframe 
-                data-aa="2442904" 
-                src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=020617&title_color=c20ee9"
-                style={{ border: 0, padding: 0, width: "100%", height: "100px", overflow: "hidden", display: "block" }}
-              />
-            </div>
           </CardContent>
+
+          {/* A-ADS Banner Ad */}
+          <div className="w-full px-8 pb-6">
+            <iframe 
+              data-aa="2442904" 
+              src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=020617&title_color=c20ee9"
+              style={{ border: 0, padding: 0, width: "100%", height: "100px", overflow: "hidden", display: "block" }}
+            />
+          </div>
         </Card>
 
         <Card className="glass md:col-span-2 rounded-[2.5rem] border-white/10 overflow-hidden flex flex-col">
