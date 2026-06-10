@@ -355,3 +355,91 @@ BEGIN
   );
 END;
 $$;
+
+-- 11. RPC: Claim rewards from all active miners at once
+CREATE OR REPLACE FUNCTION public.claim_all_miner_rewards()
+RETURNS JSON
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_miner RECORD;
+  v_res JSON;
+  v_total_claimed INT := 0;
+  v_success_count INT := 0;
+  v_new_balance INT;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Unauthorized');
+  END IF;
+
+  -- Loop through all active miners of the user that are NOT expired
+  FOR v_miner IN 
+    SELECT id FROM public.user_miners 
+    WHERE user_id = v_user_id AND expires_at > now()
+  LOOP
+    SELECT public.claim_miner_rewards(v_miner.id) INTO v_res;
+    IF (v_res->>'success')::BOOLEAN = true THEN
+      v_total_claimed := v_total_claimed + (v_res->>'reward_amount')::INT;
+      v_success_count := v_success_count + 1;
+    END IF;
+  END LOOP;
+
+  -- Fetch final balance
+  SELECT balance INTO v_new_balance FROM public.profiles WHERE id = v_user_id;
+
+  IF v_success_count = 0 THEN
+    RETURN json_build_object('success', false, 'message', 'No rewards available to claim.');
+  END IF;
+
+  RETURN json_build_object(
+    'success', true,
+    'message', 'Successfully claimed ' || v_total_claimed || ' points from ' || v_success_count || ' miners!',
+    'new_balance', v_new_balance,
+    'total_claimed', v_total_claimed
+  );
+END;
+$$;
+
+-- 12. RPC: Recharge all active miners at once
+CREATE OR REPLACE FUNCTION public.recharge_all_miners()
+RETURNS JSON
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_miner RECORD;
+  v_res JSON;
+  v_success_count INT := 0;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Unauthorized');
+  END IF;
+
+  -- Loop through all active miners of the user that are NOT expired
+  FOR v_miner IN 
+    SELECT id FROM public.user_miners 
+    WHERE user_id = v_user_id AND expires_at > now()
+  LOOP
+    SELECT public.recharge_miner(v_miner.id) INTO v_res;
+    IF (v_res->>'success')::BOOLEAN = true THEN
+      v_success_count := v_success_count + 1;
+    END IF;
+  END LOOP;
+
+  IF v_success_count = 0 THEN
+    RETURN json_build_object('success', false, 'message', 'No miners were recharged.');
+  END IF;
+
+  RETURN json_build_object(
+    'success', true,
+    'message', 'Successfully recharged ' || v_success_count || ' miners!'
+  );
+END;
+$$;
