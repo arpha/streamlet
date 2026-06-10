@@ -275,11 +275,6 @@ function ShortlinksContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
-      {/* Popunder Ad Script */}
-      <Script 
-        src="https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js"
-        strategy="afterInteractive"
-      />
       {/* ADBLOCK DETECTOR */}
       <AdBlockDetector onDetect={setAdBlockActive} />
       {adBlockActive && <AntiAdBlockModal />}
