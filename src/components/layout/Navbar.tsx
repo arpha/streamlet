@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package, Trophy } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package, Trophy, Shield } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -245,6 +245,15 @@ export function Navbar() {
                     <Trophy className="w-4 h-4 text-amber-400" />
                   </div>
                   <span className="font-bold uppercase text-xs tracking-widest">Admin Tasks</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => router.push("/admin/activities")}
+                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-sky-500/10 text-sky-400 focus:text-sky-300 transition-all mt-1"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/20 flex items-center justify-center border border-sky-500/20">
+                    <Shield className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <span className="font-bold uppercase text-xs tracking-widest">Player Activities</span>
                 </DropdownMenuItem>
                 <div 
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all mt-1 select-none"
