@@ -47,6 +47,15 @@ export default function TermsPage() {
             </div>
           </div>
 
+          {/* A-ADS Banner Ad */}
+          <div id="frame" className="w-full my-6 relative z-[99998]">
+            <iframe 
+              data-aa="2442904" 
+              src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=f6f1f6&title_color=c20ee9"
+              style={{ border: 0, padding: 0, width: "100%", height: "100px", overflow: "hidden", display: "block", margin: "auto" }}
+            />
+          </div>
+
           {/* Policy Text */}
           <div className="space-y-8 text-white/70 text-sm md:text-base leading-relaxed font-medium">
             <p>
