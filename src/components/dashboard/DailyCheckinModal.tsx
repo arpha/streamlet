@@ -66,6 +66,15 @@ export function DailyCheckinModal({
     setLoading(true)
     setClaimingDay(dayNum)
 
+    // Trigger popunder ad dynamically on daily check-in claim click
+    if (typeof window !== "undefined" && !document.getElementById('popunder-ad-script')) {
+      const script = document.createElement('script')
+      script.id = 'popunder-ad-script'
+      script.src = 'https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js'
+      script.async = true
+      document.body.appendChild(script)
+    }
+
     try {
       const { data, error } = await supabase.rpc("claim_daily_checkin")
 

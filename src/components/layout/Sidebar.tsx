@@ -160,20 +160,7 @@ export function Sidebar() {
           const isActive = pathname === item.href
           const isFaucetDisabled = item.name === "Faucet" && faucetCooldown > 0
           
-          const handleInteraction = () => {
-            if (["Faucet", "Shortlinks", "Leaderboard", "Referrals"].includes(item.name)) {
-              if (typeof window !== "undefined" && !document.getElementById('popunder-ad-script')) {
-                const script = document.createElement('script')
-                script.id = 'popunder-ad-script'
-                script.src = 'https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js'
-                script.async = true
-                document.body.appendChild(script)
-              }
-            }
-          }
-
           const handleClick = (e: React.MouseEvent) => {
-            handleInteraction()
             if (item.comingSoon) {
               e.preventDefault()
               toast.info(`Fitur ${item.name} segera hadir!`)
@@ -193,8 +180,6 @@ export function Sidebar() {
               key={item.name} 
               href={item.comingSoon ? "#" : item.href}
               onClick={handleClick}
-              onMouseEnter={handleInteraction}
-              onTouchStart={handleInteraction}
             >
               <div className={cn(
                 "group flex items-center rounded-2xl transition-all duration-200",
