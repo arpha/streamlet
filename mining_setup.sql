@@ -29,6 +29,32 @@ FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+-- 4b. Create mining_claims table to separate mining history from faucet history
+CREATE TABLE IF NOT EXISTS public.mining_claims (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    miner_id UUID REFERENCES public.user_miners(id) ON DELETE SET NULL,
+    amount INTEGER NOT NULL, -- negative for purchase, positive for claim
+    claim_type TEXT NOT NULL CHECK (claim_type IN ('purchase', 'claim')),
+    claimed_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    ip_address TEXT,
+    user_agent TEXT
+);
+
+-- Enable RLS for mining_claims
+ALTER TABLE public.mining_claims ENABLE ROW LEVEL SECURITY;
+
+-- Grant permissions for mining_claims
+GRANT SELECT ON public.mining_claims TO authenticated;
+
+-- RLS Policy for mining_claims
+DROP POLICY IF EXISTS "Users can view their own mining claims" ON public.mining_claims;
+CREATE POLICY "Users can view their own mining claims"
+ON public.mining_claims
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
 -- 5. Helper Function: Get profit multiplier based on user's current XP/Rank
 CREATE OR REPLACE FUNCTION public.get_user_mining_multiplier(p_xp INT)
 RETURNS NUMERIC
@@ -133,8 +159,8 @@ BEGIN
   RETURNING id INTO v_miner_id;
 
   -- 6. Log purchase activity
-  INSERT INTO public.faucet_claims (user_id, amount, claimed_at, ip_address, user_agent)
-  VALUES (v_user_id, -v_cost, now(), '127.0.0.1', 'System: Purchased ' || p_miner_type || ' miner');
+  INSERT INTO public.mining_claims (user_id, miner_id, amount, claim_type, claimed_at, ip_address, user_agent)
+  VALUES (v_user_id, v_miner_id, -v_cost, 'purchase', now(), '127.0.0.1', 'Purchased ' || p_miner_type || ' miner');
 
   RETURN json_build_object(
     'success', true,
@@ -232,8 +258,8 @@ BEGIN
   WHERE id = p_miner_id;
 
   -- 10. Log claim in history
-  INSERT INTO public.faucet_claims (user_id, amount, claimed_at, ip_address, user_agent)
-  VALUES (v_user_id, v_reward_amount, now(), '127.0.0.1', 'System: Claimed rewards from ' || v_miner.miner_type || ' miner');
+  INSERT INTO public.mining_claims (user_id, miner_id, amount, claim_type, claimed_at, ip_address, user_agent)
+  VALUES (v_user_id, p_miner_id, v_reward_amount, 'claim', now(), '127.0.0.1', 'Claimed rewards from ' || v_miner.miner_type || ' miner');
 
   RETURN json_build_object(
     'success', true,
