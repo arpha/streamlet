@@ -576,6 +576,15 @@ function HomeContent() {
             <LevelIcon className="w-48 h-48 text-white" />
           </div>
           <CardContent className="p-8 md:p-10 relative z-10">
+            {/* A-ADS Banner Ad */}
+            <div id="frame" className="w-full mb-8 relative z-[99998]" style={{ width: "100%", margin: "auto", position: "relative" }}>
+              <iframe 
+                data-aa="2442904" 
+                src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=f6f1f6&title_color=c20ee9"
+                style={{ border: 0, padding: 0, width: "70%", height: "90px", overflow: "hidden", display: "block", margin: "auto" }}
+              />
+            </div>
+
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               {/* Level Badge */}
               <div className="flex items-center gap-5">
