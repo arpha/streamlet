@@ -1,4 +1,3 @@
-[ignoring loop detection]
 -- ====================================================================
 -- DATABASE SETUP SCRIPT FOR VIRTUAL MINER GAME
 -- Run this script in the SQL Editor of your Supabase dashboard.
