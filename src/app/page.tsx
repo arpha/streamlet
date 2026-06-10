@@ -576,13 +576,20 @@ function HomeContent() {
             <LevelIcon className="w-48 h-48 text-white" />
           </div>
           <CardContent className="p-8 md:p-10 relative z-10">
-            {/* A-ADS Banner Ad */}
-            <div id="frame" className="w-full mb-8 relative z-[99998]" style={{ width: "100%", margin: "auto", position: "relative" }}>
-              <iframe 
-                data-aa="2442904" 
-                src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=f6f1f6&title_color=c20ee9"
-                style={{ border: 0, padding: 0, width: "70%", height: "90px", overflow: "hidden", display: "block", margin: "auto" }}
-              />
+            {/* HighPerformanceFormat Banner Ad */}
+            <div className="w-full mb-8 flex justify-center">
+              <div id="dashboard-banner-ad" ref={(el) => {
+                if (el && !el.dataset.adLoaded) {
+                  el.dataset.adLoaded = "true"
+                  const configScript = document.createElement("script")
+                  configScript.textContent = `atOptions = { 'key': 'd99ba076bdb6aa90fc1176bc0c12c9c7', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`
+                  el.appendChild(configScript)
+                  const adScript = document.createElement("script")
+                  adScript.src = "https://www.highperformanceformat.com/d99ba076bdb6aa90fc1176bc0c12c9c7/invoke.js"
+                  adScript.async = true
+                  el.appendChild(adScript)
+                }
+              }} className="max-w-full overflow-hidden" />
             </div>
 
             <div className="flex flex-col md:flex-row md:items-center gap-8">
