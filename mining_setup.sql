@@ -100,7 +100,14 @@ END;
 $$;
 
 -- 7. RPC: Purchase a new Miner
-CREATE OR REPLACE FUNCTION public.purchase_miner(p_miner_type TEXT)
+DROP FUNCTION IF EXISTS public.purchase_miner(TEXT);
+DROP FUNCTION IF EXISTS public.purchase_miner(TEXT, TEXT, TEXT);
+
+CREATE OR REPLACE FUNCTION public.purchase_miner(
+  p_miner_type TEXT,
+  p_ip_address TEXT DEFAULT NULL,
+  p_user_agent TEXT DEFAULT NULL
+)
 RETURNS JSON
 SECURITY DEFINER
 SET search_path = public
@@ -160,7 +167,7 @@ BEGIN
 
   -- 6. Log purchase activity
   INSERT INTO public.mining_claims (user_id, miner_id, amount, claim_type, claimed_at, ip_address, user_agent)
-  VALUES (v_user_id, v_miner_id, -v_cost, 'purchase', now(), '127.0.0.1', 'Purchased ' || p_miner_type || ' miner');
+  VALUES (v_user_id, v_miner_id, -v_cost, 'purchase', now(), COALESCE(p_ip_address, '127.0.0.1'), COALESCE(p_user_agent, 'Purchased ' || p_miner_type || ' miner'));
 
   RETURN json_build_object(
     'success', true,
@@ -172,7 +179,14 @@ END;
 $$;
 
 -- 8. RPC: Claim miner rewards
-CREATE OR REPLACE FUNCTION public.claim_miner_rewards(p_miner_id UUID)
+DROP FUNCTION IF EXISTS public.claim_miner_rewards(UUID);
+DROP FUNCTION IF EXISTS public.claim_miner_rewards(UUID, TEXT, TEXT);
+
+CREATE OR REPLACE FUNCTION public.claim_miner_rewards(
+  p_miner_id UUID,
+  p_ip_address TEXT DEFAULT NULL,
+  p_user_agent TEXT DEFAULT NULL
+)
 RETURNS JSON
 SECURITY DEFINER
 SET search_path = public
@@ -259,7 +273,7 @@ BEGIN
 
   -- 10. Log claim in history
   INSERT INTO public.mining_claims (user_id, miner_id, amount, claim_type, claimed_at, ip_address, user_agent)
-  VALUES (v_user_id, p_miner_id, v_reward_amount, 'claim', now(), '127.0.0.1', 'Claimed rewards from ' || v_miner.miner_type || ' miner');
+  VALUES (v_user_id, p_miner_id, v_reward_amount, 'claim', now(), COALESCE(p_ip_address, '127.0.0.1'), COALESCE(p_user_agent, 'Claimed rewards from ' || v_miner.miner_type || ' miner'));
 
   RETURN json_build_object(
     'success', true,
@@ -383,7 +397,13 @@ END;
 $$;
 
 -- 11. RPC: Claim rewards from all active miners at once
-CREATE OR REPLACE FUNCTION public.claim_all_miner_rewards()
+DROP FUNCTION IF EXISTS public.claim_all_miner_rewards();
+DROP FUNCTION IF EXISTS public.claim_all_miner_rewards(TEXT, TEXT);
+
+CREATE OR REPLACE FUNCTION public.claim_all_miner_rewards(
+  p_ip_address TEXT DEFAULT NULL,
+  p_user_agent TEXT DEFAULT NULL
+)
 RETURNS JSON
 SECURITY DEFINER
 SET search_path = public
@@ -407,7 +427,7 @@ BEGIN
     SELECT id FROM public.user_miners 
     WHERE user_id = v_user_id AND expires_at > now()
   LOOP
-    SELECT public.claim_miner_rewards(v_miner.id) INTO v_res;
+    SELECT public.claim_miner_rewards(v_miner.id, p_ip_address, p_user_agent) INTO v_res;
     IF (v_res->>'success')::BOOLEAN = true THEN
       v_total_claimed := v_total_claimed + (v_res->>'reward_amount')::INT;
       v_success_count := v_success_count + 1;

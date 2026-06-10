@@ -58,6 +58,19 @@ export default function MiningPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [claimingAll, setClaimingAll] = useState(false)
   const [rechargingAll, setRechargingAll] = useState(false)
+  const [ipAddress, setIpAddress] = useState<string>("127.0.0.1")
+  const [userAgent, setUserAgent] = useState<string>("")
+
+  // Fetch client IP and User-Agent
+  useEffect(() => {
+    fetch("/api/ip")
+      .then(res => res.json())
+      .then(data => {
+        if (data.ip) setIpAddress(data.ip)
+        if (data.userAgent) setUserAgent(data.userAgent)
+      })
+      .catch(err => console.error("Failed to fetch IP:", err))
+  }, [])
 
   // Redirect if not logged in
   useEffect(() => {
@@ -171,7 +184,11 @@ export default function MiningPage() {
     const { toast } = await import("sonner")
 
     try {
-      const { data, error } = await supabase.rpc("purchase_miner", { p_miner_type: type })
+      const { data, error } = await supabase.rpc("purchase_miner", { 
+        p_miner_type: type,
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent
+      })
       if (error) throw error
 
       const res = data as { success: boolean; message: string; new_balance?: number }
@@ -194,7 +211,11 @@ export default function MiningPage() {
     const { toast } = await import("sonner")
 
     try {
-      const { data, error } = await supabase.rpc("claim_miner_rewards", { p_miner_id: id })
+      const { data, error } = await supabase.rpc("claim_miner_rewards", { 
+        p_miner_id: id,
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent
+      })
       if (error) throw error
 
       const res = data as { success: boolean; message: string; new_balance?: number }
@@ -261,7 +282,10 @@ export default function MiningPage() {
     const { toast } = await import("sonner")
 
     try {
-      const { data, error } = await supabase.rpc("claim_all_miner_rewards")
+      const { data, error } = await supabase.rpc("claim_all_miner_rewards", {
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent
+      })
       if (error) throw error
 
       const res = data as { success: boolean; message: string; new_balance?: number }
