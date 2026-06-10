@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package, Trophy, Shield } from "lucide-react"
+import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package, Trophy, Shield, Hammer } from "lucide-react"
 import { useState, useEffect } from "react"
 import {
   DropdownMenu,
@@ -203,6 +203,15 @@ export function Navbar() {
                 <User className="w-4 h-4" />
               </div>
               <span className="font-bold uppercase text-xs tracking-widest">My Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => router.push("/mining")}
+              className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-white/10 text-white/70 focus:text-white transition-all mt-1"
+            >
+              <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center border border-white/5">
+                <Hammer className="w-4 h-4 text-purple-400" />
+              </div>
+              <span className="font-bold uppercase text-xs tracking-widest">Mining Room</span>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-default gap-3 p-3 rounded-xl focus:bg-white/5 text-white/70 transition-all">
               <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center border border-amber-500/20">
