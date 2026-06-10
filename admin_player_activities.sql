@@ -25,7 +25,10 @@ $$;
 -- 3. Berikan izin akses eksekusi ke user terautentikasi
 GRANT EXECUTE ON FUNCTION public.update_user_activity() TO authenticated;
 
--- 4. Fungsi utama untuk mengambil semua aktivitas dengan status online
+-- 4. Hapus fungsi lama jika ada (untuk menghindari error perubahan tipe return)
+DROP FUNCTION IF EXISTS public.get_admin_player_activities(UUID, TEXT, TEXT, INT, INT);
+
+-- 5. Fungsi utama untuk mengambil semua aktivitas dengan status online
 CREATE OR REPLACE FUNCTION public.get_admin_player_activities(
   p_user_id UUID,
   p_search TEXT DEFAULT NULL,
