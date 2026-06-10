@@ -24,6 +24,9 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
 import { useAuth } from "@/components/providers/AuthProvider"
+import Script from "next/script"
+import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
+
 
 interface Cycle {
   id: number
@@ -200,6 +203,11 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-10 text-white min-h-screen">
+      {/* Popunder Ad Script */}
+      <Script 
+        src="https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js"
+        strategy="afterInteractive"
+      />
       {/* HEADER WITH META */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
         <div className="space-y-2">
@@ -254,6 +262,9 @@ export default function LeaderboardPage() {
         </div>
       )}
 
+
+      {/* Native Banner Ad */}
+      <NativeBannerAd />
 
       {/* TABS SELECTOR */}
       <div className="flex justify-center">

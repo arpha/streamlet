@@ -24,6 +24,9 @@ import { motion } from "framer-motion"
 import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
 import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { getDeviceFingerprint } from "@/lib/fingerprint"
+import Script from "next/script"
+import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
+
 
 function ShortlinksContent() {
   const { user, loading } = useAuth()
@@ -273,6 +276,11 @@ function ShortlinksContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      {/* Popunder Ad Script */}
+      <Script 
+        src="https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js"
+        strategy="afterInteractive"
+      />
       {/* ADBLOCK DETECTOR */}
       <AdBlockDetector onDetect={setAdBlockActive} />
       {adBlockActive && <AntiAdBlockModal />}
@@ -286,6 +294,9 @@ function ShortlinksContent() {
         <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-2 italic uppercase">SHORTLINKS</h2>
         <p className="text-white/60 font-medium italic">Complete shortlink challenges to claim high-reward points!</p>
       </div>
+
+      {/* Native Banner Ad */}
+      <NativeBannerAd />
 
       {/* STATS CARDS */}
       <div className="grid gap-6 md:grid-cols-3">

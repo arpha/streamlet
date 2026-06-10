@@ -5,8 +5,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { MaintenanceProvider } from "@/components/providers/MaintenanceProvider";
 import { MainContent } from "@/components/layout-wrapper/MainContent";
-import Script from "next/script";
-
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -38,11 +36,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Popunder Ad Script */}
-        <Script 
-          src="https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js"
-          strategy="afterInteractive"
-        />
         <AuthProvider>
           <MaintenanceProvider>
             <MainContent>

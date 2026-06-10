@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
 import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
+import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
 import { motion, AnimatePresence } from "framer-motion"
 import Script from "next/script"
 import { Suspense } from "react"
@@ -413,6 +414,12 @@ function FaucetContent() {
         strategy="afterInteractive"
       />
 
+      {/* Popunder Ad Script */}
+      <Script 
+        src="https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js"
+        strategy="afterInteractive"
+      />
+
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-fuchsia-400 animate-pulse" />
@@ -421,6 +428,9 @@ function FaucetContent() {
         <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-2 italic uppercase">FAUCET</h2>
         <p className="text-white/60 font-medium italic">Complete the challenge to earn {rewardAmount} points!</p>
       </div>
+
+      {/* Native Banner Ad */}
+      <NativeBannerAd />
 
       <div className="space-y-8">
           <Card className="glass relative overflow-hidden group border-white/10 rounded-[3rem] shadow-2xl">
