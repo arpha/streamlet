@@ -293,6 +293,22 @@ export function DashboardTasksBoard() {
             )
           })}
         </AnimatePresence>
+
+          {/* Ad slot in empty grid space */}
+          <div className="glass relative overflow-hidden rounded-[2rem] border-white/10 flex items-center justify-center min-h-[250px]">
+            <div ref={(el) => {
+              if (el && !el.dataset.adLoaded) {
+                el.dataset.adLoaded = "true"
+                const configScript = document.createElement("script")
+                configScript.textContent = `atOptions = { 'key': '27c408318ef2976d86d9dd84a5117ce5', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };`
+                el.appendChild(configScript)
+                const adScript = document.createElement("script")
+                adScript.src = "https://www.highperformanceformat.com/27c408318ef2976d86d9dd84a5117ce5/invoke.js"
+                adScript.async = true
+                el.appendChild(adScript)
+              }
+            }} className="max-w-full overflow-hidden" />
+          </div>
       </div>
     </div>
   )
