@@ -1,10 +1,10 @@
 [ignoring loop detection]
 -- ====================================================================
--- SKRIP SETUP DATABASE VIRTUAL MINER GAME
--- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
+-- DATABASE SETUP SCRIPT FOR VIRTUAL MINER GAME
+-- Run this script in the SQL Editor of your Supabase dashboard.
 -- ====================================================================
 
--- 1. Buat tabel user_miners jika belum ada
+-- 1. Create user_miners table if it does not exist
 CREATE TABLE IF NOT EXISTS public.user_miners (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -16,13 +16,13 @@ CREATE TABLE IF NOT EXISTS public.user_miners (
     charged_until TIMESTAMP WITH TIME ZONE DEFAULT (now() + INTERVAL '24 hours')
 );
 
--- 2. Aktifkan Row Level Security (RLS)
+-- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.user_miners ENABLE ROW LEVEL SECURITY;
 
--- 3. Berikan hak akses ke role authenticated
+-- 3. Grant access permissions to authenticated roles
 GRANT SELECT ON public.user_miners TO authenticated;
 
--- 4. Policy RLS: User hanya bisa melihat miner miliknya sendiri
+-- 4. RLS Policy: Users can only view their own miners
 DROP POLICY IF EXISTS "Users can view their own miners" ON public.user_miners;
 CREATE POLICY "Users can view their own miners"
 ON public.user_miners
@@ -30,7 +30,7 @@ FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
--- 5. Fungsi Helper: Mendapatkan profit multiplier berdasarkan XP/Rank user saat ini
+-- 5. Helper Function: Get profit multiplier based on user's current XP/Rank
 CREATE OR REPLACE FUNCTION public.get_user_mining_multiplier(p_xp INT)
 RETURNS NUMERIC
 SECURITY DEFINER
@@ -39,7 +39,7 @@ LANGUAGE plpgsql IMMUTABLE
 AS $$
 BEGIN
   IF p_xp < 1000 THEN
-    RETURN 1.00; -- Mud & Bronze (Tidak mendapat bonus profit tambahan)
+    RETURN 1.00; -- Mud & Bronze (No extra bonus)
   ELSIF p_xp < 10000 THEN
     RETURN 1.03; -- Silver (+3% profit)
   ELSIF p_xp < 100000 THEN
@@ -52,7 +52,7 @@ BEGIN
 END;
 $$;
 
--- 6. Fungsi Helper: Bersihkan/reset last_claimed_at jika rank user turun di bawah Silver
+-- 6. Helper Function: Clean up / reset last_claimed_at if rank drops below Silver
 CREATE OR REPLACE FUNCTION public.check_and_update_inactive_miners(p_user_id UUID)
 RETURNS VOID
 SECURITY DEFINER
@@ -62,10 +62,10 @@ AS $$
 DECLARE
   v_xp INT;
 BEGIN
-  -- Dapatkan XP user saat ini
+  -- Get user's current XP
   SELECT xp INTO v_xp FROM public.profiles WHERE id = p_user_id;
   
-  -- Jika rank turun di bawah Silver (< 1000 XP)
+  -- If rank dropped below Silver (< 1000 XP)
   IF v_xp < 1000 THEN
     UPDATE public.user_miners
     SET last_claimed_at = now()
@@ -74,7 +74,7 @@ BEGIN
 END;
 $$;
 
--- 7. RPC: Membeli Miner baru
+-- 7. RPC: Purchase a new Miner
 CREATE OR REPLACE FUNCTION public.purchase_miner(p_miner_type TEXT)
 RETURNS JSON
 SECURITY DEFINER
@@ -89,24 +89,24 @@ DECLARE
   v_new_balance INT;
   v_miner_id UUID;
 BEGIN
-  -- Dapatkan ID user yang login
+  -- Get logged in user ID
   v_user_id := auth.uid();
   IF v_user_id IS NULL THEN
     RETURN json_build_object('success', false, 'message', 'Unauthorized');
   END IF;
 
-  -- 1. Validasi minimal Rank Silver (XP >= 1000)
+  -- 1. Validate Silver Rank minimum requirement (XP >= 1000)
   SELECT xp, balance INTO v_xp, v_balance FROM public.profiles WHERE id = v_user_id FOR UPDATE;
   
   IF v_xp IS NULL THEN
-    RETURN json_build_object('success', false, 'message', 'Profil tidak ditemukan.');
+    RETURN json_build_object('success', false, 'message', 'Profile not found.');
   END IF;
   
   IF v_xp < 1000 THEN
-    RETURN json_build_object('success', false, 'message', 'Masa keaktifan rank Anda terlalu rendah. Butuh rank Silver ke atas untuk menggunakan Virtual Miner.');
+    RETURN json_build_object('success', false, 'message', 'Your rank status is too low. Silver rank or higher is required to use Virtual Miner.');
   END IF;
 
-  -- 2. Tentukan harga miner berdasarkan tipenya
+  -- 2. Determine cost based on miner type
   IF p_miner_type = 'coal' THEN
     v_cost := 5000;
   ELSIF p_miner_type = 'iron' THEN
@@ -114,39 +114,39 @@ BEGIN
   ELSIF p_miner_type = 'gold' THEN
     v_cost := 500000;
   ELSE
-    RETURN json_build_object('success', false, 'message', 'Tipe miner tidak valid.');
+    RETURN json_build_object('success', false, 'message', 'Invalid miner type.');
   END IF;
 
-  -- 3. Verifikasi apakah poin user cukup
+  -- 3. Verify point balance
   IF v_balance < v_cost THEN
-    RETURN json_build_object('success', false, 'message', 'Saldo poin Anda tidak mencukupi untuk membeli miner ini.');
+    RETURN json_build_object('success', false, 'message', 'Your point balance is insufficient to purchase this miner.');
   END IF;
 
-  -- 4. Kurangi saldo poin user
+  -- 4. Deduct points from profile balance
   UPDATE public.profiles
   SET balance = balance - v_cost
   WHERE id = v_user_id
   RETURNING balance INTO v_new_balance;
 
-  -- 5. Masukkan record miner baru
+  -- 5. Insert new miner record
   INSERT INTO public.user_miners (user_id, miner_type, cost, created_at, expires_at, last_claimed_at, charged_until)
   VALUES (v_user_id, p_miner_type, v_cost, now(), now() + INTERVAL '30 days', now(), now() + INTERVAL '24 hours')
   RETURNING id INTO v_miner_id;
 
-  -- 6. Log aktivitas pembelian
+  -- 6. Log purchase activity
   INSERT INTO public.faucet_claims (user_id, points_reward, ip_address, user_agent, details, created_at)
   VALUES (v_user_id, -v_cost, '127.0.0.1', 'System', 'Purchased ' || p_miner_type || ' miner', now());
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Berhasil membeli ' || p_miner_type || ' miner!',
+    'message', 'Successfully purchased ' || p_miner_type || ' miner!',
     'new_balance', v_new_balance,
     'miner_id', v_miner_id
   );
 END;
 $$;
 
--- 8. RPC: Klaim rewards dari miner
+-- 8. RPC: Claim miner rewards
 CREATE OR REPLACE FUNCTION public.claim_miner_rewards(p_miner_id UUID)
 RETURNS JSON
 SECURITY DEFINER
@@ -170,75 +170,73 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Unauthorized');
   END IF;
 
-  -- 1. Ambil data miner dan kunci baris
+  -- 1. Fetch miner details and lock row
   SELECT * INTO v_miner FROM public.user_miners WHERE id = p_miner_id AND user_id = v_user_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('success', false, 'message', 'Miner tidak ditemukan.');
+    RETURN json_build_object('success', false, 'message', 'Miner not found.');
   END IF;
 
-  -- 2. Ambil XP user saat ini
+  -- 2. Get current user XP
   SELECT xp INTO v_xp FROM public.profiles WHERE id = v_user_id FOR UPDATE;
   
-  -- 3. Cek apakah rank saat ini di bawah Silver
+  -- 3. Check if rank dropped below Silver
   IF v_xp < 1000 THEN
-    -- Reset last_claimed_at ke waktu sekarang untuk menghanguskan akumulasi waktu sebelumnya
+    -- Reset last_claimed_at to now to discard previous mining progression
     UPDATE public.user_miners SET last_claimed_at = now() WHERE id = p_miner_id;
-    RETURN json_build_object('success', false, 'message', 'Miner nonaktif karena rank Anda berada di bawah Silver. Naikkan rank Anda untuk mengaktifkannya kembali.');
+    RETURN json_build_object('success', false, 'message', 'Miner is inactive because your rank is below Silver. Rank up to reactivate it.');
   END IF;
 
-  -- 4. Hitung multiplier berdasarkan rank saat ini
+  -- 4. Calculate multiplier based on current XP
   v_multiplier := public.get_user_mining_multiplier(v_xp);
 
-  -- 5. Hitung batas akhir penambangan yang valid (terkecil dari now, expires_at, dan charged_until)
+  -- 5. Calculate valid end time (minimum of now, expires_at, and charged_until)
   v_end_time := LEAST(now(), v_miner.expires_at, v_miner.charged_until);
 
-  -- Jika last_claimed_at berada setelah v_end_time (tidak ada waktu tambang berjalan)
+  -- If last_claimed_at is after the calculated end time
   IF v_miner.last_claimed_at >= v_end_time THEN
-    RETURN json_build_object('success', false, 'message', 'Tidak ada hasil tambang baru yang bisa diklaim saat ini.');
+    RETURN json_build_object('success', false, 'message', 'No new mined rewards to claim at this time.');
   END IF;
 
-  -- 6. Hitung durasi jam menambang
+  -- 6. Calculate active mining hours
   v_active_hours := EXTRACT(EPOCH FROM (v_end_time - v_miner.last_claimed_at)) / 3600.0;
   IF v_active_hours < 0 THEN
     v_active_hours := 0;
   END IF;
 
-  -- 7. Hitung pendapatan
-  -- total_return = harga beli * multiplier (misal 5000 * 1.03 = 5150)
+  -- 7. Calculate payout amount
   v_total_return := v_miner.cost * v_multiplier;
-  -- hourly_rate = total_return / 720 jam (30 hari)
   v_hourly_rate := v_total_return / 720.0;
   v_reward_amount := FLOOR(v_active_hours * v_hourly_rate);
 
   IF v_reward_amount <= 0 THEN
-    RETURN json_build_object('success', false, 'message', 'Hasil tambang terlalu kecil untuk diklaim. Silakan tunggu lebih lama.');
+    RETURN json_build_object('success', false, 'message', 'Mined rewards are too small to claim. Please wait a bit longer.');
   END IF;
 
-  -- 8. Update saldo user
+  -- 8. Add rewards to user balance
   UPDATE public.profiles
   SET balance = balance + v_reward_amount
   WHERE id = v_user_id
   RETURNING balance INTO v_new_balance;
 
-  -- 9. Update last_claimed_at pada miner
+  -- 9. Update last_claimed_at timestamp
   UPDATE public.user_miners
   SET last_claimed_at = v_end_time
   WHERE id = p_miner_id;
 
-  -- 10. Catat klaim di tabel history
+  -- 10. Log claim in history
   INSERT INTO public.faucet_claims (user_id, points_reward, ip_address, user_agent, details, created_at)
   VALUES (v_user_id, v_reward_amount, '127.0.0.1', 'System', 'Claimed rewards from ' || v_miner.miner_type || ' miner', now());
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Berhasil mengklaim ' || v_reward_amount || ' poin dari miner Anda!',
+    'message', 'Successfully claimed ' || v_reward_amount || ' points from your miner!',
     'new_balance', v_new_balance,
     'reward_amount', v_reward_amount
   );
 END;
 $$;
 
--- 9. RPC: Mengisi baterai (recharge) miner
+-- 9. RPC: Recharge miner battery
 CREATE OR REPLACE FUNCTION public.recharge_miner(p_miner_id UUID)
 RETURNS JSON
 SECURITY DEFINER
@@ -256,36 +254,35 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Unauthorized');
   END IF;
 
-  -- 1. Ambil data miner dan kunci baris
+  -- 1. Fetch miner details and lock row
   SELECT * INTO v_miner FROM public.user_miners WHERE id = p_miner_id AND user_id = v_user_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('success', false, 'message', 'Miner tidak ditemukan.');
+    RETURN json_build_object('success', false, 'message', 'Miner not found.');
   END IF;
 
-  -- Cek apakah miner sudah expired
+  -- Verify expiration
   IF now() >= v_miner.expires_at THEN
-    RETURN json_build_object('success', false, 'message', 'Miner sudah kedaluwarsa. Tidak dapat di-recharge.');
+    RETURN json_build_object('success', false, 'message', 'Miner is already expired. Cannot recharge.');
   END IF;
 
-  -- 2. Ambil XP user
+  -- 2. Get user XP
   SELECT xp INTO v_xp FROM public.profiles WHERE id = v_user_id;
   IF v_xp < 1000 THEN
-    RETURN json_build_object('success', false, 'message', 'Rank Anda di bawah Silver. Miner tidak dapat di-recharge.');
+    RETURN json_build_object('success', false, 'message', 'Your rank is below Silver. Miner cannot be recharged.');
   END IF;
 
-  -- 3. Klaim otomatis sisa reward terlebih dahulu
-  --    Ini memanggil fungsi claim_miner_rewards secara internal
+  -- 3. Auto-claim remaining rewards first
   BEGIN
     v_claim_res := public.claim_miner_rewards(p_miner_id);
   EXCEPTION WHEN OTHERS THEN
-    -- Hiraukan error jika tidak ada reward yang bernilai > 0
+    -- Ignore errors if there are no rewards to claim
   END;
 
-  -- Ambil data terupdate setelah claim
+  -- Fetch updated miner details after auto-claim
   SELECT * INTO v_miner FROM public.user_miners WHERE id = p_miner_id;
 
-  -- 4. Jika baterai sudah sempat mati total (charged_until < now())
-  --    Maka ubah last_claimed_at = now() agar jeda offline tidak dihitung
+  -- 4. If battery was completely dead (charged_until < now())
+  --    Then reset last_claimed_at = now() so offline gap is not calculated
   IF v_miner.charged_until < now() THEN
     UPDATE public.user_miners
     SET 
@@ -293,7 +290,7 @@ BEGIN
       charged_until = now() + INTERVAL '24 hours'
     WHERE id = p_miner_id;
   ELSE
-    -- Jika masih menyala, perpanjang baterai hingga 24 jam ke depan dari sekarang
+    -- If battery is still active, extend charged_until by 24 hours from now
     UPDATE public.user_miners
     SET charged_until = now() + INTERVAL '24 hours'
     WHERE id = p_miner_id;
@@ -301,12 +298,12 @@ BEGIN
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Baterai miner berhasil diisi ulang hingga 24 jam ke depan!'
+    'message', 'Miner battery successfully recharged for the next 24 hours!'
   );
 END;
 $$;
 
--- 10. RPC: Membuang miner expired
+-- 10. RPC: Discard expired miner
 CREATE OR REPLACE FUNCTION public.delete_expired_miner(p_miner_id UUID)
 RETURNS JSON
 SECURITY DEFINER
@@ -323,30 +320,30 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Unauthorized');
   END IF;
 
-  -- 1. Ambil data miner
+  -- 1. Fetch miner details
   SELECT * INTO v_miner FROM public.user_miners WHERE id = p_miner_id AND user_id = v_user_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN json_build_object('success', false, 'message', 'Miner tidak ditemukan.');
+    RETURN json_build_object('success', false, 'message', 'Miner not found.');
   END IF;
 
-  -- 2. Validasi apakah miner benar-benar sudah kedaluwarsa
+  -- 2. Verify if miner is actually expired
   IF now() < v_miner.expires_at THEN
-    RETURN json_build_object('success', false, 'message', 'Miner belum kedaluwarsa. Anda hanya bisa membuang miner yang sudah expired.');
+    RETURN json_build_object('success', false, 'message', 'Miner is not expired. You can only discard expired miners.');
   END IF;
 
-  -- 3. Klaim otomatis sisa reward terakhir
+  -- 3. Auto-claim remaining rewards one last time
   BEGIN
     v_claim_res := public.claim_miner_rewards(p_miner_id);
   EXCEPTION WHEN OTHERS THEN
-    -- Hiraukan error jika tidak ada reward yang dapat diklaim
+    -- Ignore errors if no rewards can be claimed
   END;
 
-  -- 4. Hapus miner dari database untuk mengosongkan rak
+  -- 4. Delete miner from database to free up space
   DELETE FROM public.user_miners WHERE id = p_miner_id;
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Miner kedaluwarsa berhasil dibuang. Rak Anda sekarang kosong.'
+    'message', 'Expired miner successfully discarded. Your rack slot is now empty.'
   );
 END;
 $$;

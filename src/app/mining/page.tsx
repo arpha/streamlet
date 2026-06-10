@@ -68,10 +68,10 @@ export default function MiningPage() {
   const fetchMiners = async () => {
     if (!userId) return
     try {
-      // 1. Jalankan check helper terlebih dahulu untuk mendeteksi penurunan rank
+      // 1. Run check helper first to process demotions
       await supabase.rpc("check_and_update_inactive_miners", { p_user_id: userId })
 
-      // 2. Ambil data miners terbaru
+      // 2. Fetch updated miners list
       const { data, error } = await supabase
         .from("user_miners")
         .select("*")
@@ -133,7 +133,7 @@ export default function MiningPage() {
       type: "coal" as const,
       name: "Coal Miner",
       cost: 5000,
-      description: "Pekerja tambang batu bara berbiaya rendah. Cocok untuk pemula yang ingin mencoba sistem investasi pasif.",
+      description: "Low-cost coal miner. Ideal for beginners wanting to try passive investments.",
       colorClass: "from-zinc-700 to-zinc-900 border-zinc-600/30 text-zinc-300",
       glowClass: "shadow-zinc-500/5",
       iconColor: "text-zinc-400"
@@ -142,7 +142,7 @@ export default function MiningPage() {
       type: "iron" as const,
       name: "Iron Miner",
       cost: 50000,
-      description: "Pekerja tambang besi kelas menengah. Menghasilkan poin pasif yang stabil dengan kapasitas optimal.",
+      description: "Mid-tier iron miner. Earns stable passive points with optimal performance.",
       colorClass: "from-slate-600 to-slate-800 border-slate-500/30 text-slate-200",
       glowClass: "shadow-slate-400/5",
       iconColor: "text-slate-300"
@@ -151,7 +151,7 @@ export default function MiningPage() {
       type: "gold" as const,
       name: "Gold Miner",
       cost: 500000,
-      description: "Pekerja tambang emas elit berkecepatan tinggi. Memberikan return koin pasif maksimal bagi pemain berpengalaman.",
+      description: "Elite high-speed gold miner. Delivers maximum passive point returns for experienced players.",
       colorClass: "from-amber-600/40 to-amber-900/40 border-amber-500/30 text-amber-100",
       glowClass: "shadow-amber-500/10",
       iconColor: "text-amber-400"
@@ -161,7 +161,7 @@ export default function MiningPage() {
   // Handlers
   const handleBuyMiner = async (type: string) => {
     if (xp < 1000) {
-      import("sonner").then(m => m.toast.error("Hanya rank Silver ke atas yang dapat membeli miner!"))
+      import("sonner").then(m => m.toast.error("Only Silver rank or higher can purchase miners!"))
       return
     }
 
@@ -181,7 +181,7 @@ export default function MiningPage() {
         fetchMiners()
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal membeli miner.")
+      toast.error(err.message || "Failed to purchase miner.")
     } finally {
       setBuyingType(null)
     }
@@ -204,7 +204,7 @@ export default function MiningPage() {
         fetchMiners()
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal mengklaim hasil tambang.")
+      toast.error(err.message || "Failed to claim mined rewards.")
     } finally {
       setClaimingId(null)
     }
@@ -226,7 +226,7 @@ export default function MiningPage() {
         fetchMiners()
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal mengisi daya baterai.")
+      toast.error(err.message || "Failed to recharge battery.")
     } finally {
       setRechargingId(null)
     }
@@ -248,7 +248,7 @@ export default function MiningPage() {
         fetchMiners()
       }
     } catch (err: any) {
-      toast.error(err.message || "Gagal membuang miner.")
+      toast.error(err.message || "Failed to discard miner.")
     } finally {
       setDeletingId(null)
     }
@@ -278,7 +278,7 @@ export default function MiningPage() {
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase">MINING ROOM</h2>
           <p className="text-white/60 font-medium italic">
-            Beli alat tambang virtual, jaga daya baterainya agar tetap hidup, dan nikmati poin pasif setiap jam!
+            Purchase virtual miners, keep their batteries charged, and earn passive points every hour!
           </p>
         </div>
 
@@ -342,15 +342,15 @@ export default function MiningPage() {
             ) : miners.length === 0 ? (
               <div className="glass border-white/10 rounded-[2.5rem] p-20 text-center flex flex-col items-center justify-center">
                 <Hammer className="w-16 h-16 text-white/10 mb-4 animate-bounce" />
-                <h4 className="text-lg font-black uppercase text-white/60">Rak Tambang Anda Kosong</h4>
+                <h4 className="text-lg font-black uppercase text-white/60">Your Mining Rack is Empty</h4>
                 <p className="text-white/40 text-sm mt-1 max-w-sm mb-6">
-                  Anda tidak memiliki alat tambang aktif saat ini. Buka Miner Shop sekarang untuk membeli miner pertama Anda!
+                  You don't have any active miners. Visit the Miner Shop to buy your first miner!
                 </p>
                 <Button 
                   onClick={() => setActiveTab('shop')}
                   className="rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-purple-600/20 px-6 py-3 h-auto"
                 >
-                  Beli Miner Pertama <ArrowRight className="w-4 h-4" />
+                  Buy First Miner <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>
             ) : (
@@ -418,7 +418,7 @@ export default function MiningPage() {
                             <Cpu className="w-4 h-4 text-purple-400" />
                             {miner.miner_type === 'coal' ? 'Coal Miner' : miner.miner_type === 'iron' ? 'Iron Miner' : 'Gold Miner'}
                           </CardTitle>
-                          <span className="text-[10px] text-white/40 font-mono mt-0.5 block uppercase">Cost: {miner.cost.toLocaleString()} Poin</span>
+                          <span className="text-[10px] text-white/40 font-mono mt-0.5 block uppercase">Cost: {miner.cost.toLocaleString()} Points</span>
                         </div>
                         {statusBadge}
                       </CardHeader>
@@ -431,7 +431,7 @@ export default function MiningPage() {
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-white/40 font-bold uppercase tracking-wider flex items-center gap-1">
                                 <Battery className="w-3.5 h-3.5" />
-                                Baterai (24 Jam)
+                                Battery (24 Hours)
                               </span>
                               <span className="font-bold font-mono text-white/80">
                                 {status === 'expired' ? '0%' : `${Math.round(batteryPercentage)}%`}
@@ -450,9 +450,9 @@ export default function MiningPage() {
                           {/* Expiration and multiplier metadata */}
                           <div className="grid grid-cols-2 gap-4 text-xs">
                             <div className="bg-white/[0.01] border border-white/5 p-3 rounded-2xl">
-                              <span className="text-[9px] text-white/35 font-bold uppercase tracking-wider block">Masa Aktif</span>
+                              <span className="text-[9px] text-white/35 font-bold uppercase tracking-wider block">Contract Duration</span>
                               <span className="font-black text-white/80 font-mono mt-0.5 block">
-                                {isExpired ? 'Kedaluwarsa' : `${daysLeft} Hari Lagi`}
+                                {isExpired ? 'Expired' : `${daysLeft} Days Left`}
                               </span>
                             </div>
                             <div className="bg-white/[0.01] border border-white/5 p-3 rounded-2xl">
@@ -466,11 +466,11 @@ export default function MiningPage() {
 
                         {/* Live pending payout display */}
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center py-5 relative overflow-hidden bg-gradient-to-b from-purple-950/5 to-transparent">
-                          <span className="text-[9px] text-white/35 font-black uppercase tracking-widest mb-1.5">Hasil Tambang Terkumpul</span>
+                          <span className="text-[9px] text-white/35 font-black uppercase tracking-widest mb-1.5">Accumulated Mined Rewards</span>
                           <span className="text-2xl font-black font-mono text-emerald-400 tracking-tight neon-text animate-pulse">
                             {pendingPoints.toFixed(4)}
                           </span>
-                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest mt-1">Poin</span>
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest mt-1">Points</span>
                         </div>
 
                         {/* Action buttons based on status */}
@@ -485,12 +485,12 @@ export default function MiningPage() {
                               {deletingId === miner.id ? (
                                 <>
                                   <Loader2 className="w-4 h-4 animate-spin" />
-                                  Membuang...
+                                  Discarding...
                                 </>
                               ) : (
                                 <>
                                   <Trash2 className="w-4 h-4" />
-                                  Buang Miner (Bersihkan)
+                                  Discard Miner (Trash)
                                 </>
                               )}
                             </Button>
@@ -505,7 +505,7 @@ export default function MiningPage() {
                                 {claimingId === miner.id ? (
                                   <Loader2 className="w-4 h-4 animate-spin text-primary" />
                                 ) : (
-                                  'Klaim Poin'
+                                  'Claim Points'
                                 )}
                               </Button>
                               <Button
@@ -547,9 +547,9 @@ export default function MiningPage() {
                   <Lock className="w-6 h-6 animate-bounce" />
                 </div>
                 <div>
-                  <h4 className="text-base font-black text-rose-400 uppercase tracking-wide">Akses Toko Miner Terkunci</h4>
+                  <h4 className="text-base font-black text-rose-400 uppercase tracking-wide">Miner Shop Locked</h4>
                   <p className="text-white/60 text-sm mt-0.5">
-                    Hanya pemain berstatus **Rank Silver** (XP &gt;= 1.000) ke atas yang diizinkan untuk membeli miner. Faucet dan Shortlinks Anda saat ini memberikan bonus XP untuk menaikkan rank.
+                    Only players with **Silver Rank** (XP &gt;= 1,000) or higher are allowed to purchase miners. Earn XP from Faucets and Shortlinks to rank up.
                   </p>
                 </div>
               </div>
@@ -592,25 +592,25 @@ export default function MiningPage() {
                       {/* Yield Info Box */}
                       <div className="space-y-3 p-4 rounded-3xl bg-white/5 border border-white/10">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/40 font-bold uppercase tracking-wider">Biaya</span>
-                          <span className="font-black text-white font-mono">{item.cost.toLocaleString()} Poin</span>
+                          <span className="text-white/40 font-bold uppercase tracking-wider">Cost</span>
+                          <span className="font-black text-white font-mono">{item.cost.toLocaleString()} Points</span>
                         </div>
                         <div className="flex justify-between items-center text-xs border-t border-white/5 pt-2.5">
-                          <span className="text-white/40 font-bold uppercase tracking-wider">Keuntungan Rank</span>
+                          <span className="text-white/40 font-bold uppercase tracking-wider">Rank Profit Bonus</span>
                           <span className={`font-black font-mono ${getRankColor(xp)}`}>
                             {isRankLow ? "0%" : `+${Math.round((userMultiplier - 1) * 100)}%`}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-xs border-t border-white/5 pt-2.5">
-                          <span className="text-white/40 font-bold uppercase tracking-wider">Est. Hasil Total</span>
+                          <span className="text-white/40 font-bold uppercase tracking-wider">Est. Total Yield</span>
                           <span className="font-black text-emerald-400 font-mono">
-                            {isRankLow ? item.cost.toLocaleString() : estTotalReturn.toLocaleString()} Poin
+                            {isRankLow ? item.cost.toLocaleString() : estTotalReturn.toLocaleString()} Points
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-xs border-t border-white/5 pt-2.5">
-                          <span className="text-white/40 font-bold uppercase tracking-wider">Est. Hasil / Jam</span>
+                          <span className="text-white/40 font-bold uppercase tracking-wider">Est. Hourly Yield</span>
                           <span className="font-black text-purple-400 font-mono">
-                            {estHourlyRate.toFixed(2)} Poin/jam
+                            {estHourlyRate.toFixed(2)} Points/hour
                           </span>
                         </div>
                       </div>
@@ -627,11 +627,11 @@ export default function MiningPage() {
                         {buyingType === item.type ? (
                           <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
                         ) : isRankLow ? (
-                          'Rank Terlalu Rendah'
+                          'Rank Too Low'
                         ) : !isAffordable ? (
-                          'Saldo Poin Kurang'
+                          'Insufficient Points'
                         ) : (
-                          'Beli Miner Sekarang'
+                          'Buy Miner Now'
                         )}
                       </Button>
                     </CardContent>
@@ -651,35 +651,35 @@ export default function MiningPage() {
             VIRTUAL MINER GAME GUIDE
           </CardTitle>
           <CardDescription className="text-white/40 font-medium italic">
-            Petunjuk bermain dan ketentuan operasional sistem tambang kripto virtual.
+            How to play and terms of operation for the virtual crypto mining system.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 md:p-8 grid md:grid-cols-3 gap-6 text-xs text-white/60">
           <div className="space-y-2">
             <h5 className="font-black text-white uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center font-mono">1</span>
-              Masa Kontrak 30 Hari
+              30-Day Contract
             </h5>
             <p className="leading-relaxed pl-6">
-              Setiap miner beroperasi selama tepat 30 hari sejak dibeli. Setelah lewat dari 30 hari, miner akan kedaluwarsa (Expired) dan harus dibuang untuk mengosongkan rak. Poin sisa yang belum diklaim otomatis diberikan saat dibuang.
+              Each miner operates for exactly 30 days. Once expired, it must be discarded to empty the rack. Remaining unclaimed rewards are automatically claimed upon discarding.
             </p>
           </div>
           <div className="space-y-2">
             <h5 className="font-black text-white uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center font-mono">2</span>
-              Wajib Isi Ulang Baterai
+              Daily Recharge Required
             </h5>
             <p className="leading-relaxed pl-6">
-              Baterai miner hanya bertahan selama 24 jam. Anda wajib masuk ke Mining Room dan mengklik **Recharge** setiap hari. Jika baterai habis, penambangan terjeda dan tidak menghasilkan koin selama jeda offline tersebut.
+              Miner batteries last for 24 hours. You must recharge them daily in the Mining Room. If the battery dies, mining pauses and no rewards are generated during the offline period.
             </p>
           </div>
           <div className="space-y-2">
             <h5 className="font-black text-white uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center font-mono">3</span>
-              Pajak Penurunan Rank
+              Rank Demotion Pause
             </h5>
             <p className="leading-relaxed pl-6">
-              Jika XP Anda turun di bawah 1.000 (menjadi rank Mud/Bronze), miner Anda otomatis terhenti (Paused) dan waktu penambangan yang berjalan saat status rank rendah akan hangus/di-reset. Jaga keaktifan Anda di faucet!
+              If your XP falls below 1,000 (demoting to Mud/Bronze), your miners will be paused. Mined progress during this low-rank status will be reset. Keep active on faucets to secure your rank!
             </p>
           </div>
         </CardContent>
