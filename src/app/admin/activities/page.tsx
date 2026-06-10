@@ -24,6 +24,7 @@ interface ActivityLog {
   device_fingerprint: string | null
   status: string
   created_at: string
+  last_active_at: string | null
 }
 
 export default function AdminActivitiesPage() {
@@ -113,6 +114,12 @@ export default function AdminActivitiesPage() {
   useEffect(() => {
     fetchActivities()
   }, [userId, isAdmin, debouncedSearch, typeFilter, limit, page])
+
+  const isOnline = (lastActiveAt: string | null) => {
+    if (!lastActiveAt) return false
+    const diffMs = Date.now() - new Date(lastActiveAt).getTime()
+    return diffMs < 5 * 60 * 1000 // online if active within last 5 minutes
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -272,7 +279,17 @@ export default function AdminActivitiesPage() {
                         {/* User Column */}
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
-                            <span className="font-black text-white uppercase tracking-tight">{log.username || "Anonymous"}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-white uppercase tracking-tight">{log.username || "Anonymous"}</span>
+                              {isOnline(log.last_active_at) ? (
+                                <span className="flex h-2 w-2 relative" title="Online now">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                              ) : (
+                                <span className="w-1.5 h-1.5 rounded-full bg-white/20" title={`Last active: ${log.last_active_at ? new Date(log.last_active_at).toLocaleString() : 'Never'}`} />
+                              )}
+                            </div>
                             <span className="text-[10px] text-white/40 font-medium">{log.email}</span>
                           </div>
                         </td>

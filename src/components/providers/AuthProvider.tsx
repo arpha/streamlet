@@ -50,6 +50,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [supabase, setUser, resetUser])
 
+  // Heartbeat tracking for online status
+  useEffect(() => {
+    if (!user) return
+
+    const updateActivity = async () => {
+      try {
+        await supabase.rpc('update_user_activity')
+      } catch (err) {
+        console.error("Failed to update activity heartbeat:", err)
+      }
+    }
+
+    updateActivity()
+
+    // Ping every 2 minutes (120000 ms)
+    const interval = setInterval(updateActivity, 120000)
+
+    return () => clearInterval(interval)
+  }, [user, supabase])
+
   return (
     <AuthContext.Provider value={{ supabase, user, loading }}>
       {children}

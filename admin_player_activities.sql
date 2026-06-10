@@ -1,8 +1,31 @@
 -- ====================================================================
--- SKRIP SETUP SEKIRITI & AMBIL AKTIVITAS PEMAIN UNTUK ADMIN
+-- SKRIP SETUP SEKIRITI, AKTIVITAS & HEARTBEAT PEMAIN UNTUK ADMIN
 -- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
 -- ====================================================================
 
+-- 1. Tambah kolom last_active_at pada tabel profiles jika belum ada
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;
+
+-- 2. Fungsi RPC untuk mengupdate status aktivitas/heartbeat user (dipanggil dari client)
+CREATE OR REPLACE FUNCTION public.update_user_activity()
+RETURNS VOID
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    UPDATE public.profiles
+    SET last_active_at = now()
+    WHERE id = auth.uid();
+  END IF;
+END;
+$$;
+
+-- 3. Berikan izin akses eksekusi ke user terautentikasi
+GRANT EXECUTE ON FUNCTION public.update_user_activity() TO authenticated;
+
+-- 4. Fungsi utama untuk mengambil semua aktivitas dengan status online
 CREATE OR REPLACE FUNCTION public.get_admin_player_activities(
   p_user_id UUID,
   p_search TEXT DEFAULT NULL,
@@ -19,7 +42,8 @@ RETURNS TABLE (
   ip_address TEXT,
   device_fingerprint TEXT,
   status TEXT,
-  created_at TIMESTAMP WITH TIME ZONE
+  created_at TIMESTAMP WITH TIME ZONE,
+  last_active_at TIMESTAMP WITH TIME ZONE
 )
 SECURITY DEFINER
 SET search_path = public
@@ -28,7 +52,7 @@ AS $$
 DECLARE
   v_is_admin BOOLEAN;
 BEGIN
-  -- 1. Verifikasi apakah user yang memanggil adalah admin
+  -- Verifikasi apakah user yang memanggil adalah admin
   SELECT is_admin INTO v_is_admin FROM public.profiles WHERE id = p_user_id;
   IF v_is_admin IS NOT TRUE THEN
     RAISE EXCEPTION 'Akses ditolak. Anda bukan Admin.';
@@ -46,7 +70,8 @@ BEGIN
       f.ip_address::TEXT,
       f.device_fingerprint::TEXT,
       'completed'::TEXT as status,
-      f.claimed_at as created_at
+      f.claimed_at as created_at,
+      p.last_active_at
     FROM public.faucet_claims f
     JOIN public.profiles p ON f.user_id = p.id
     
@@ -62,7 +87,8 @@ BEGIN
       s.ip_address::TEXT,
       s.device_fingerprint::TEXT,
       s.status::TEXT,
-      COALESCE(s.completed_at, s.created_at) as created_at
+      COALESCE(s.completed_at, s.created_at) as created_at,
+      p.last_active_at
     FROM public.shortlink_claims s
     JOIN public.profiles p ON s.user_id = p.id
     
@@ -78,7 +104,8 @@ BEGIN
       NULL::TEXT as ip_address,
       NULL::TEXT as device_fingerprint,
       o.status::TEXT,
-      o.created_at as created_at
+      o.created_at as created_at,
+      p.last_active_at
     FROM public.offerwall_claims o
     JOIN public.profiles p ON o.user_id = p.id
     
@@ -94,7 +121,8 @@ BEGIN
       NULL::TEXT as ip_address,
       NULL::TEXT as device_fingerprint,
       w.status::TEXT,
-      w.created_at as created_at
+      w.created_at as created_at,
+      p.last_active_at
     FROM public.withdrawals w
     JOIN public.profiles p ON w.user_id = p.id
 
@@ -110,11 +138,22 @@ BEGIN
       NULL::TEXT as ip_address,
       NULL::TEXT as device_fingerprint,
       'completed'::TEXT as status,
-      d.claimed_at as created_at
+      d.claimed_at as created_at,
+      p.last_active_at
     FROM public.daily_checkin_logs d
     JOIN public.profiles p ON d.user_id = p.id
   )
-  SELECT a.activity_type, a.username, a.email, a.amount, a.details, a.ip_address, a.device_fingerprint, a.status, a.created_at
+  SELECT 
+    a.activity_type, 
+    a.username, 
+    a.email, 
+    a.amount, 
+    a.details, 
+    a.ip_address, 
+    a.device_fingerprint, 
+    a.status, 
+    a.created_at,
+    a.last_active_at
   FROM all_activities a
   WHERE 
     (p_type IS NULL OR a.activity_type = p_type)
