@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle, CalendarCheck } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle, CalendarCheck, Cpu } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -280,11 +280,33 @@ function HomeContent() {
           .order('created_at', { ascending: false })
           .limit(5)
 
+        // 5c. Fetch recent mining claims
+        const { count: miningCount } = await supabase
+          .from('mining_claims')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('claim_type', 'claim')
+
+        const { data: miningData } = await supabase
+          .from('mining_claims')
+          .select('amount')
+          .eq('user_id', userId)
+          .eq('claim_type', 'claim')
+
+        const miningTotal = miningData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0
+
+        const { data: recentMining } = await supabase
+          .from('mining_claims')
+          .select('*')
+          .eq('user_id', userId)
+          .order('claimed_at', { ascending: false })
+          .limit(5)
+
         setStatsData({
-          totalClaims: (faucetCount || 0) + (shortlinkCount || 0) + (offerwallCount || 0),
+          totalClaims: (faucetCount || 0) + (shortlinkCount || 0) + (offerwallCount || 0) + (miningCount || 0),
           referrals: referralCount,
           activeToday: refStats?.active_today || 0,
-          totalEarned: faucetTotal + shortlinkTotal + offerwallTotal + referralCommissions
+          totalEarned: faucetTotal + shortlinkTotal + offerwallTotal + miningTotal + referralCommissions
         })
 
         const activities: any[] = []
@@ -324,6 +346,20 @@ function HomeContent() {
               date: new Date(ow.created_at),
               icon: Gamepad2,
               color: 'text-amber-400'
+            })
+          })
+        }
+
+        if (recentMining) {
+          recentMining.forEach(mining => {
+            const isPurchase = mining.claim_type === 'purchase'
+            activities.push({
+              type: isPurchase ? 'Miner Purchase' : 'Miner Reward Claim',
+              amount: isPurchase ? `-${Math.abs(mining.amount)} Points` : `+${mining.amount} Points`,
+              time: formatDistanceToNow(new Date(mining.claimed_at), { addSuffix: true }),
+              date: new Date(mining.claimed_at),
+              icon: Cpu,
+              color: isPurchase ? 'text-rose-400' : 'text-emerald-400'
             })
           })
         }
