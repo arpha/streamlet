@@ -25,7 +25,6 @@ import { AdBlockDetector } from "@/components/shared/AdBlockDetector"
 import { AntiAdBlockModal } from "@/components/shared/AntiAdBlockModal"
 import { getDeviceFingerprint } from "@/lib/fingerprint"
 import Script from "next/script"
-import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
 
 
 function ShortlinksContent() {
@@ -295,8 +294,6 @@ function ShortlinksContent() {
         <p className="text-white/60 font-medium italic">Complete shortlink challenges to claim high-reward points!</p>
       </div>
 
-      {/* Native Banner Ad */}
-      <NativeBannerAd />
 
       {/* STATS CARDS */}
       <div className="grid gap-6 md:grid-cols-3">

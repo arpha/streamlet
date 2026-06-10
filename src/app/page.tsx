@@ -11,7 +11,6 @@ import { useAuth } from "@/components/providers/AuthProvider"
 import { LandingPage } from "@/components/landing/LandingPage"
 import { MessageModal } from "@/components/messages/MessageModal"
 import { DailyCheckinModal } from "@/components/dashboard/DailyCheckinModal"
-import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
 import { createClient } from "@/lib/supabase"
 import { formatDistanceToNow } from 'date-fns'
 import { useSearchParams } from "next/navigation"
@@ -723,8 +722,6 @@ function HomeContent() {
         ))}
       </motion.div>
 
-      {/* Native Banner Ad */}
-      <NativeBannerAd />
 
       {/* Charts & History */}
       <div className="grid gap-8 md:grid-cols-5">

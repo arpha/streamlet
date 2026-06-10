@@ -25,7 +25,6 @@ import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
 import { useAuth } from "@/components/providers/AuthProvider"
 import Script from "next/script"
-import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
 
 
 interface Cycle {
@@ -263,8 +262,6 @@ export default function LeaderboardPage() {
       )}
 
 
-      {/* Native Banner Ad */}
-      <NativeBannerAd />
 
       {/* TABS SELECTOR */}
       <div className="flex justify-center">

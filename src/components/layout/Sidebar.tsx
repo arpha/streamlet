@@ -172,6 +172,14 @@ export function Sidebar() {
                 toast.warning(`Faucet is cooling down. Please wait!`)
                 return
               }
+              // Trigger popunder ad on Faucet click
+              if (!document.getElementById('popunder-faucet-script')) {
+                const script = document.createElement('script')
+                script.id = 'popunder-faucet-script'
+                script.src = 'https://pl29698487.effectivecpmnetwork.com/66/c3/59/66c3592296a5a47dfcc56ad2915c624d.js'
+                script.async = true
+                document.body.appendChild(script)
+              }
             }
           }
 
