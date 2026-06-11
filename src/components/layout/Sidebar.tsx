@@ -191,13 +191,6 @@ export function Sidebar() {
               toast.info(`Fitur ${item.name} segera hadir!`)
               return
             }
-            if (item.name === "Faucet") {
-              if (faucetCooldown > 0) {
-                e.preventDefault()
-                toast.warning(`Faucet is cooling down. Please wait!`)
-                return
-              }
-            }
           }
 
           return (
@@ -211,8 +204,7 @@ export function Sidebar() {
                 isSidebarOpen ? "gap-4 px-4 py-3.5 w-full" : "justify-center w-12 h-12 mx-auto",
                 isActive 
                   ? "bg-primary text-white shadow-lg shadow-primary/30 active-glow" 
-                  : "text-white/40 hover:text-white hover:bg-white/5",
-                isFaucetDisabled && "opacity-30 pointer-events-none cursor-not-allowed hover:bg-transparent text-white/20"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
               )}>
                 <div className="relative flex-shrink-0">
                   <item.icon className={cn(
