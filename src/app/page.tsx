@@ -71,6 +71,8 @@ function HomeContent() {
     referral_count: number;
   } | null>(null)
 
+  const [cpxAvailable, setCpxAvailable] = useState(false)
+  const [topSurvey, setTopSurvey] = useState<{ provider: string, reward: number, href: string } | null>(null)
   const [autoOpenMessage, setAutoOpenMessage] = useState<any | null>(null)
   const [isAutoMessageOpen, setIsAutoMessageOpen] = useState(false)
   const [isDailyCheckinOpen, setIsDailyCheckinOpen] = useState(false)
@@ -430,6 +432,20 @@ function HomeContent() {
         } catch (e) {
           console.warn("Failed to fetch user leaderboard ranks:", e)
         }
+
+        // 9. Check CPX Surveys availability
+        try {
+          const res = await fetch(`/api/surveys/check?user_id=${userId}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.surveys_available && data.top_survey) {
+              setCpxAvailable(true)
+              setTopSurvey(data.top_survey)
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to check CPX surveys:", e)
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
       } finally {
@@ -551,13 +567,26 @@ function HomeContent() {
           </h2>
           <div className="flex flex-wrap items-center gap-3 mt-1">
             <p className="text-white/70 text-lg font-bold">Ready to grow your crypto portfolio today?</p>
-            <button
-              onClick={() => setIsDailyCheckinOpen(true)}
-              className="px-4 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/5"
-            >
-              <CalendarCheck className="w-4 h-4" />
-              Daily Check-in
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => setIsDailyCheckinOpen(true)}
+                className="px-4 py-1.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/5 w-max"
+              >
+                <CalendarCheck className="w-4 h-4" />
+                Daily Check-in
+              </button>
+              {cpxAvailable && topSurvey && (
+                <a
+                  href={topSurvey.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-1.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 text-emerald-400 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-emerald-500/5 animate-pulse w-full whitespace-nowrap"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {topSurvey.provider}: {topSurvey.reward.toLocaleString()} Pts
+                </a>
+              )}
+            </div>
           </div>
         </motion.div>
 

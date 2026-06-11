@@ -48,11 +48,24 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
 
     // CPX returns surveys in data.surveys array
-    const cpxAvailable = !!(data?.surveys && Array.isArray(data.surveys) && data.surveys.length > 0)
+    const cpxSurveys = data?.surveys || []
+    const cpxAvailable = Array.isArray(cpxSurveys) && cpxSurveys.length > 0
+
+    let topSurvey = null
+    if (cpxAvailable) {
+      // Sort by payout descending to get highest paying survey
+      const sortedSurveys = [...cpxSurveys].sort((a, b) => Number(b.payout) - Number(a.payout))
+      topSurvey = {
+        provider: "CPX Research",
+        reward: Number(sortedSurveys[0].payout),
+        href: sortedSurveys[0].href_new || sortedSurveys[0].href
+      }
+    }
 
     return NextResponse.json({
       surveys_available: cpxAvailable,
-      cpx_count: data?.surveys?.length || 0,
+      cpx_count: cpxSurveys.length,
+      top_survey: topSurvey
     })
   } catch (error) {
     console.error("Error checking survey availability:", error)
