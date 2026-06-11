@@ -51,6 +51,9 @@ function FaucetContent() {
   const [claimProgress, setClaimProgress] = useState<number | null>(null)
   const [progressText, setProgressText] = useState<string>("Initializing...")
 
+  const [cpxAvailable, setCpxAvailable] = useState(false)
+  const [topSurvey, setTopSurvey] = useState<{ provider: string, reward: number, href: string } | null>(null)
+
   // CAPTCHA STATES
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
   const [hcaptchaLoaded, setHcaptchaLoaded] = useState(false)
@@ -137,6 +140,28 @@ function FaucetContent() {
       fetchCaptchaAssignment()
     }
   }, [loadingCooldown, timeLeft, captchaType, userId])
+
+  // Fetch survey availability
+  useEffect(() => {
+    if (!userId) return
+
+    async function checkSurveys() {
+      try {
+        const res = await fetch(`/api/surveys/check?user_id=${userId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.surveys_available && data.top_survey) {
+            setCpxAvailable(true)
+            setTopSurvey(data.top_survey)
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to check surveys:", err)
+      }
+    }
+
+    checkSurveys()
+  }, [userId])
 
   // Initialize Turnstile
   useEffect(() => {
@@ -584,6 +609,20 @@ function FaucetContent() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {cpxAvailable && topSurvey && (
+                <div className="pt-4 mt-4 border-t border-white/5">
+                  <a
+                    href={topSurvey.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 text-emerald-400 font-bold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-500/5 animate-pulse w-full"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    {topSurvey.provider}: {topSurvey.reward.toLocaleString()} Pts Available Now!
+                  </a>
+                </div>
+              )}
             </CardContent>
           </Card>
       </div>
