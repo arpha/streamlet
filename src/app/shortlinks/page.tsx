@@ -13,7 +13,8 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
-  Play
+  Play,
+  Sparkles
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -54,6 +55,9 @@ function ShortlinksContent() {
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [adBlockActive, setAdBlockActive] = useState<boolean>(false)
+
+  const [cpxAvailable, setCpxAvailable] = useState(false)
+  const [topSurvey, setTopSurvey] = useState<{ provider: string, reward: number, href: string } | null>(null)
 
   // Parse callback status from query parameters
   useEffect(() => {
@@ -109,6 +113,20 @@ function ShortlinksContent() {
         setCooldownExeio(data.cooldown_exeio || 0)
         setCooldownFclc(data.cooldown_fclc || 0)
         setTotalEarned(data.total_earned)
+      }
+      
+      // Fetch survey status
+      try {
+        const res = await fetch(`/api/surveys/check?user_id=${userId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.surveys_available && data.top_survey) {
+            setCpxAvailable(true)
+            setTopSurvey(data.top_survey)
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to check surveys:", e)
       }
     } catch (err) {
       console.error("Unexpected error fetching stats:", err)
@@ -350,6 +368,20 @@ function ShortlinksContent() {
           </CardContent>
         </Card>
       </div>
+
+      {cpxAvailable && topSurvey && (
+        <div className="max-w-4xl mx-auto">
+          <a
+            href={topSurvey.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 p-4 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 text-emerald-400 font-bold text-sm md:text-base uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-500/5 animate-pulse"
+          >
+            <Sparkles className="w-5 h-5" />
+            {topSurvey.provider}: {topSurvey.reward.toLocaleString()} Pts Available Now!
+          </a>
+        </div>
+      )}
 
       {/* SHORTLINKS PROVIDERS SECTION */}
       <div className="max-w-4xl mx-auto space-y-6">
