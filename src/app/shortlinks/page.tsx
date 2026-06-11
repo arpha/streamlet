@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, Fragment } from "react"
+import { NativeBannerAd } from "@/components/shared/NativeBannerAd"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -410,8 +411,9 @@ function ShortlinksContent() {
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-6 animate-none">
             {providers.map((p, idx) => (
-              <div key={p.id} className="space-y-6">
-                <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all group">
+              <Fragment key={p.id}>
+                <div className="space-y-6">
+                  <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all group">
                   <div className="flex items-start gap-4 flex-1">
                     <div className={`p-3.5 rounded-2xl bg-gradient-to-br ${p.gradient} shadow-lg shadow-purple-500/10 text-white flex-shrink-0`}>
                       <Link2 className="w-6 h-6" />
@@ -487,6 +489,12 @@ function ShortlinksContent() {
                 </div>
 
               </div>
+              {idx === 0 && (
+                <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex items-center justify-center hover:bg-white/[0.04] transition-all w-full overflow-hidden">
+                  <NativeBannerAd />
+                </div>
+              )}
+            </Fragment>
             ))}
 
             {/* INFO BOX */}
