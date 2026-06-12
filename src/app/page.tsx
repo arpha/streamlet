@@ -116,6 +116,9 @@ function HomeContent() {
     totalEarned: 0
   })
   const [recentActivity, setRecentActivity] = useState<any[]>([])
+  const [globalActivities, setGlobalActivities] = useState<any[]>([])
+  const [isLoadingGlobal, setIsLoadingGlobal] = useState(true)
+  const [activeTab, setActiveTab] = useState<'personal' | 'global'>('global')
   const [isLoadingStats, setIsLoadingStats] = useState(true)
   const [blogCards, setBlogCards] = useState<any[]>([])
   const [weeklyEarnings, setWeeklyEarnings] = useState<any[]>([
@@ -457,6 +460,51 @@ function HomeContent() {
       fetchDashboardData()
     }
   }, [userId, supabase, balance])
+
+  useEffect(() => {
+    async function fetchGlobalActivities() {
+      try {
+        const { data, error } = await supabase.rpc('get_recent_player_activities')
+        if (!error && data) {
+          const mapped = data.map((act: any) => {
+            let icon = Coins
+            let color = 'text-purple-400'
+            if (act.activity_type === 'shortlink') {
+              icon = Link2
+              color = 'text-cyan-400'
+            } else if (act.activity_type === 'offerwall') {
+              icon = Gamepad2
+              color = 'text-amber-400'
+            } else if (act.activity_type === 'withdrawal') {
+              icon = ArrowDownRight
+              color = 'text-rose-400'
+            } else if (act.activity_type === 'mining') {
+              icon = Cpu
+              color = act.amount.startsWith('-') ? 'text-rose-400' : 'text-emerald-400'
+            } else if (act.activity_type === 'checkin') {
+              icon = CalendarCheck
+              color = 'text-emerald-400'
+            }
+            return {
+              ...act,
+              icon,
+              color,
+              time: formatDistanceToNow(new Date(act.created_at), { addSuffix: true })
+            }
+          })
+          setGlobalActivities(mapped)
+        }
+      } catch (err) {
+        console.error("Error fetching global activities:", err)
+      } finally {
+        setIsLoadingGlobal(false)
+      }
+    }
+
+    fetchGlobalActivities()
+    const interval = setInterval(fetchGlobalActivities, 5 * 60 * 1000) // every 5 minutes
+    return () => clearInterval(interval)
+  }, [supabase])
 
   if (loading) {
     return (
@@ -909,42 +957,137 @@ function HomeContent() {
           </div>
         </Card>
 
-        <Card className="glass md:col-span-2 rounded-[2.5rem] border-white/10 overflow-hidden flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-8 py-6">
-            <CardTitle className="text-xl font-bold text-white uppercase italic">Recent Activity</CardTitle>
-            <Button variant="ghost" size="sm" className="text-xs font-bold hover:bg-white/10 text-purple-400 rounded-xl underline uppercase">View All</Button>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
-            <div className="divide-y divide-white/5">
-              <AnimatePresence>
-                {recentActivity.length > 0 ? (
-                  recentActivity.map((activity, i) => (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      key={activity.type + i} 
-                      className="flex items-center gap-4 px-8 py-5 hover:bg-white/[0.05] transition-colors cursor-pointer group"
-                    >
-                      <div className={`w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center ${activity.color} group-hover:scale-110 transition-transform`}>
-                        <activity.icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-white uppercase">{activity.type}</p>
-                        <p className="text-xs text-white/40 font-medium italic">{activity.time}</p>
-                      </div>
-                      <div className={`text-sm font-black font-mono ${activity.color}`}>
-                        {activity.amount}
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-white/20">
-                     <Clock className="w-10 h-10 mb-2 opacity-10" />
-                     <span className="text-xs font-bold uppercase tracking-widest">No recent activity</span>
-                  </div>
-                )}
-              </AnimatePresence>
+        <Card className="glass md:col-span-2 rounded-[2.5rem] border-white/10 overflow-hidden flex flex-col h-[480px]">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setActiveTab('global')}
+                className={`text-sm font-black uppercase tracking-wider pb-1 transition-all cursor-pointer ${
+                  activeTab === 'global' 
+                    ? 'text-white border-b-2 border-primary' 
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                Player Feed
+              </button>
+              <button 
+                onClick={() => setActiveTab('personal')}
+                className={`text-sm font-black uppercase tracking-wider pb-1 transition-all cursor-pointer ${
+                  activeTab === 'personal' 
+                    ? 'text-white border-b-2 border-primary' 
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                My Activity
+              </button>
             </div>
+            {activeTab === 'global' ? (
+              <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live 5m
+              </span>
+            ) : (
+              <Button variant="ghost" size="sm" className="text-[10px] font-black hover:bg-white/10 text-purple-400 rounded-xl underline uppercase px-2 py-1 h-auto">View All</Button>
+            )}
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-hidden flex flex-col justify-center">
+            {activeTab === 'global' ? (
+              isLoadingGlobal ? (
+                <div className="flex flex-col items-center justify-center py-20 text-white/20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Loading Feed...</span>
+                </div>
+              ) : globalActivities.length > 0 ? (
+                <div className="relative flex-1 overflow-hidden h-[360px]">
+                  {/* Fade-out Gradients */}
+                  <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#020617] to-transparent z-10 pointer-events-none" />
+                  <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#020617] to-transparent z-10 pointer-events-none" />
+                  
+                  <div className="animate-marquee-vertical flex flex-col gap-1 py-4">
+                    {/* First Copy */}
+                    {globalActivities.map((activity, i) => (
+                      <div 
+                        key={`global-1-${i}`} 
+                        className="flex items-center gap-4 px-6 py-3.5 hover:bg-white/[0.05] transition-colors cursor-pointer group"
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center ${activity.color} group-hover:scale-110 transition-transform`}>
+                          <activity.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-white truncate uppercase">{activity.username}</span>
+                            <span className="text-[8px] bg-white/5 text-white/40 px-1.5 py-0.5 rounded font-black uppercase tracking-wider flex-shrink-0">{activity.activity_type}</span>
+                          </div>
+                          <p className="text-[10px] text-white/50 truncate font-semibold mt-0.5 italic">{activity.details}</p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`text-xs font-black font-mono ${activity.color}`}>{activity.amount}</span>
+                          <span className="text-[8px] text-white/30 font-bold uppercase tracking-tight mt-0.5">{activity.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Second Copy */}
+                    {globalActivities.map((activity, i) => (
+                      <div 
+                        key={`global-2-${i}`} 
+                        className="flex items-center gap-4 px-6 py-3.5 hover:bg-white/[0.05] transition-colors cursor-pointer group"
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center ${activity.color} group-hover:scale-110 transition-transform`}>
+                          <activity.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-white truncate uppercase">{activity.username}</span>
+                            <span className="text-[8px] bg-white/5 text-white/40 px-1.5 py-0.5 rounded font-black uppercase tracking-wider flex-shrink-0">{activity.activity_type}</span>
+                          </div>
+                          <p className="text-[10px] text-white/50 truncate font-semibold mt-0.5 italic">{activity.details}</p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`text-xs font-black font-mono ${activity.color}`}>{activity.amount}</span>
+                          <span className="text-[8px] text-white/30 font-bold uppercase tracking-tight mt-0.5">{activity.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-white/20">
+                  <Clock className="w-10 h-10 mb-2 opacity-10" />
+                  <span className="text-xs font-bold uppercase tracking-widest">No activities recorded</span>
+                </div>
+              )
+            ) : (
+              <div className="divide-y divide-white/5 overflow-y-auto custom-scrollbar h-[360px]">
+                <AnimatePresence>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity, i) => (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        key={activity.type + i} 
+                        className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.05] transition-colors cursor-pointer group"
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center ${activity.color} group-hover:scale-110 transition-transform`}>
+                          <activity.icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-white uppercase truncate">{activity.type}</p>
+                          <p className="text-[10px] text-white/40 font-medium italic mt-0.5">{activity.time}</p>
+                        </div>
+                        <div className={`text-xs font-black font-mono ${activity.color}`}>
+                          {activity.amount}
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-white/20">
+                      <Clock className="w-10 h-10 mb-2 opacity-10" />
+                      <span className="text-xs font-bold uppercase tracking-widest">No recent activity</span>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
