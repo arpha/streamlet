@@ -15,7 +15,8 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Megaphone
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -23,15 +24,16 @@ import { useStore } from "@/store/useStore"
 import { motion } from "framer-motion"
 import { createClient } from "@/lib/supabase"
 
-const navItems = [
+const navItems: { name: string; icon: any; href: string; comingSoon?: boolean }[] = [
   { name: "Dashboard", icon: LayoutDashboard, href: "/" },
   { name: "Faucet", icon: Coins, href: "/faucet" },
-  { name: "PTC Ads", icon: MousePointer2, href: "/ptc", comingSoon: true },
+  { name: "PTC Ads", icon: MousePointer2, href: "/ptc" },
   { name: "Shortlinks", icon: Link2, href: "/shortlinks" },
   { name: "Offerwalls", icon: Gamepad2, href: "/offerwalls" },
   { name: "Leaderboard", icon: Trophy, href: "/leaderboard" },
   { name: "Referrals", icon: Users, href: "/referral" },
   { name: "Withdraw", icon: Wallet, href: "/withdraw" },
+  { name: "Advertise", icon: Megaphone, href: "/advertise" },
 ]
 
 export function Sidebar() {
