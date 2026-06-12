@@ -262,7 +262,7 @@ export default function AdminWithdrawalsPage() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {displayedList.map((w) => {
-                    const formattedDate = new Date(w.created_at).toLocaleString("id-ID", {
+                    const formattedDate = new Date(w.created_at).toLocaleString("en-US", {
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
@@ -356,7 +356,7 @@ export default function AdminWithdrawalsPage() {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => {
-                                  if (confirm("Apakah Anda yakin ingin membatalkan penarikan ini dan mengembalikan saldo poin ke pengguna?")) {
+                                  if (confirm("Are you sure you want to cancel this withdrawal and refund the points balance to the user?")) {
                                     handleAction(w.id, "cancel")
                                   }
                                 }}
@@ -386,7 +386,7 @@ export default function AdminWithdrawalsPage() {
         <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-blue-200/80">
           <p className="font-bold text-blue-400 mb-1">Manual Payout Policy</p>
-          Sesuai dengan kebijakan situs, penarikan pending dikarenakan saldo faucet kosong memiliki batas waktu estimasi penyelesaian **1 hari kerja**. Pastikan Anda segera mengisi ulang saldo di FaucetPay Anda dan menekan tombol **Retry Payout** sebelum batas waktu terlewati untuk menjaga kepercayaan member.
+          According to site policy, pending withdrawals due to empty faucet balance have an estimated resolution window of **1 working day**. Make sure to top up your FaucetPay account balance and click **Retry Payout** before the time limit is reached to maintain member trust.
         </div>
       </div>
     </div>

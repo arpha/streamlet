@@ -258,13 +258,13 @@ export default function AdminDashboardPage() {
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-sm text-amber-400">Terdapat Penarikan Pending!</p>
-              <p className="text-[11px] text-white/60">Ada {stats.pendingWithdrawalsCount} penarikan ({stats.pendingWithdrawalsPoints.toLocaleString()} Pts) yang tertunda karena saldo faucet kosong.</p>
+              <p className="font-bold text-sm text-amber-400">Pending Withdrawals Queue!</p>
+              <p className="text-[11px] text-white/60">There are {stats.pendingWithdrawalsCount} withdrawals ({stats.pendingWithdrawalsPoints.toLocaleString()} Pts) pending due to empty faucet balance.</p>
             </div>
           </div>
           <Link href="/admin/withdrawals">
             <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-black text-xs uppercase tracking-widest px-4 py-2 h-9 rounded-xl border-0">
-              Proses Sekarang <ArrowRight className="w-3.5 h-3.5" />
+              Process Now <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </Link>
         </div>

@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
         p_error_message: err.message || "Failed to fetch crypto price from CoinGecko"
       })
       return NextResponse.json(
-        { success: false, message: "Gagal mengambil harga kripto. Saldo telah dikembalikan." },
+        { success: false, message: "Failed to fetch crypto price. Points have been refunded." },
         { status: 500 }
       )
     }
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
         p_error_message: "Satoshi amount is 0"
       })
       return NextResponse.json(
-        { success: false, message: "Jumlah kripto terlalu kecil untuk dikirim. Saldo telah dikembalikan." },
+        { success: false, message: "Crypto amount is too small to send. Points have been refunded." },
         { status: 400 }
       )
     }
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: `Gagal mengirim pembayaran FaucetPay: ${err.message}. Saldo telah dikembalikan.`,
+          message: `Failed to send FaucetPay payment: ${err.message}. Points have been refunded.`,
         },
         { status: 500 }
       )
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
         })
         return NextResponse.json({
           success: true,
-          message: "Penarikan Anda berstatus PENDING karena saldo faucet kosong, pemrosesan manual maksimal 1 hari kerja.",
+          message: "Your withdrawal is PENDING due to insufficient faucet balance. It will be processed manually within 1 working day.",
           new_balance: dbResult.new_balance,
           isPendingQueue: true
         })
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: `FaucetPay: ${paymentResult.message}. Saldo telah dikembalikan.`,
+          message: `FaucetPay: ${paymentResult.message}. Points have been refunded.`,
         },
         { status: 400 }
       )
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil menarik ${pointsAmount} poin ($${usdValue.toFixed(6)}) sebagai ${cryptoAmount.toFixed(8)} ${coin}!`,
+      message: `Successfully withdrew ${pointsAmount} points ($${usdValue.toFixed(6)}) as ${cryptoAmount.toFixed(8)} ${coin}!`,
       new_balance: dbResult.new_balance,
       usd_value: usdValue,
       crypto_amount: cryptoAmount,
@@ -283,7 +283,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Withdraw API error:", error)
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan yang tidak terduga." },
+      { success: false, message: error.message || "An unexpected error occurred." },
       { status: 500 }
     )
   }

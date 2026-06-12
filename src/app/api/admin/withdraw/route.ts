@@ -150,12 +150,12 @@ export async function POST(req: NextRequest) {
         p_usd_value: usdValue,
         p_crypto_amount: withdrawal.crypto_amount || 0,
         p_tx_hash: null,
-        p_error_message: "Dibatalkan dan dikembalikan oleh Administrator."
+        p_error_message: "Cancelled and refunded by Administrator."
       })
 
       return NextResponse.json({
         success: true,
-        message: "Penarikan berhasil dibatalkan dan saldo poin pengguna telah dikembalikan.",
+        message: "Withdrawal has been successfully cancelled and points have been refunded to the user.",
       })
     }
 
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
       cryptoPrice = await getCryptoPrice(withdrawal.coin)
     } catch (err: any) {
       return NextResponse.json(
-        { success: false, message: `Gagal mengambil harga kripto: ${err.message}` },
+        { success: false, message: `Failed to fetch crypto price: ${err.message}` },
         { status: 500 }
       )
     }
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
 
     if (satoshiAmount <= 0) {
       return NextResponse.json(
-        { success: false, message: "Jumlah kripto terlalu kecil untuk dikirim." },
+        { success: false, message: "Crypto amount is too small to send." },
         { status: 400 }
       )
     }
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
         p_error_message: err.message || "Network error during payout retry"
       })
       return NextResponse.json(
-        { success: false, message: `Gagal mengirim pembayaran FaucetPay: ${err.message}` },
+        { success: false, message: `Failed to send FaucetPay payment: ${err.message}` },
         { status: 500 }
       )
     }
@@ -232,12 +232,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Penarikan berhasil dikirim via FaucetPay! Payout ID: #${paymentResult.payout_id}`,
+      message: `Withdrawal successfully sent via FaucetPay! Payout ID: #${paymentResult.payout_id}`,
     })
   } catch (error: any) {
     console.error("Admin Withdraw Action API error:", error)
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan internal." },
+      { success: false, message: error.message || "Internal server error." },
       { status: 500 }
     )
   }
