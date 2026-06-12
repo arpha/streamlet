@@ -5,13 +5,15 @@ import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { Navbar } from "@/components/layout/Navbar"
 import { useAuth } from "@/components/providers/AuthProvider"
+import { usePathname } from "next/navigation"
 
 export function MainContent({ children }: { children: React.ReactNode }) {
   const { isSidebarOpen, toggleSidebar } = useStore()
   const { user, loading } = useAuth()
+  const pathname = usePathname()
 
-  // If not logged in, just show children (LandingPage) without Sidebar/Navbar
-  if (!loading && !user) {
+  // If not logged in or viewing the PTC ad viewer, show full screen content without sidebar/navbar
+  if ((!loading && !user) || pathname === "/ptc/view") {
     return <div className="min-h-screen bg-[#020617]">{children}</div>
   }
 

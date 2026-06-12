@@ -349,7 +349,7 @@ function PTCViewContent() {
     : 0
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 py-12 px-4">
+    <div className="w-full h-screen overflow-hidden flex flex-col bg-zinc-950 text-white select-none">
       {/* CAPTCHA SCRIPTS */}
       <Script 
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" 
@@ -362,87 +362,140 @@ function PTCViewContent() {
         strategy="afterInteractive"
       />
 
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => router.push("/ptc")}
-        className="text-zinc-400 hover:text-white mb-2"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to PTC
-      </Button>
+      {/* TOP HEADER BAR */}
+      <header className="h-20 bg-zinc-950/90 border-b border-white/5 backdrop-blur-md flex items-center justify-between px-6 z-40">
+        {/* Left: Brand & Back button */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => router.push("/ptc")}
+            className="text-zinc-400 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Back
+          </Button>
+          <div className="hidden sm:block border-l border-white/10 h-6" />
+          <div className="hidden sm:flex flex-col">
+            <span className="text-[10px] font-black text-primary tracking-wider uppercase font-mono">Streamlet PTC</span>
+            <span className="text-xs text-zinc-300 font-bold max-w-[200px] truncate">{campaign?.title || "Loading Campaign..."}</span>
+          </div>
+        </div>
 
-      <Card className="glass border-primary/20 relative overflow-hidden bg-zinc-950/40">
-        <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-3">
-            <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
-              <Timer className="w-8 h-8 text-primary animate-pulse" />
+        {/* Center: Timer or Completion State */}
+        <div className="flex-1 max-w-md mx-6 flex flex-col items-center gap-1.5">
+          {timeLeft !== null && timeLeft > 0 ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-zinc-500 font-bold tracking-widest font-mono uppercase">
+                  {!isTabActive ? "PAUSED" : "VIEWING AD"}
+                </span>
+                <span className={`text-xl font-black font-mono tracking-tight transition-colors ${!isTabActive ? "text-rose-500" : "text-primary animate-pulse"}`}>
+                  {timeLeft}s
+                </span>
+              </div>
+              <div className="w-full bg-zinc-900 border border-white/5 h-2 rounded-full overflow-hidden p-0.5">
+                <div 
+                  className={`h-full rounded-full transition-all duration-1000 ease-linear ${!isTabActive ? "bg-zinc-700" : "bg-gradient-to-r from-primary via-fuchsia-500 to-primary"}`}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs uppercase font-mono animate-pulse">
+              <CheckCircle2 className="w-4 h-4" /> Ready to Claim Reward!
+            </div>
+          )}
+        </div>
+
+        {/* Right: Fallback button */}
+        <div className="flex items-center gap-3">
+          {campaign?.url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[11px] h-8 font-semibold border-white/10 hover:bg-white/5 bg-transparent text-zinc-400 hover:text-white"
+              onClick={() => window.open(campaign.url, "_blank", "noopener,noreferrer")}
+            >
+              <AlertCircle className="w-3.5 h-3.5 mr-1 text-yellow-500" />
+              Situs tidak terbuka?
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* IFRAME AREA */}
+      <div className="flex-1 relative bg-zinc-900">
+        {isLoadingCampaign ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-zinc-950">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="text-sm text-zinc-400 font-mono">Loading Advertiser Site...</span>
+          </div>
+        ) : campaign?.url ? (
+          <iframe 
+            src={campaign.url}
+            className="w-full h-full border-none bg-white"
+            sandbox="allow-scripts allow-same-origin allow-forms"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-950">
+            <AlertCircle className="w-8 h-8 text-rose-500" />
+            <span className="text-sm text-rose-400">Failed to load campaign URL.</span>
+          </div>
+        )}
+
+        {/* PAUSE MODAL OVERLAY (when user switches tab/focus away) */}
+        {timeLeft !== null && timeLeft > 0 && !isTabActive && (
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center">
+            <div className="max-w-md p-8 rounded-2xl bg-zinc-950/80 border border-white/5 shadow-2xl space-y-4">
+              <div className="flex justify-center">
+                <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 animate-pulse">
+                  <Timer className="w-10 h-10" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white">Timer Paused!</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed font-mono">
+                Sistem mendeteksi Anda meninggalkan tab iklan. Silakan **pindah fokus/klik** kembali ke halaman ini agar timer berjalan kembali.
+              </p>
+              <div className="text-3xl font-black font-mono text-rose-500">
+                {timeLeft}s Remaining
+              </div>
+              <div className="flex justify-center pt-2">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                  Harap tetap fokus di tab ini untuk melanjutkan klaim.
+                </span>
+              </div>
             </div>
           </div>
-          <CardTitle className="text-xl font-bold text-white">
-            {isLoadingCampaign ? "Loading Ad Campaign Details..." : campaign?.title}
-          </CardTitle>
-          <CardDescription className="text-xs text-zinc-500 font-mono">
-            {campaign?.url}
-          </CardDescription>
-        </CardHeader>
+        )}
 
-        <CardContent className="space-y-6">
-          <AnimatePresence mode="wait">
-            {isLoadingCampaign ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="text-sm text-zinc-400">Loading campaign...</span>
-              </div>
-            ) : timeLeft !== null && timeLeft > 0 ? (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="space-y-5 text-center"
-              >
-                {/* Countdown display */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className={`text-5xl font-black font-mono transition-colors duration-300 ${!isTabActive ? "text-primary animate-pulse" : "text-rose-500"}`}>
-                    {timeLeft}s
+        {/* CAPTCHA MODAL OVERLAY (when timer reaches 0) */}
+        {timeLeft === 0 && (
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-md z-30 flex items-center justify-center p-4">
+            <Card className="w-full max-w-md glass border-primary/20 bg-zinc-950/90 shadow-2xl relative overflow-hidden">
+              <CardHeader className="text-center pb-2">
+                <div className="flex justify-center mb-2">
+                  <div className="p-3 rounded-full bg-primary/10 border border-primary/20 text-primary">
+                    <ShieldCheck className="w-8 h-8 animate-pulse" />
                   </div>
-                  {isTabActive && (
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 animate-bounce font-mono">
-                      Timer Paused! Please view the opened ad page.
-                    </span>
-                  )}
                 </div>
+                <CardTitle className="text-lg font-bold text-white font-mono">Security Verification</CardTitle>
+                <CardDescription className="text-xs text-zinc-400">
+                  Selesaikan kedua captcha di bawah untuk mengklaim reward Anda.
+                </CardDescription>
+              </CardHeader>
 
-                {/* Progress bar */}
-                <div className="w-full bg-zinc-900 border border-white/5 h-4 rounded-full overflow-hidden p-0.5">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-1000 ease-linear ${!isTabActive ? "bg-gradient-to-r from-primary via-fuchsia-500 to-primary" : "bg-zinc-700"}`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10 text-left">
-                  <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-xs text-yellow-500/80 leading-relaxed font-mono">
-                    <strong>IMPORTANT:</strong> You must keep the opened advertiser window active. Switching back to this tab will pause the countdown.
-                  </span>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
+              <CardContent className="space-y-4 pt-2">
                 {isLoadingCaptcha ? (
                   <div className="flex flex-col items-center justify-center py-8 gap-2">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    <span className="text-xs text-muted-foreground">Loading Security Verification...</span>
+                    <span className="text-xs text-muted-foreground font-mono">Loading Security Verification...</span>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {/* Security Check 1: Turnstile */}
                     {externalCaptchaType === "turnstile" && (
-                      <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
+                      <div className="w-full p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2.5">
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
                             <ShieldCheck className="w-3.5 h-3.5" />
@@ -450,13 +503,13 @@ function PTCViewContent() {
                           </span>
                           {turnstileToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                         </div>
-                        <div ref={turnstileRef} className="min-w-[300px] min-h-[65px] flex items-center justify-center" />
+                        <div ref={turnstileRef} className="min-w-[300px] min-h-[65px] flex items-center justify-center scale-90" />
                       </div>
                     )}
 
                     {/* Security Check 2: hCaptcha */}
                     {externalCaptchaType === "hcaptcha" && (
-                      <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
+                      <div className="w-full p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-2.5">
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
                             <ShieldCheck className="w-3.5 h-3.5" />
@@ -464,13 +517,13 @@ function PTCViewContent() {
                           </span>
                           {hcaptchaToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                         </div>
-                        <div ref={hcaptchaRef} className="min-w-[303px] min-h-[78px] flex items-center justify-center" />
+                        <div ref={hcaptchaRef} className="min-w-[303px] min-h-[78px] flex items-center justify-center scale-90" />
                       </div>
                     )}
 
                     {/* Security Check 3: Streamlet Custom Captcha */}
                     {streamletChallenge && (
-                      <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                      <div className="w-full p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col gap-3">
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
                             <ShieldCheck className="w-3.5 h-3.5" />
@@ -481,7 +534,7 @@ function PTCViewContent() {
                         <p className="text-xs text-zinc-400 text-center">
                           Please click the <span className="font-extrabold text-white underline decoration-primary decoration-2 underline-offset-4 font-mono">{streamletChallenge.prompt}</span> icon below:
                         </p>
-                        <div className="flex justify-center gap-3 pt-1">
+                        <div className="flex justify-center gap-3 pt-0.5">
                           {streamletChallenge.options.map((option) => {
                             const IconComponent = (() => {
                               switch (option) {
@@ -502,13 +555,13 @@ function PTCViewContent() {
                                 key={option}
                                 type="button"
                                 onClick={() => setStreamletToken(option)}
-                                className={`p-4 rounded-xl transition-all duration-200 border flex items-center justify-center ${
+                                className={`p-3.5 rounded-lg transition-all duration-200 border flex items-center justify-center ${
                                   isSelected
                                     ? "bg-primary border-primary text-white scale-110 shadow-lg shadow-primary/20"
                                     : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 text-white/70 hover:text-white"
                                 }`}
                               >
-                                <IconComponent className="w-5 h-5" />
+                                <IconComponent className="w-4.5 h-4.5" />
                               </button>
                             )
                           })}
@@ -518,7 +571,7 @@ function PTCViewContent() {
 
                     {/* Claim Button */}
                     <Button 
-                      className={`w-full h-14 text-base font-bold rounded-xl transition-all gap-2 uppercase ${
+                      className={`w-full h-12 text-sm font-bold rounded-lg transition-all gap-2 uppercase ${
                         captchaVerified 
                           ? "bg-primary hover:bg-primary/90 text-white neon-glow" 
                           : "bg-white/5 text-white/20 cursor-not-allowed border border-white/10"
@@ -527,19 +580,19 @@ function PTCViewContent() {
                       disabled={!captchaVerified || isClaiming}
                     >
                       {isClaiming ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Coins className="w-5 h-5" />
+                        <Coins className="w-4 h-4" />
                       )}
                       {captchaVerified ? `CLAIM ${campaign?.reward_per_view} POINTS` : "Complete Security Verification"}
                     </Button>
                   </div>
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

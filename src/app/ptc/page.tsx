@@ -43,9 +43,6 @@ export default function PTCPage() {
   }, [])
 
   const handleWatchAd = (campaign: any) => {
-    // Open target website in a new window/tab
-    window.open(campaign.url, "_blank", "noopener,noreferrer")
-    
     // Redirect current page to the timer verification page
     router.push(`/ptc/view?id=${campaign.id}`)
   }
