@@ -41,6 +41,45 @@ declare global {
   }
 }
 
+// Helper function to automatically convert standard YouTube URLs to Embed URLs
+function getEmbedUrl(url: string): string {
+  if (!url) return ""
+  
+  try {
+    const urlObj = new URL(url)
+    
+    // Check for youtube.com
+    if (urlObj.hostname.includes("youtube.com")) {
+      // Handle /watch?v=...
+      if (urlObj.pathname === "/watch") {
+        const videoId = urlObj.searchParams.get("v")
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`
+        }
+      }
+      // Handle /shorts/...
+      if (urlObj.pathname.startsWith("/shorts/")) {
+        const videoId = urlObj.pathname.split("/")[2]
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`
+        }
+      }
+    }
+    
+    // Check for youtu.be (short url)
+    if (urlObj.hostname === "youtu.be") {
+      const videoId = urlObj.pathname.slice(1) // remove leading slash
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`
+      }
+    }
+  } catch (e) {
+    // Fallback if URL is invalid or parsing fails
+  }
+  
+  return url
+}
+
 function PTCViewContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -432,9 +471,11 @@ function PTCViewContent() {
           </div>
         ) : campaign?.url ? (
           <iframe 
-            src={campaign.url}
+            src={getEmbedUrl(campaign.url)}
             className="w-full h-full border-none bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
             referrerPolicy="no-referrer"
           />
         ) : (
