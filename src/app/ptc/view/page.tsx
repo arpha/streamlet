@@ -38,12 +38,14 @@ declare global {
       reset: (widgetId?: string) => void
       remove: (widgetId?: string) => void
     }
+    YT?: any
+    onYouTubeIframeAPIReady?: () => void
   }
 }
 
-// Helper function to automatically convert standard YouTube URLs to Embed URLs
-function getEmbedUrl(url: string): string {
-  if (!url) return ""
+// Helper function to extract YouTube video ID from various YouTube URL formats
+function getYouTubeVideoId(url: string): string | null {
+  if (!url) return null
   
   try {
     const urlObj = new URL(url)
@@ -52,32 +54,27 @@ function getEmbedUrl(url: string): string {
     if (urlObj.hostname.includes("youtube.com")) {
       // Handle /watch?v=...
       if (urlObj.pathname === "/watch") {
-        const videoId = urlObj.searchParams.get("v")
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`
-        }
+        return urlObj.searchParams.get("v")
       }
       // Handle /shorts/...
       if (urlObj.pathname.startsWith("/shorts/")) {
-        const videoId = urlObj.pathname.split("/")[2]
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`
-        }
+        return urlObj.pathname.split("/")[2] || null
+      }
+      // Handle /embed/...
+      if (urlObj.pathname.startsWith("/embed/")) {
+        return urlObj.pathname.split("/")[2] || null
       }
     }
     
     // Check for youtu.be (short url)
     if (urlObj.hostname === "youtu.be") {
-      const videoId = urlObj.pathname.slice(1) // remove leading slash
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`
-      }
+      return urlObj.pathname.slice(1) || null
     }
   } catch (e) {
-    // Fallback if URL is invalid or parsing fails
+    // Parsing fails
   }
   
-  return url
+  return null
 }
 
 function PTCViewContent() {
@@ -90,10 +87,13 @@ function PTCViewContent() {
   // Campaign Info
   const [campaign, setCampaign] = useState<any>(null)
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(true)
+  const [isYoutubeAd, setIsYoutubeAd] = useState(false)
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true)
 
   // Timer States
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [timerStarted, setTimerStarted] = useState(false)
+  const ytPlayerRef = useRef<any>(null)
 
   // Captcha States
   const [externalCaptchaType, setExternalCaptchaType] = useState<"turnstile" | "hcaptcha" | null>(null)
@@ -183,6 +183,16 @@ function PTCViewContent() {
         setCampaign(data)
         setTimeLeft(data.duration)
         setTimerStarted(true)
+
+        // Check if it is a YouTube ad
+        const ytVideoId = getYouTubeVideoId(data.url)
+        if (ytVideoId) {
+          setIsYoutubeAd(true)
+          setIsVideoPlaying(false) // Wait for user to play
+        } else {
+          setIsYoutubeAd(false)
+          setIsVideoPlaying(true) // Start ticking immediately
+        }
       } catch (err) {
         toast.error("Failed to connect to database.")
         router.push("/ptc")
@@ -193,6 +203,80 @@ function PTCViewContent() {
 
     loadCampaign()
   }, [campaignId, supabase, router])
+
+  // Handle YouTube Iframe Player API Loading and Initialization
+  useEffect(() => {
+    if (!campaign || !isYoutubeAd) return
+
+    const videoId = getYouTubeVideoId(campaign.url)
+    if (!videoId) return
+
+    // Callback when API is ready
+    const initPlayer = () => {
+      if (!window.YT) return
+      
+      // Ensure element exists in DOM
+      const playerDiv = document.getElementById("youtube-player")
+      if (!playerDiv) return
+
+      try {
+        ytPlayerRef.current = new window.YT.Player("youtube-player", {
+          height: "100%",
+          width: "100%",
+          videoId: videoId,
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            rel: 0,
+            showinfo: 0,
+            modestbranding: 1,
+          },
+          events: {
+            onStateChange: (event: any) => {
+              // event.data matches:
+              // YT.PlayerState.PLAYING = 1
+              // YT.PlayerState.PAUSED = 2
+              // YT.PlayerState.ENDED = 0
+              if (event.data === 1) {
+                setIsVideoPlaying(true)
+              } else {
+                setIsVideoPlaying(false)
+              }
+            },
+          },
+        })
+      } catch (e) {
+        console.error("YouTube Player init error:", e)
+      }
+    }
+
+    // Check if script is already present
+    if (!window.YT) {
+      // Load YouTube Player API script
+      const tag = document.createElement("script")
+      tag.src = "https://www.youtube.com/iframe_api"
+      const firstScriptTag = document.getElementsByTagName("script")[0]
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+      } else {
+        document.head.appendChild(tag)
+      }
+
+      // Define global callback
+      window.onYouTubeIframeAPIReady = () => {
+        initPlayer()
+      }
+    } else {
+      initPlayer()
+    }
+
+    return () => {
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === "function") {
+        ytPlayerRef.current.destroy()
+        ytPlayerRef.current = null
+      }
+    }
+  }, [campaign, isYoutubeAd])
 
   // Countdown timer ticking down and dynamic browser tab title update
   useEffect(() => {
@@ -205,6 +289,12 @@ function PTCViewContent() {
 
     if (!isTabActive) {
       document.title = `[PAUSED] (${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
+      return
+    }
+
+    // Pause timer if video is not playing
+    if (isYoutubeAd && !isVideoPlaying) {
+      document.title = `[PAUSED - VIDEO] (${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
       return
     }
 
@@ -221,7 +311,7 @@ function PTCViewContent() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, timerStarted, campaign, isTabActive])
+  }, [timeLeft, timerStarted, campaign, isTabActive, isYoutubeAd, isVideoPlaying])
 
   // Fetch Captcha Signed Payload when timer hits 0
   useEffect(() => {
@@ -470,14 +560,26 @@ function PTCViewContent() {
             <span className="text-sm text-zinc-400 font-mono">Loading Advertiser Site...</span>
           </div>
         ) : campaign?.url ? (
-          <iframe 
-            src={getEmbedUrl(campaign.url)}
-            className="w-full h-full border-none bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="no-referrer"
-          />
+          isYoutubeAd ? (
+            <div className="w-full h-full bg-black relative">
+              <div id="youtube-player" className="w-full h-full" />
+              {!isVideoPlaying && timeLeft !== null && timeLeft > 0 && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full bg-rose-500/90 border border-rose-600 text-white text-xs font-bold font-mono shadow-lg animate-bounce flex items-center gap-1.5 pointer-events-none">
+                  <AlertCircle className="w-4 h-4" />
+                  Silakan tekan tombol PUTAR (Play) pada video untuk memulai timer!
+                </div>
+              )}
+            </div>
+          ) : (
+            <iframe 
+              src={campaign.url}
+              className="w-full h-full border-none bg-white"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="no-referrer"
+            />
+          )
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-950">
             <AlertCircle className="w-8 h-8 text-rose-500" />
