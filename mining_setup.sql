@@ -120,11 +120,21 @@ DECLARE
   v_balance INT;
   v_new_balance INT;
   v_miner_id UUID;
+  v_active_miners_count INT;
 BEGIN
   -- Get logged in user ID
   v_user_id := auth.uid();
   IF v_user_id IS NULL THEN
     RETURN json_build_object('success', false, 'message', 'Unauthorized');
+  END IF;
+
+  -- 0. Enforce maximum of 3 active miners
+  SELECT COUNT(*)::INT INTO v_active_miners_count
+  FROM public.user_miners
+  WHERE user_id = v_user_id AND expires_at > now();
+  
+  IF v_active_miners_count >= 3 THEN
+    RETURN json_build_object('success', false, 'message', 'Batas maksimal miner aktif adalah 3. Anda tidak dapat membeli miner lagi saat ini.');
   END IF;
 
   -- 1. Validate Silver Rank minimum requirement (XP >= 1000)

@@ -180,6 +180,12 @@ export default function MiningPage() {
       return
     }
 
+    const activeMinersCount = miners.filter(m => new Date(m.expires_at) > new Date()).length
+    if (activeMinersCount >= 3) {
+      import("sonner").then(m => m.toast.error("Batas maksimal miner aktif adalah 3! Silakan tunggu miner Anda kedaluwarsa."))
+      return
+    }
+
     setBuyingType(type)
     const { toast } = await import("sonner")
 
@@ -429,7 +435,7 @@ export default function MiningPage() {
                 {/* Bulk Actions Bar */}
                 <div className="flex flex-wrap justify-between items-center gap-4 bg-white/[0.02] border border-white/5 p-4 rounded-3xl">
                   <div className="text-xs text-white/50">
-                    You have <span className="text-white font-black">{miners.length}</span> active miner{miners.length > 1 ? 's' : ''} in your rack.
+                    Active Miner Slots: <span className="text-white font-black">{miners.filter(m => new Date(m.expires_at) > new Date()).length} / 3</span>
                   </div>
                   <div className="flex gap-2.5">
                     <Button
@@ -672,7 +678,9 @@ export default function MiningPage() {
                 const estTotalReturn = item.cost * userMultiplier
                 const estHourlyRate = estTotalReturn / 720.0
                 const isAffordable = balance >= item.cost
-                const isButtonDisabled = isRankLow || !isAffordable || buyingType !== null
+                const activeMinersCount = miners.filter(m => new Date(m.expires_at) > new Date()).length
+                const isRoomFull = activeMinersCount >= 3
+                const isButtonDisabled = isRankLow || !isAffordable || isRoomFull || buyingType !== null
 
                 return (
                   <Card 
@@ -730,7 +738,7 @@ export default function MiningPage() {
                         onClick={() => handleBuyMiner(item.type)}
                         disabled={isButtonDisabled}
                         className={`w-full rounded-2xl py-5 h-auto text-xs font-black uppercase tracking-widest border-0 transition-all ${
-                          !isAffordable && !isRankLow
+                          (isRoomFull || (!isAffordable && !isRankLow))
                             ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/10"
                             : "bg-white hover:bg-white/90 text-slate-950 shadow-lg shadow-white/10"
                         }`}
@@ -739,6 +747,8 @@ export default function MiningPage() {
                           <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
                         ) : isRankLow ? (
                           'Rank Too Low'
+                        ) : isRoomFull ? (
+                          'Room Full (Max 3)'
                         ) : !isAffordable ? (
                           'Insufficient Points'
                         ) : (
