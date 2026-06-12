@@ -124,14 +124,18 @@ BEGIN
 END;
 $$;
 
+ALTER TABLE public.withdrawals ADD COLUMN IF NOT EXISTS error_message TEXT;
+
 -- 8. Fungsi untuk mengupdate status withdrawal setelah pembayaran FaucetPay
 --    Digunakan oleh backend API route
+DROP FUNCTION IF EXISTS public.complete_withdrawal(UUID, TEXT, NUMERIC, BIGINT, TEXT);
 CREATE OR REPLACE FUNCTION public.complete_withdrawal(
   p_withdrawal_id UUID,
   p_status TEXT,
   p_usd_value NUMERIC,
   p_crypto_amount BIGINT,
-  p_tx_hash TEXT DEFAULT NULL
+  p_tx_hash TEXT DEFAULT NULL,
+  p_error_message TEXT DEFAULT NULL
 )
 RETURNS VOID
 SECURITY DEFINER
@@ -144,7 +148,8 @@ BEGIN
     status = p_status,
     usd_value = p_usd_value,
     crypto_amount = p_crypto_amount,
-    tx_hash = p_tx_hash
+    tx_hash = p_tx_hash,
+    error_message = p_error_message
   WHERE id = p_withdrawal_id;
 
   -- Jika gagal, kembalikan saldo pengguna

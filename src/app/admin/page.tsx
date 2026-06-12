@@ -250,12 +250,33 @@ export default function AdminDashboardPage() {
         </Button>
       </div>
 
+      {/* Alert if there are pending withdrawals */}
+      {stats.pendingWithdrawalsCount > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-[1.5rem] p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-amber-400">Terdapat Penarikan Pending!</p>
+              <p className="text-[11px] text-white/60">Ada {stats.pendingWithdrawalsCount} penarikan ({stats.pendingWithdrawalsPoints.toLocaleString()} Pts) yang tertunda karena saldo faucet kosong.</p>
+            </div>
+          </div>
+          <Link href="/admin/withdrawals">
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-black text-xs uppercase tracking-widest px-4 py-2 h-9 rounded-xl border-0">
+              Proses Sekarang <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* ADMIN SHORTCUTS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {[
           { name: "Player Activities", icon: Activity, href: "/admin/activities", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
           { name: "Manage Tasks", icon: ListTodo, href: "/admin/tasks", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
-          { name: "Leaderboard Winner", icon: Award, href: "/admin/leaderboard", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+          { name: "Manage Withdrawals", icon: Wallet, href: "/admin/withdrawals", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+          { name: "Leaderboard Winner", icon: Award, href: "/admin/leaderboard", color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
           { name: "Blog Posts", icon: BookOpen, href: "/admin/blog", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
           { name: "User Messages", icon: MessageSquare, href: "/admin/messages", color: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
         ].map((item) => (

@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
     let cryptoPrice: number
     try {
       cryptoPrice = await getCryptoPrice(coin)
-    } catch {
+    } catch (err: any) {
       // Refund if we can't get price
       await supabase.rpc("complete_withdrawal", {
         p_withdrawal_id: dbResult.withdrawal_id,
@@ -170,6 +170,7 @@ export async function POST(req: NextRequest) {
         p_usd_value: usdValue,
         p_crypto_amount: 0,
         p_tx_hash: null,
+        p_error_message: err.message || "Failed to fetch crypto price from CoinGecko"
       })
       return NextResponse.json(
         { success: false, message: "Gagal mengambil harga kripto. Saldo telah dikembalikan." },
@@ -187,6 +188,7 @@ export async function POST(req: NextRequest) {
         p_usd_value: usdValue,
         p_crypto_amount: 0,
         p_tx_hash: null,
+        p_error_message: "Satoshi amount is 0"
       })
       return NextResponse.json(
         { success: false, message: "Jumlah kripto terlalu kecil untuk dikirim. Saldo telah dikembalikan." },
@@ -208,6 +210,7 @@ export async function POST(req: NextRequest) {
         p_usd_value: usdValue,
         p_crypto_amount: satoshiAmount,
         p_tx_hash: null,
+        p_error_message: err.message || "Network/Fetch error on FaucetPay API"
       })
       return NextResponse.json(
         {
@@ -219,13 +222,36 @@ export async function POST(req: NextRequest) {
     }
 
     if (!paymentResult.success) {
-      // Refund on FaucetPay rejection
+      const errMsg = paymentResult.message || "Unknown FaucetPay error"
+      const lower = errMsg.toLowerCase()
+      const isInsufficient = lower.includes("insufficient") || lower.includes("funds") || lower.includes("balance") || lower.includes("not enough")
+
+      if (isInsufficient) {
+        // Leave status as pending, save the conversion rate & error message, and do NOT refund.
+        await supabase.rpc("complete_withdrawal", {
+          p_withdrawal_id: dbResult.withdrawal_id,
+          p_status: "pending",
+          p_usd_value: usdValue,
+          p_crypto_amount: satoshiAmount,
+          p_tx_hash: null,
+          p_error_message: errMsg
+        })
+        return NextResponse.json({
+          success: true,
+          message: "Penarikan Anda berstatus PENDING karena saldo faucet kosong, pemrosesan manual maksimal 1 hari kerja.",
+          new_balance: dbResult.new_balance,
+          isPendingQueue: true
+        })
+      }
+
+      // Refund on FaucetPay rejection for other reasons (e.g. invalid account)
       await supabase.rpc("complete_withdrawal", {
         p_withdrawal_id: dbResult.withdrawal_id,
         p_status: "failed",
         p_usd_value: usdValue,
         p_crypto_amount: satoshiAmount,
         p_tx_hash: null,
+        p_error_message: errMsg
       })
       return NextResponse.json(
         {
@@ -243,6 +269,7 @@ export async function POST(req: NextRequest) {
       p_usd_value: usdValue,
       p_crypto_amount: satoshiAmount,
       p_tx_hash: paymentResult.payout_id ? String(paymentResult.payout_id) : null,
+      p_error_message: null
     })
 
     return NextResponse.json({
