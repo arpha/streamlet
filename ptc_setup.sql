@@ -277,16 +277,15 @@ BEGIN
   SET status = 'completed'
   WHERE id = p_campaign_id AND views_completed >= total_views;
 
-  -- Tambah saldo poin dan 1 XP ke viewer
+  -- Tambah saldo poin ke viewer (TANPA XP)
   UPDATE public.profiles
-  SET balance = balance + v_campaign.reward_per_view,
-      xp = xp + 1
+  SET balance = balance + v_campaign.reward_per_view
   WHERE id = p_user_id
   RETURNING balance, xp INTO v_new_balance, v_new_xp;
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Berhasil mengklaim ' || v_campaign.reward_per_view || ' Poin & 1 XP!',
+    'message', 'Berhasil mengklaim ' || v_campaign.reward_per_view || ' Poin!',
     'new_balance', v_new_balance,
     'new_xp', v_new_xp
   );

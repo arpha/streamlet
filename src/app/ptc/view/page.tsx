@@ -76,6 +76,31 @@ function PTCViewContent() {
 
   // Claim State
   const [isClaiming, setIsClaiming] = useState(false)
+  const [isTabActive, setIsTabActive] = useState(true)
+
+  // Listen to visibility and focus events to pause/resume timer
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabActive(document.visibilityState === "visible")
+    }
+    const handleFocus = () => setIsTabActive(true)
+    const handleBlur = () => setIsTabActive(false)
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    window.addEventListener("focus", handleFocus)
+    window.addEventListener("blur", handleBlur)
+
+    // Set initial focus state
+    if (typeof document !== "undefined") {
+      setIsTabActive(document.visibilityState === "visible")
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("blur", handleBlur)
+    }
+  }, [])
 
   // Check if captcha scripts are already loaded on client mount (Next.js Script onLoad bypass fix)
   useEffect(() => {
@@ -139,6 +164,11 @@ function PTCViewContent() {
       return
     }
 
+    if (!isTabActive) {
+      document.title = `[PAUSED] (${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
+      return
+    }
+
     document.title = `(${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
 
     const timer = setInterval(() => {
@@ -152,7 +182,7 @@ function PTCViewContent() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, timerStarted, campaign])
+  }, [timeLeft, timerStarted, campaign, isTabActive])
 
   // Fetch Captcha Signed Payload when timer hits 0
   useEffect(() => {
@@ -371,14 +401,21 @@ function PTCViewContent() {
                 className="space-y-5 text-center"
               >
                 {/* Countdown display */}
-                <div className="text-5xl font-black font-mono text-primary animate-pulse">
-                  {timeLeft}s
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`text-5xl font-black font-mono transition-colors duration-300 ${isTabActive ? "text-primary animate-pulse" : "text-rose-500"}`}>
+                    {timeLeft}s
+                  </div>
+                  {!isTabActive && (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 animate-bounce">
+                      Timer Paused! Please return to this page.
+                    </span>
+                  )}
                 </div>
 
                 {/* Progress bar */}
                 <div className="w-full bg-zinc-900 border border-white/5 h-4 rounded-full overflow-hidden p-0.5">
                   <div 
-                    className="h-full rounded-full bg-gradient-to-r from-primary via-fuchsia-500 to-primary transition-all duration-1000 ease-linear"
+                    className={`h-full rounded-full transition-all duration-1000 ease-linear ${isTabActive ? "bg-gradient-to-r from-primary via-fuchsia-500 to-primary" : "bg-zinc-700"}`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -386,7 +423,7 @@ function PTCViewContent() {
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10 text-left">
                   <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                   <span className="text-xs text-yellow-500/80 leading-relaxed">
-                    <strong>IMPORTANT:</strong> Do not close the advertiser website tab/window that you just opened. The countdown will continue on this page.
+                    <strong>IMPORTANT:</strong> Keep this tab active. Switching tabs or window focus will pause the countdown.
                   </span>
                 </div>
               </motion.div>
