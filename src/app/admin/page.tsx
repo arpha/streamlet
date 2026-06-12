@@ -102,45 +102,18 @@ export default function AdminDashboardPage() {
     setLoadingLogs(true)
     
     try {
-      const todayISO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const monthAgoISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-
-      // Fetch Stats in parallel
+      // Fetch Stats via secure RPC and parallel logs
       const [
-        usersRes,
-        dauRes,
-        mauRes,
-        faucetClaimsRes,
-        shortlinkClaimsRes,
-        minersRes,
-        miningClaimsPurchasesRes,
-        miningClaimsRewardsRes,
-        withdrawalsCompletedRes,
-        withdrawalsFailedRes,
-        withdrawalsPendingRes,
-        ptcRes,
+        statsRes,
         activitiesRes,
         withdrawalsListRes
       ] = await Promise.all([
-        supabase.from("profiles").select("balance"),
-        supabase.from("profiles").select("id", { count: "exact" }).gte("last_active_at", todayISO),
-        supabase.from("profiles").select("id", { count: "exact" }).gte("last_active_at", monthAgoISO),
-        supabase.from("faucet_claims").select("id", { count: "exact" }),
-        supabase.from("shortlink_claims").select("id", { count: "exact" }).eq("status", "completed"),
-        supabase.from("user_miners").select("miner_type, expires_at"),
-        supabase.from("mining_claims").select("amount").eq("claim_type", "purchase"),
-        supabase.from("mining_claims").select("amount").eq("claim_type", "claim"),
-        supabase.from("withdrawals").select("amount, usd_value").eq("status", "completed"),
-        supabase.from("withdrawals").select("id", { count: "exact" }).eq("status", "failed"),
-        supabase.from("withdrawals").select("amount").eq("status", "pending"),
-        supabase.from("ptc_campaigns").select("id", { count: "exact" }).eq("status", "active"),
-        // Fetch 5 recent activities
+        supabase.rpc("get_admin_dashboard_stats", { p_user_id: userId }),
         supabase.rpc("get_admin_player_activities", {
           p_user_id: userId,
           p_limit: 5,
           p_offset: 0
         }),
-        // Fetch 5 recent withdrawals
         supabase.from("withdrawals").select(`
           id,
           amount,
@@ -152,48 +125,10 @@ export default function AdminDashboardPage() {
         `).order("created_at", { ascending: false }).limit(5)
       ])
 
-      // Calculations
-      const userList = usersRes.data || []
-      const totalPoints = userList.reduce((sum, u) => sum + (u.balance || 0), 0)
-      
-      const minersList = minersRes.data || []
-      const now = new Date()
-      const activeCount = minersList.filter(m => new Date(m.expires_at) > now).length
-      const coalCount = minersList.filter(m => m.miner_type === "coal" && new Date(m.expires_at) > now).length
-      const ironCount = minersList.filter(m => m.miner_type === "iron" && new Date(m.expires_at) > now).length
-      const goldCount = minersList.filter(m => m.miner_type === "gold" && new Date(m.expires_at) > now).length
-
-      const purchasesSum = Math.abs(miningClaimsPurchasesRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0)
-      const claimsSum = miningClaimsRewardsRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0
-
-      const completedCount = withdrawalsCompletedRes.data?.length || 0
-      const completedUsd = withdrawalsCompletedRes.data?.reduce((sum, w) => sum + (Number(w.usd_value) || 0), 0) || 0
-      const pendingCount = withdrawalsPendingRes.data?.length || 0
-      const pendingPoints = withdrawalsPendingRes.data?.reduce((sum, w) => sum + (w.amount || 0), 0) || 0
-
-      setStats({
-        totalUsers: userList.length,
-        dau: dauRes.count || 0,
-        mau: mauRes.count || 0,
-        totalUserPoints: totalPoints,
-        totalFaucetClaims: faucetClaimsRes.count || 0,
-        totalShortlinks: shortlinkClaimsRes.count || 0,
-        
-        activeMiners: activeCount,
-        coalMiners: coalCount,
-        ironMiners: ironCount,
-        goldMiners: goldCount,
-        minerPurchasesVolume: purchasesSum,
-        minerClaimsVolume: claimsSum,
-        
-        completedWithdrawalsCount: completedCount,
-        completedWithdrawalsUsd: completedUsd,
-        failedWithdrawalsCount: withdrawalsFailedRes.count || 0,
-        pendingWithdrawalsCount: pendingCount,
-        pendingWithdrawalsPoints: pendingPoints,
-        
-        activePtcCampaigns: ptcRes.count || 0,
-      })
+      if (statsRes.error) throw statsRes.error
+      if (statsRes.data) {
+        setStats(statsRes.data)
+      }
 
       if (activitiesRes.data) {
         setRecentActivities(activitiesRes.data)

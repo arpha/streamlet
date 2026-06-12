@@ -1,0 +1,1 @@
+-- Deprecated in favor of admin_rls_policies.sql to avoid RLS infinite recursion.
