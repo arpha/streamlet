@@ -67,6 +67,7 @@ DECLARE
   v_pending_withdrawals_count INT;
   v_pending_withdrawals_points NUMERIC;
   v_active_ptc_campaigns INT;
+  v_total_offerwalls INT;
   v_now TIMESTAMP WITH TIME ZONE;
 BEGIN
   -- Verify requester is an administrator using the secure helper function
@@ -107,6 +108,9 @@ BEGIN
   -- 7. PTC Campaigns Count
   SELECT count(*) INTO v_active_ptc_campaigns FROM public.ptc_campaigns WHERE status = 'active';
 
+  -- 8. Offerwall Claims Count
+  SELECT count(*) INTO v_total_offerwalls FROM public.offerwall_claims WHERE status = 'completed';
+
   RETURN json_build_object(
     'totalUsers', v_total_users,
     'dau', v_dau,
@@ -125,7 +129,8 @@ BEGIN
     'failedWithdrawalsCount', v_failed_withdrawals_count,
     'pendingWithdrawalsCount', v_pending_withdrawals_count,
     'pendingWithdrawalsPoints', v_pending_withdrawals_points,
-    'activePtcCampaigns', v_active_ptc_campaigns
+    'activePtcCampaigns', v_active_ptc_campaigns,
+    'totalOfferwalls', v_total_offerwalls
   );
 END;
 $$;

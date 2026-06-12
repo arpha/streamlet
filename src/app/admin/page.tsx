@@ -75,6 +75,7 @@ export default function AdminDashboardPage() {
     
     // PTC stats
     activePtcCampaigns: 0,
+    totalOfferwalls: 0,
   })
 
   const [recentActivities, setRecentActivities] = useState<ActivityLog[]>([])
@@ -371,7 +372,7 @@ export default function AdminDashboardPage() {
           { name: "Faucet Claims", count: stats.totalFaucetClaims, icon: Flame, color: "text-purple-400" },
           { name: "Shortlink Completes", count: stats.totalShortlinks, icon: Link2, color: "text-cyan-400" },
           { name: "Active PTC Ads", count: stats.activePtcCampaigns, icon: Megaphone, color: "text-amber-400" },
-          { name: "Completed Surveys", count: 0, icon: Gamepad2, color: "text-emerald-400" }
+          { name: "Offerwall Completes", count: stats.totalOfferwalls, icon: Gamepad2, color: "text-emerald-400" }
         ].map((metric) => (
           <Card key={metric.name} className="glass border-white/5 rounded-2xl">
             <CardContent className="p-5 flex items-center justify-between">
