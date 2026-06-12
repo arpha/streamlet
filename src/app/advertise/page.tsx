@@ -275,17 +275,17 @@ export default function AdvertisePage() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 glass p-1 gap-1 h-auto">
-          <TabsTrigger value="ptc-create" className="gap-2 py-2 h-auto data-active:bg-primary data-active:text-white transition-all">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 glass p-1 gap-1 !h-auto !justify-start">
+          <TabsTrigger value="ptc-create" className="gap-2 py-2 !h-auto data-active:bg-primary data-active:text-white dark:data-active:bg-primary dark:data-active:text-white transition-all">
             <Plus className="w-4 h-4" /> Create PTC
           </TabsTrigger>
-          <TabsTrigger value="exchange" className="gap-2 py-2 h-auto data-active:bg-primary data-active:text-white transition-all">
+          <TabsTrigger value="exchange" className="gap-2 py-2 !h-auto data-active:bg-primary data-active:text-white dark:data-active:bg-primary dark:data-active:text-white transition-all">
             <ArrowRightLeft className="w-4 h-4" /> Exchange Points
           </TabsTrigger>
-          <TabsTrigger value="deposit" className="gap-2 py-2 h-auto data-active:bg-primary data-active:text-white transition-all">
+          <TabsTrigger value="deposit" className="gap-2 py-2 !h-auto data-active:bg-primary data-active:text-white dark:data-active:bg-primary dark:data-active:text-white transition-all">
             <Wallet className="w-4 h-4" /> Crypto Deposit
           </TabsTrigger>
-          <TabsTrigger value="campaigns" className="gap-2 py-2 h-auto data-active:bg-primary data-active:text-white transition-all">
+          <TabsTrigger value="campaigns" className="gap-2 py-2 !h-auto data-active:bg-primary data-active:text-white dark:data-active:bg-primary dark:data-active:text-white transition-all">
             <History className="w-4 h-4" /> My Campaigns
           </TabsTrigger>
         </TabsList>
