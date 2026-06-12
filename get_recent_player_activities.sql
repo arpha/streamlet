@@ -22,7 +22,7 @@ BEGIN
     (SELECT 
       'faucet'::TEXT as activity_type,
       p.username,
-      (f.amount || ' Pts')::TEXT as amount,
+      ('+' || f.amount::NUMERIC::INTEGER || ' Pts')::TEXT as amount,
       'Faucet Claim'::TEXT as details,
       f.claimed_at as created_at
     FROM public.faucet_claims f
