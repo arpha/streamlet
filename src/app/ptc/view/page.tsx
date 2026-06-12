@@ -57,9 +57,10 @@ function PTCViewContent() {
   const [timerStarted, setTimerStarted] = useState(false)
 
   // Captcha States
-  const [captchaType, setCaptchaType] = useState<"turnstile" | "hcaptcha" | "streamlet" | null>(null)
+  const [externalCaptchaType, setExternalCaptchaType] = useState<"turnstile" | "hcaptcha" | null>(null)
   const [captchaTimestamp, setCaptchaTimestamp] = useState<number | null>(null)
-  const [captchaSignature, setCaptchaSignature] = useState<string | null>(null)
+  const [externalSignature, setExternalSignature] = useState<string | null>(null)
+  const [streamletSignature, setStreamletSignature] = useState<string | null>(null)
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
   const [hcaptchaLoaded, setHcaptchaLoaded] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -155,7 +156,7 @@ function PTCViewContent() {
 
   // Fetch Captcha Signed Payload when timer hits 0
   useEffect(() => {
-    if (timeLeft !== 0 || captchaType !== null || isLoadingCaptcha) return
+    if (timeLeft !== 0 || externalCaptchaType !== null || isLoadingCaptcha) return
 
     const loadCaptchaSignature = async () => {
       setIsLoadingCaptcha(true)
@@ -163,12 +164,11 @@ function PTCViewContent() {
         const res = await fetch("/api/ptc/captcha")
         const data = await res.json()
         if (data.success) {
-          setCaptchaType(data.captchaType)
+          setExternalCaptchaType(data.externalCaptchaType)
           setCaptchaTimestamp(data.timestamp)
-          setCaptchaSignature(data.signature)
-          if (data.captchaType === "streamlet") {
-            setStreamletChallenge(data.challenge)
-          }
+          setExternalSignature(data.externalSignature)
+          setStreamletSignature(data.streamletSignature)
+          setStreamletChallenge(data.streamletChallenge)
         } else {
           toast.error("Failed to retrieve security signature.")
         }
@@ -180,11 +180,11 @@ function PTCViewContent() {
     }
 
     loadCaptchaSignature()
-  }, [timeLeft, captchaType, isLoadingCaptcha])
+  }, [timeLeft, externalCaptchaType, isLoadingCaptcha])
 
   // Initialize Turnstile Challenge
   useEffect(() => {
-    if (captchaType !== "turnstile" || !turnstileLoaded || !turnstileRef.current || !window.turnstile) return
+    if (externalCaptchaType !== "turnstile" || !turnstileLoaded || !turnstileRef.current || !window.turnstile) return
 
     const sitekey = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"
 
@@ -218,11 +218,11 @@ function PTCViewContent() {
         } catch (e) {}
       }
     }
-  }, [captchaType, turnstileLoaded])
+  }, [externalCaptchaType, turnstileLoaded])
 
   // Initialize hCaptcha Challenge
   useEffect(() => {
-    if (captchaType !== "hcaptcha" || !hcaptchaLoaded || !hcaptchaRef.current || !window.hcaptcha) return
+    if (externalCaptchaType !== "hcaptcha" || !hcaptchaLoaded || !hcaptchaRef.current || !window.hcaptcha) return
 
     const sitekey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"
 
@@ -256,15 +256,15 @@ function PTCViewContent() {
         } catch (e) {}
       }
     }
-  }, [captchaType, hcaptchaLoaded])
+  }, [externalCaptchaType, hcaptchaLoaded])
 
-  const captchaVerified = captchaType === "turnstile" 
-    ? !!turnstileToken 
-    : (captchaType === "hcaptcha" 
-      ? !!hcaptchaToken 
-      : (captchaType === "streamlet" 
-        ? !!streamletToken 
-        : false))
+  const captchaVerified = (
+    externalCaptchaType === "turnstile" 
+      ? !!turnstileToken 
+      : (externalCaptchaType === "hcaptcha" 
+        ? !!hcaptchaToken 
+        : false)
+  ) && !!streamletToken
 
   // Handle Reward Claim Submission
   const handleClaimReward = async () => {
@@ -277,14 +277,12 @@ function PTCViewContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           campaignId: campaign.id,
-          captchaType,
-          captchaToken: captchaType === "turnstile" 
-            ? turnstileToken 
-            : (captchaType === "hcaptcha" 
-              ? hcaptchaToken 
-              : streamletToken),
+          externalCaptchaType,
+          externalCaptchaToken: externalCaptchaType === "turnstile" ? turnstileToken : hcaptchaToken,
+          streamletCaptchaToken: streamletToken,
           captchaTimestamp,
-          captchaSignature,
+          externalSignature,
+          streamletSignature,
         })
       })
       const data = await res.json()
@@ -299,9 +297,9 @@ function PTCViewContent() {
       } else {
         toast.error(data.message || "Failed to claim reward.")
         // Reset Captcha if verification fails
-        if (captchaType === "turnstile" && window.turnstile && turnstileWidgetId.current) {
+        if (externalCaptchaType === "turnstile" && window.turnstile && turnstileWidgetId.current) {
           window.turnstile.reset(turnstileWidgetId.current)
-        } else if (captchaType === "hcaptcha" && window.hcaptcha && hcaptchaWidgetId.current) {
+        } else if (externalCaptchaType === "hcaptcha" && window.hcaptcha && hcaptchaWidgetId.current) {
           window.hcaptcha.reset(hcaptchaWidgetId.current)
         }
         setTurnstileToken(null)
@@ -406,10 +404,10 @@ function PTCViewContent() {
                 ) : (
                   <div className="space-y-4">
                     {/* Security Check 1: Turnstile */}
-                    {captchaType === "turnstile" && (
+                    {externalCaptchaType === "turnstile" && (
                       <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
                             <ShieldCheck className="w-3.5 h-3.5" />
                             Turnstile Verification
                           </span>
@@ -420,10 +418,10 @@ function PTCViewContent() {
                     )}
 
                     {/* Security Check 2: hCaptcha */}
-                    {captchaType === "hcaptcha" && (
+                    {externalCaptchaType === "hcaptcha" && (
                       <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3">
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
                             <ShieldCheck className="w-3.5 h-3.5" />
                             hCaptcha Verification
                           </span>
@@ -434,7 +432,7 @@ function PTCViewContent() {
                     )}
 
                     {/* Security Check 3: Streamlet Custom Captcha */}
-                    {captchaType === "streamlet" && streamletChallenge && (
+                    {streamletChallenge && (
                       <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-4">
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">

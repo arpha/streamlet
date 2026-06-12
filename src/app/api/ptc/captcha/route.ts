@@ -25,55 +25,38 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const rand = Math.random()
-    let captchaType: "turnstile" | "hcaptcha" | "streamlet"
-    if (rand < 0.33) {
-      captchaType = "turnstile"
-    } else if (rand < 0.66) {
-      captchaType = "hcaptcha"
-    } else {
-      captchaType = "streamlet"
-    }
-
+    // 1. Alternate external captcha type (50/50 turnstile vs hcaptcha)
+    const externalCaptchaType = Math.random() < 0.5 ? "turnstile" : "hcaptcha"
     const timestamp = Date.now()
 
-    if (captchaType === "streamlet") {
-      // Pick a random target icon
-      const targetIndex = Math.floor(Math.random() * CAPTCHA_ICONS.length)
-      const target = CAPTCHA_ICONS[targetIndex]
+    // Sign external captcha type
+    const externalSignature = crypto
+      .createHmac("sha256", SECRET)
+      .update(`${user.id}:${externalCaptchaType}:${timestamp}`)
+      .digest("hex")
 
-      // Shuffle options
-      const options = [...CAPTCHA_ICONS].sort(() => Math.random() - 0.5)
+    // 2. Generate Streamlet custom captcha challenge
+    const targetIndex = Math.floor(Math.random() * CAPTCHA_ICONS.length)
+    const target = CAPTCHA_ICONS[targetIndex]
+    const options = [...CAPTCHA_ICONS].sort(() => Math.random() - 0.5)
 
-      // Signature includes target name so we verify it later
-      const signature = crypto
-        .createHmac("sha256", SECRET)
-        .update(`${user.id}:streamlet:${timestamp}:${target.name}`)
-        .digest("hex")
+    // Sign custom captcha target
+    const streamletSignature = crypto
+      .createHmac("sha256", SECRET)
+      .update(`${user.id}:streamlet:${timestamp}:${target.name}`)
+      .digest("hex")
 
-      return NextResponse.json({
-        success: true,
-        captchaType,
-        timestamp,
-        signature,
-        challenge: {
-          prompt: target.label,
-          options: options.map(o => o.name),
-        }
-      })
-    } else {
-      const signature = crypto
-        .createHmac("sha256", SECRET)
-        .update(`${user.id}:${captchaType}:${timestamp}`)
-        .digest("hex")
-
-      return NextResponse.json({
-        success: true,
-        captchaType,
-        timestamp,
-        signature,
-      })
-    }
+    return NextResponse.json({
+      success: true,
+      externalCaptchaType,
+      externalSignature,
+      streamletSignature,
+      timestamp,
+      streamletChallenge: {
+        prompt: target.label,
+        options: options.map(o => o.name),
+      }
+    })
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message || "An error occurred." },

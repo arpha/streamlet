@@ -6,7 +6,15 @@ const SECRET = process.env.CF_TURNSTILE_SECRET_KEY || "fallback_secret_ptc_arpha
 
 export async function POST(req: NextRequest) {
   try {
-    const { campaignId, captchaType, captchaToken, captchaTimestamp, captchaSignature } = await req.json()
+    const { 
+      campaignId, 
+      externalCaptchaType, 
+      externalCaptchaToken, 
+      streamletCaptchaToken, 
+      captchaTimestamp, 
+      externalSignature, 
+      streamletSignature 
+    } = await req.json()
 
     if (!campaignId) {
       return NextResponse.json(
@@ -27,23 +35,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Validate Captcha Inputs & Signature
-    if (!captchaType || !['turnstile', 'hcaptcha', 'streamlet'].includes(captchaType)) {
+    if (!externalCaptchaType || !['turnstile', 'hcaptcha'].includes(externalCaptchaType)) {
       return NextResponse.json(
-        { success: false, message: "Invalid security verification type." },
+        { success: false, message: "Invalid external security verification type." },
         { status: 400 }
       )
     }
 
-    if (!captchaToken) {
+    if (!externalCaptchaToken || !streamletCaptchaToken) {
       return NextResponse.json(
-        { success: false, message: "Security verification token is required." },
+        { success: false, message: "Both captcha verifications are required." },
         { status: 400 }
       )
     }
 
-    if (!captchaTimestamp || !captchaSignature) {
+    if (!captchaTimestamp || !externalSignature || !streamletSignature) {
       return NextResponse.json(
-        { success: false, message: "Security signature is required." },
+        { success: false, message: "Security signatures are required." },
         { status: 400 }
       )
     }
@@ -58,25 +66,29 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Verify HMAC Signature
-    const expectedSignature = captchaType === "streamlet"
-      ? crypto
-          .createHmac("sha256", SECRET)
-          .update(`${user.id}:streamlet:${captchaTimestamp}:${captchaToken}`)
-          .digest("hex")
-      : crypto
-          .createHmac("sha256", SECRET)
-          .update(`${user.id}:${captchaType}:${captchaTimestamp}`)
-          .digest("hex")
+    // Verify HMAC Signatures
+    const expectedExternalSignature = crypto
+      .createHmac("sha256", SECRET)
+      .update(`${user.id}:${externalCaptchaType}:${captchaTimestamp}`)
+      .digest("hex")
+
+    const expectedStreamletSignature = crypto
+      .createHmac("sha256", SECRET)
+      .update(`${user.id}:streamlet:${captchaTimestamp}:${streamletCaptchaToken}`)
+      .digest("hex")
 
     try {
-      const isSignatureValid = crypto.timingSafeEqual(
-        Buffer.from(captchaSignature, "hex"),
-        Buffer.from(expectedSignature, "hex")
+      const isExternalValid = crypto.timingSafeEqual(
+        Buffer.from(externalSignature, "hex"),
+        Buffer.from(expectedExternalSignature, "hex")
       )
-      if (!isSignatureValid) {
+      const isStreamletValid = crypto.timingSafeEqual(
+        Buffer.from(streamletSignature, "hex"),
+        Buffer.from(expectedStreamletSignature, "hex")
+      )
+      if (!isExternalValid || !isStreamletValid) {
         return NextResponse.json(
-          { success: false, message: "Security signature verification failed. Make sure you clicked the correct icon." },
+          { success: false, message: "Security signature verification failed. Make sure you solved both captchas correctly." },
           { status: 400 }
         )
       }
@@ -88,12 +100,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Verify token with provider
-    if (captchaType === 'turnstile') {
+    if (externalCaptchaType === 'turnstile') {
       const turnstileSecret = process.env.CF_TURNSTILE_SECRET_KEY || "1x00000000000000000000AA"
       const turnstileRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(captchaToken)}`,
+        body: `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(externalCaptchaToken)}`,
       })
 
       const turnstileData = await turnstileRes.json()
@@ -103,12 +115,12 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
-    } else if (captchaType === 'hcaptcha') {
+    } else if (externalCaptchaType === 'hcaptcha') {
       const hcaptchaSecret = process.env.HCAPTCHA_SECRET_KEY || "0x0000000000000000000000000000000000000000"
       const hcaptchaRes = await fetch("https://hcaptcha.com/siteverify", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `secret=${encodeURIComponent(hcaptchaSecret)}&response=${encodeURIComponent(captchaToken)}`,
+        body: `secret=${encodeURIComponent(hcaptchaSecret)}&response=${encodeURIComponent(externalCaptchaToken)}`,
       })
 
       const hcaptchaData = await hcaptchaRes.json()
