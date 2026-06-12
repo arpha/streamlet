@@ -42,6 +42,7 @@ export function Sidebar() {
   const { isSidebarOpen, toggleSidebar, id: userId, balance, isAdmin } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
   const [surveysAvailable, setSurveysAvailable] = useState(false)
+  const [ptcAvailableCount, setPtcAvailableCount] = useState(0)
 
   // Check survey availability periodically
   useEffect(() => {
@@ -65,7 +66,33 @@ export function Sidebar() {
     checkSurveys()
     const interval = setInterval(checkSurveys, 5 * 60 * 1000) // every 5 minutes
     return () => clearInterval(interval)
-  }, [userId])
+  }, [userId, pathname])
+
+  // Check PTC availability periodically
+  useEffect(() => {
+    if (!userId) {
+      setPtcAvailableCount(0)
+      return
+    }
+
+    async function checkPTC() {
+      try {
+        const res = await fetch('/api/ptc')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && data.campaigns) {
+            setPtcAvailableCount(data.campaigns.length)
+          }
+        }
+      } catch {
+        // Silently fail
+      }
+    }
+
+    checkPTC()
+    const interval = setInterval(checkPTC, 5 * 60 * 1000) // every 5 minutes
+    return () => clearInterval(interval)
+  }, [userId, pathname])
 
   useEffect(() => {
     if (!userId) {
@@ -221,6 +248,13 @@ export function Sidebar() {
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-emerald-300/50" />
                     </span>
                   )}
+                  {/* Pulsing green dot for PTC Ads when ads are available */}
+                  {item.name === "PTC Ads" && ptcAvailableCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-emerald-300/50" />
+                    </span>
+                  )}
                 </div>
                 {isSidebarOpen && (
                   <motion.span 
@@ -237,6 +271,11 @@ export function Sidebar() {
                     {item.name === "Offerwalls" && surveysAvailable && (
                       <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider animate-pulse ml-2 flex-shrink-0">
                         Surveys Live
+                      </span>
+                    )}
+                    {item.name === "PTC Ads" && ptcAvailableCount > 0 && (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-black uppercase tracking-wider animate-pulse ml-2 flex-shrink-0">
+                        {ptcAvailableCount} Ads
                       </span>
                     )}
                     {item.name === "Faucet" && faucetCooldown > 0 && (
