@@ -308,7 +308,6 @@ export default function AdvertisePage() {
                     <div key={tier.duration} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
                       <div className="flex flex-col">
                         <span className="font-semibold text-sm">{tier.label}</span>
-                        <span className="text-xs text-emerald-400">Reward: {tier.reward} Points</span>
                       </div>
                       <span className="font-extrabold text-primary font-mono text-sm">{tier.cost} Tokens</span>
                     </div>
