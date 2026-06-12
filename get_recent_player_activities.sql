@@ -28,7 +28,7 @@ BEGIN
     FROM public.faucet_claims f
     JOIN public.profiles p ON f.user_id = p.id
     ORDER BY f.claimed_at DESC
-    LIMIT 10)
+    LIMIT 20)
     
     UNION ALL
     
@@ -43,7 +43,7 @@ BEGIN
     JOIN public.profiles p ON s.user_id = p.id
     WHERE s.status = 'completed'
     ORDER BY COALESCE(s.completed_at, s.created_at) DESC
-    LIMIT 10)
+    LIMIT 20)
     
     UNION ALL
     
@@ -58,7 +58,7 @@ BEGIN
     JOIN public.profiles p ON o.user_id = p.id
     WHERE o.status = 'completed'
     ORDER BY o.created_at DESC
-    LIMIT 10)
+    LIMIT 20)
     
     UNION ALL
     
@@ -72,7 +72,7 @@ BEGIN
     FROM public.withdrawals w
     JOIN public.profiles p ON w.user_id = p.id
     ORDER BY w.created_at DESC
-    LIMIT 10)
+    LIMIT 20)
 
     UNION ALL
     
@@ -86,7 +86,7 @@ BEGIN
     FROM public.daily_checkin_logs d
     JOIN public.profiles p ON d.user_id = p.id
     ORDER BY d.claimed_at DESC
-    LIMIT 10)
+    LIMIT 20)
 
     UNION ALL
 
@@ -100,7 +100,7 @@ BEGIN
     FROM public.mining_claims m
     JOIN public.profiles p ON m.user_id = p.id
     ORDER BY m.claimed_at DESC
-    LIMIT 10)
+    LIMIT 20)
 
     UNION ALL
 
@@ -115,7 +115,7 @@ BEGIN
     JOIN public.ptc_campaigns c ON v.campaign_id = c.id
     JOIN public.profiles p ON v.user_id = p.id
     ORDER BY v.viewed_at DESC
-    LIMIT 10)
+    LIMIT 20)
   )
   SELECT 
     a.activity_type, 
@@ -125,7 +125,7 @@ BEGIN
     a.created_at
   FROM all_activities a
   ORDER BY a.created_at DESC
-  LIMIT 10;
+  LIMIT 20;
 END;
 $$;
 
