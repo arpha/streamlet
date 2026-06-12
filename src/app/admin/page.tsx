@@ -326,9 +326,17 @@ export default function AdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div>
-              <span className="text-2xl font-black text-zinc-100 font-mono">{stats.totalUserPoints.toLocaleString()} Pts</span>
-              <p className="text-[9px] text-zinc-500 uppercase font-bold tracking-wider">Total User Balances</p>
+            <div className="flex justify-between items-end">
+              <div>
+                <span className="text-2xl font-black text-zinc-100 font-mono">{stats.totalUserPoints.toLocaleString()} Pts</span>
+                <p className="text-[9px] text-zinc-500 uppercase font-bold tracking-wider mt-0.5">Total User Balances</p>
+              </div>
+              <div className="text-right">
+                <span className="text-base font-bold text-emerald-400 font-mono">
+                  (${(stats.totalUserPoints * 0.000005).toFixed(2)})
+                </span>
+                <p className="text-[8px] text-zinc-500 uppercase font-bold tracking-wider mt-0.5">USD Value</p>
+              </div>
             </div>
 
             <div className="pt-2 border-t border-white/5 space-y-2">
@@ -346,7 +354,7 @@ export default function AdminDashboardPage() {
                 <span className="text-zinc-400">Pending Actions:</span>
                 {stats.pendingWithdrawalsCount > 0 ? (
                   <span className="font-bold text-amber-400 font-mono animate-pulse">
-                    {stats.pendingWithdrawalsCount} ({stats.pendingWithdrawalsPoints.toLocaleString()} Pts)
+                    {stats.pendingWithdrawalsCount} ({stats.pendingWithdrawalsPoints.toLocaleString()} Pts / ${(stats.pendingWithdrawalsPoints * 0.000005).toFixed(2)})
                   </span>
                 ) : (
                   <span className="text-zinc-600 font-bold">None</span>
