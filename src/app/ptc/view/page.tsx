@@ -402,12 +402,12 @@ function PTCViewContent() {
               >
                 {/* Countdown display */}
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`text-5xl font-black font-mono transition-colors duration-300 ${isTabActive ? "text-primary animate-pulse" : "text-rose-500"}`}>
+                  <div className={`text-5xl font-black font-mono transition-colors duration-300 ${!isTabActive ? "text-primary animate-pulse" : "text-rose-500"}`}>
                     {timeLeft}s
                   </div>
-                  {!isTabActive && (
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 animate-bounce">
-                      Timer Paused! Please return to this page.
+                  {isTabActive && (
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 animate-bounce font-mono">
+                      Timer Paused! Please view the opened ad page.
                     </span>
                   )}
                 </div>
@@ -415,15 +415,15 @@ function PTCViewContent() {
                 {/* Progress bar */}
                 <div className="w-full bg-zinc-900 border border-white/5 h-4 rounded-full overflow-hidden p-0.5">
                   <div 
-                    className={`h-full rounded-full transition-all duration-1000 ease-linear ${isTabActive ? "bg-gradient-to-r from-primary via-fuchsia-500 to-primary" : "bg-zinc-700"}`}
+                    className={`h-full rounded-full transition-all duration-1000 ease-linear ${!isTabActive ? "bg-gradient-to-r from-primary via-fuchsia-500 to-primary" : "bg-zinc-700"}`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
 
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10 text-left">
                   <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-xs text-yellow-500/80 leading-relaxed">
-                    <strong>IMPORTANT:</strong> Keep this tab active. Switching tabs or window focus will pause the countdown.
+                  <span className="text-xs text-yellow-500/80 leading-relaxed font-mono">
+                    <strong>IMPORTANT:</strong> You must keep the opened advertiser window active. Switching back to this tab will pause the countdown.
                   </span>
                 </div>
               </motion.div>
