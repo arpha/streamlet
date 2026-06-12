@@ -288,7 +288,7 @@ function PTCViewContent() {
       return
     }
 
-    if (!isTabActive) {
+    if (isYoutubeAd && !isTabActive) {
       document.title = `[PAUSED] (${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
       return
     }
@@ -608,7 +608,7 @@ function PTCViewContent() {
         )}
 
         {/* PAUSE MODAL OVERLAY (when user switches tab/focus away) */}
-        {timeLeft !== null && timeLeft > 0 && !isTabActive && (
+        {timeLeft !== null && timeLeft > 0 && isYoutubeAd && !isTabActive && (
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center">
             <div className="max-w-md p-8 rounded-2xl bg-zinc-950/80 border border-white/5 shadow-2xl space-y-4">
               <div className="flex justify-center">
