@@ -224,6 +224,7 @@ DECLARE
   v_campaign public.ptc_campaigns;
   v_already_viewed INT;
   v_new_balance INT;
+  v_new_xp INT;
 BEGIN
   -- Reset daily views untuk campaign jika sudah berganti hari (WIB / GMT+7)
   UPDATE public.ptc_campaigns
@@ -281,12 +282,13 @@ BEGIN
   SET balance = balance + v_campaign.reward_per_view,
       xp = xp + 1
   WHERE id = p_user_id
-  RETURNING balance INTO v_new_balance;
+  RETURNING balance, xp INTO v_new_balance, v_new_xp;
 
   RETURN json_build_object(
     'success', true,
     'message', 'Berhasil mengklaim ' || v_campaign.reward_per_view || ' Poin & 1 XP!',
-    'new_balance', v_new_balance
+    'new_balance', v_new_balance,
+    'new_xp', v_new_xp
   );
 END;
 $$;

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     if (!campaignId) {
       return NextResponse.json(
-        { success: false, message: "ID Kampanye wajib diisi." },
+        { success: false, message: "Campaign ID is required." },
         { status: 400 }
       )
     }
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized. Silakan login terlebih dahulu." },
+        { success: false, message: "Unauthorized. Please log in first." },
         { status: 401 }
       )
     }
@@ -29,21 +29,21 @@ export async function POST(req: NextRequest) {
     // 2. Validate Captcha Inputs & Signature
     if (!captchaType || !['turnstile', 'hcaptcha'].includes(captchaType)) {
       return NextResponse.json(
-        { success: false, message: "Tipe verifikasi keamanan tidak valid." },
+        { success: false, message: "Invalid security verification type." },
         { status: 400 }
       )
     }
 
     if (!captchaToken) {
       return NextResponse.json(
-        { success: false, message: "Token verifikasi keamanan wajib diisi." },
+        { success: false, message: "Security verification token is required." },
         { status: 400 }
       )
     }
 
     if (!captchaTimestamp || !captchaSignature) {
       return NextResponse.json(
-        { success: false, message: "Tanda tangan keamanan wajib disertakan." },
+        { success: false, message: "Security signature is required." },
         { status: 400 }
       )
     }
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const age = now - Number(captchaTimestamp)
     if (age < 0 || age > 15 * 60 * 1000) {
       return NextResponse.json(
-        { success: false, message: "Sesi verifikasi keamanan kedaluwarsa. Silakan refresh." },
+        { success: false, message: "Security verification session expired. Please refresh." },
         { status: 400 }
       )
     }
@@ -71,13 +71,13 @@ export async function POST(req: NextRequest) {
       )
       if (!isSignatureValid) {
         return NextResponse.json(
-          { success: false, message: "Verifikasi tanda tangan keamanan gagal." },
+          { success: false, message: "Security signature verification failed." },
           { status: 400 }
         )
       }
     } catch (err) {
       return NextResponse.json(
-        { success: false, message: "Tanda tangan keamanan tidak valid." },
+        { success: false, message: "Invalid security signature." },
         { status: 400 }
       )
     }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       const turnstileData = await turnstileRes.json()
       if (!turnstileData.success) {
         return NextResponse.json(
-          { success: false, message: "Cloudflare Turnstile verification gagal. Silakan coba lagi." },
+          { success: false, message: "Cloudflare Turnstile verification failed. Please try again." },
           { status: 400 }
         )
       }
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       const hcaptchaData = await hcaptchaRes.json()
       if (!hcaptchaData.success) {
         return NextResponse.json(
-          { success: false, message: "hCaptcha verification gagal. Silakan coba lagi." },
+          { success: false, message: "hCaptcha verification failed. Please try again." },
           { status: 400 }
         )
       }
@@ -123,16 +123,16 @@ export async function POST(req: NextRequest) {
 
     if (rpcError) {
       return NextResponse.json(
-        { success: false, message: rpcError.message || "Gagal memproses klaim iklan." },
+        { success: false, message: rpcError.message || "Failed to process ad claim." },
         { status: 500 }
       )
     }
 
-    const result = rpcData as { success: boolean; message?: string; new_balance?: number }
+    const result = rpcData as { success: boolean; message?: string; new_balance?: number; new_xp?: number }
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, message: result.message || "Gagal mengklaim iklan." },
+        { success: false, message: result.message || "Failed to claim ad reward." },
         { status: 400 }
       )
     }
@@ -141,11 +141,12 @@ export async function POST(req: NextRequest) {
       success: true,
       message: result.message,
       new_balance: result.new_balance,
+      new_xp: result.new_xp,
     })
   } catch (error: any) {
     console.error("PTC claim error:", error)
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan." },
+      { success: false, message: error.message || "An error occurred." },
       { status: 500 }
     )
   }

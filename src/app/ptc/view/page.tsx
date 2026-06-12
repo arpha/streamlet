@@ -39,7 +39,7 @@ function PTCViewContent() {
   const searchParams = useSearchParams()
   const campaignId = searchParams.get("id")
   const supabase = createClient()
-  const { setBalance } = useStore()
+  const { setBalance, setXp } = useStore()
 
   // Campaign Info
   const [campaign, setCampaign] = useState<any>(null)
@@ -66,6 +66,22 @@ function PTCViewContent() {
 
   // Claim State
   const [isClaiming, setIsClaiming] = useState(false)
+
+  // Check if captcha scripts are already loaded on client mount (Next.js Script onLoad bypass fix)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.turnstile) setTurnstileLoaded(true)
+      if (window.hcaptcha) setHcaptchaLoaded(true)
+    }
+  }, [])
+
+  // Restore original page tab title on component unmount
+  useEffect(() => {
+    const originalTitle = document.title
+    return () => {
+      document.title = originalTitle
+    }
+  }, [])
 
   // Fetch campaign details on mount
   useEffect(() => {
@@ -104,9 +120,17 @@ function PTCViewContent() {
     loadCampaign()
   }, [campaignId, supabase, router])
 
-  // Countdown timer ticking down
+  // Countdown timer ticking down and dynamic browser tab title update
   useEffect(() => {
-    if (timeLeft === null || !timerStarted || timeLeft <= 0) return
+    if (timeLeft === null || !timerStarted) return
+
+    if (timeLeft <= 0) {
+      document.title = "Ready to Claim! | Streamlet"
+      return
+    }
+
+    document.title = `(${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev !== null && prev <= 1) {
@@ -118,7 +142,7 @@ function PTCViewContent() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, timerStarted])
+  }, [timeLeft, timerStarted, campaign])
 
   // Fetch Captcha Signed Payload when timer hits 0
   useEffect(() => {
@@ -246,6 +270,9 @@ function PTCViewContent() {
       if (data.success) {
         toast.success(data.message || `Successfully claimed +${campaign.reward_per_view} Points!`)
         setBalance(data.new_balance)
+        if (data.new_xp !== undefined) {
+          setXp(data.new_xp)
+        }
         router.push("/ptc")
       } else {
         toast.error(data.message || "Failed to claim reward.")
