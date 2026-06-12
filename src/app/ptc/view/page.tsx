@@ -18,7 +18,8 @@ import {
   Bell,
   Flag,
   Shield,
-  Sparkles 
+  Sparkles,
+  ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -571,14 +572,33 @@ function PTCViewContent() {
               )}
             </div>
           ) : (
-            <iframe 
-              src={campaign.url}
-              className="w-full h-full border-none bg-white"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              referrerPolicy="no-referrer"
-            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 px-6 text-center">
+              <div className="max-w-md p-8 rounded-3xl bg-white/[0.02] border border-white/5 shadow-2xl space-y-6">
+                <div className="flex justify-center">
+                  <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-primary">
+                    <ExternalLink className="w-10 h-10 animate-pulse" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white uppercase tracking-wide">Situs Dibuka di Jendela Baru</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-mono">
+                    Situs pengiklan telah dibuka di tab baru Anda. Harap tunggu hingga timer di atas selesai untuk mengklaim reward Anda.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button
+                    onClick={() => window.open(campaign.url, "_blank", "noopener,noreferrer")}
+                    className="w-full neon-glow font-bold text-xs gap-2 py-5"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Buka Kembali Situs
+                  </Button>
+                  <p className="text-[10px] text-zinc-500 font-mono">
+                    Jika situs tidak otomatis terbuka, kemungkinan terblokir oleh pemblokir iklan (popup blocker).
+                  </p>
+                </div>
+              </div>
+            </div>
           )
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-zinc-950">

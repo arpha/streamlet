@@ -16,6 +16,40 @@ import {
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
+// Helper function to extract YouTube video ID from various YouTube URL formats
+function getYouTubeVideoId(url: string): string | null {
+  if (!url) return null
+  
+  try {
+    const urlObj = new URL(url)
+    
+    // Check for youtube.com
+    if (urlObj.hostname.includes("youtube.com")) {
+      // Handle /watch?v=...
+      if (urlObj.pathname === "/watch") {
+        return urlObj.searchParams.get("v")
+      }
+      // Handle /shorts/...
+      if (urlObj.pathname.startsWith("/shorts/")) {
+        return urlObj.pathname.split("/")[2] || null
+      }
+      // Handle /embed/...
+      if (urlObj.pathname.startsWith("/embed/")) {
+        return urlObj.pathname.split("/")[2] || null
+      }
+    }
+    
+    // Check for youtu.be (short url)
+    if (urlObj.hostname === "youtu.be") {
+      return urlObj.pathname.slice(1) || null
+    }
+  } catch (e) {
+    // Parsing fails
+  }
+  
+  return null
+}
+
 export default function PTCPage() {
   const router = useRouter()
   const [campaigns, setCampaigns] = useState<any[]>([])
@@ -43,8 +77,15 @@ export default function PTCPage() {
   }, [])
 
   const handleWatchAd = (campaign: any) => {
-    // Redirect current page to the timer verification page
-    router.push(`/ptc/view?id=${campaign.id}`)
+    const isYoutube = getYouTubeVideoId(campaign.url) !== null
+    if (isYoutube) {
+      router.push(`/ptc/view?id=${campaign.id}`)
+    } else {
+      // Open the advertiser URL in a new window/tab
+      window.open(campaign.url, "_blank", "noopener,noreferrer")
+      // Redirect current page to the timer verification page
+      router.push(`/ptc/view?id=${campaign.id}`)
+    }
   }
 
   const totalPointsAvailable = campaigns.reduce((acc, c) => acc + c.reward_per_view, 0)
