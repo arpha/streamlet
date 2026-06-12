@@ -2,6 +2,7 @@
 
 import { Bell, User, Settings, LogOut, ChevronDown, Sparkles, Menu, FileText, MessageSquare, Inbox, Ticket, Package, Trophy, Shield, Hammer } from "lucide-react"
 import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,52 @@ export function Navbar() {
   const [messages, setMessages] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [selectedMessage, setSelectedMessage] = useState<any | null>(null)
+
+  const [activities, setActivities] = useState<any[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    async function fetchActivities() {
+      try {
+        const { data, error } = await supabase.rpc('get_recent_player_activities')
+        if (!error && data) {
+          const mapped = data.map((act: any) => {
+            let color = 'text-purple-400'
+            if (act.activity_type === 'shortlink') {
+              color = 'text-cyan-400'
+            } else if (act.activity_type === 'offerwall') {
+              color = 'text-amber-400'
+            } else if (act.activity_type === 'withdrawal') {
+              color = 'text-rose-400'
+            } else if (act.activity_type === 'mining') {
+              color = act.amount.startsWith('-') ? 'text-rose-400' : 'text-emerald-400'
+            } else if (act.activity_type === 'checkin') {
+              color = 'text-emerald-400'
+            }
+            return {
+              ...act,
+              color
+            }
+          })
+          setActivities(mapped)
+        }
+      } catch (err) {
+        console.error("Error fetching navbar activities:", err)
+      }
+    }
+
+    fetchActivities()
+    const pollInterval = setInterval(fetchActivities, 5 * 60 * 1000) // 5 minutes
+    return () => clearInterval(pollInterval)
+  }, [supabase])
+
+  useEffect(() => {
+    if (activities.length === 0) return
+    const indexInterval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % activities.length)
+    }, 4000) // Swap every 4 seconds
+    return () => clearInterval(indexInterval)
+  }, [activities])
 
   const handleToggleMaintenance = async () => {
     try {
@@ -105,6 +152,30 @@ export function Navbar() {
           <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
           Network Status: Online
         </Badge>
+        {activities.length > 0 && (
+          <div className="hidden lg:flex items-center gap-2 bg-white/[0.02] border border-white/10 px-3.5 py-1.5 rounded-full text-[11px] font-bold text-white/80 overflow-hidden h-9">
+            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] text-white/40 font-black uppercase tracking-wider flex-shrink-0">Live:</span>
+            <div className="relative w-[220px] h-5 overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ y: 15, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -15, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="absolute inset-0 flex items-center gap-1.5 text-white truncate"
+                >
+                  <span className="text-primary uppercase font-black truncate max-w-[70px]">{activities[currentIndex].username}</span>
+                  <span className="text-white/60 truncate">{activities[currentIndex].details}</span>
+                  <span className={`${activities[currentIndex].color} font-black font-mono flex-shrink-0`}>
+                    {activities[currentIndex].amount}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
