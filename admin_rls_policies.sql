@@ -135,5 +135,24 @@ BEGIN
 END;
 $$;
 
+-- 5. Add Select policies for admins on user_miners table
+DROP POLICY IF EXISTS "Admins can select all user miners" ON public.user_miners;
+CREATE POLICY "Admins can select all user miners"
+ON public.user_miners
+FOR SELECT
+USING (
+  public.is_admin(auth.uid())
+);
+
+-- 6. Add Select policies for admins on ptc_campaigns table
+DROP POLICY IF EXISTS "Admins can select all ptc campaigns" ON public.ptc_campaigns;
+CREATE POLICY "Admins can select all ptc campaigns"
+ON public.ptc_campaigns
+FOR SELECT
+USING (
+  public.is_admin(auth.uid())
+);
+
 -- Grant execution permissions
 GRANT EXECUTE ON FUNCTION public.get_admin_dashboard_stats(UUID) TO authenticated;
+

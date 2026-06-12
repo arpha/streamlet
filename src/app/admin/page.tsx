@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ADMIN SHORTCUTS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         {[
           { name: "Player Activities", icon: Activity, href: "/admin/activities", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
           { name: "Manage Tasks", icon: ListTodo, href: "/admin/tasks", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
@@ -215,14 +215,16 @@ export default function AdminDashboardPage() {
           { name: "Leaderboard Winner", icon: Award, href: "/admin/leaderboard", color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
           { name: "Blog Posts", icon: BookOpen, href: "/admin/blog", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
           { name: "User Messages", icon: MessageSquare, href: "/admin/messages", color: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
+          { name: "Player Miners", icon: HardDrive, href: "/admin/miners", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+          { name: "PTC Campaigns", icon: Megaphone, href: "/admin/ptc", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
         ].map((item) => (
           <Link href={item.href} key={item.name}>
-            <Card className="glass border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 cursor-pointer rounded-2xl overflow-hidden group">
-              <CardContent className="p-4 flex flex-col items-center text-center gap-3">
+            <Card className="glass border-white/5 hover:border-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 cursor-pointer rounded-2xl overflow-hidden group h-full">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-3 justify-between h-full">
                 <div className={`p-3 rounded-xl border ${item.color} group-hover:scale-110 transition-transform duration-300`}>
                   <item.icon className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-xs uppercase tracking-wider text-zinc-300 group-hover:text-white transition-colors">{item.name}</span>
+                <span className="font-bold text-[11px] uppercase tracking-wider text-zinc-300 group-hover:text-white transition-colors">{item.name}</span>
               </CardContent>
             </Card>
           </Link>
