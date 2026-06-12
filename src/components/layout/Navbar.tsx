@@ -229,40 +229,13 @@ export function Navbar() {
             {isAdmin && (
               <>
                 <DropdownMenuItem 
-                  onClick={() => router.push("/admin/blog")}
-                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-purple-500/10 text-purple-400 focus:text-purple-300 transition-all"
+                  onClick={() => router.push("/admin")}
+                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-primary/10 text-primary focus:text-primary/90 transition-all"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/20">
-                    <FileText className="w-4 h-4 text-purple-400" />
+                  <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/20">
+                    <Shield className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="font-bold uppercase text-xs tracking-widest">Admin Blog</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => router.push("/admin/messages")}
-                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-emerald-500/10 text-emerald-400 focus:text-emerald-300 transition-all mt-1"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <span className="font-bold uppercase text-xs tracking-widest">Admin Messages</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => router.push("/admin/tasks")}
-                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-amber-500/10 text-amber-400 focus:text-amber-300 transition-all mt-1"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/20">
-                    <Trophy className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <span className="font-bold uppercase text-xs tracking-widest">Admin Tasks</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => router.push("/admin/activities")}
-                  className="cursor-pointer gap-2 p-3 rounded-xl focus:bg-sky-500/10 text-sky-400 focus:text-sky-300 transition-all mt-1"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-sky-500/20 flex items-center justify-center border border-sky-500/20">
-                    <Shield className="w-4 h-4 text-sky-400" />
-                  </div>
-                  <span className="font-bold uppercase text-xs tracking-widest">Player Activities</span>
+                  <span className="font-bold uppercase text-xs tracking-widest">Admin Console</span>
                 </DropdownMenuItem>
                 <div 
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all mt-1 select-none"
