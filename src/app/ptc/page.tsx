@@ -58,7 +58,7 @@ export default function PTCPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold gradient-text">Pay-To-Click (PTC)</h2>
-          <p className="text-muted-foreground">Kunjungi situs web pengiklan selama beberapa detik untuk mendapatkan poin gratis.</p>
+          <p className="text-muted-foreground">Visit advertiser websites for a few seconds to earn free points.</p>
         </div>
         <Button 
           variant="outline" 
@@ -68,7 +68,7 @@ export default function PTCPage() {
           className="glass border-white/5 hover:bg-white/10 gap-1 text-xs font-semibold self-start md:self-auto"
         >
           {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-          Refresh Iklan
+          Refresh Ads
         </Button>
       </div>
 
@@ -80,8 +80,8 @@ export default function PTCPage() {
               <Eye className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Iklan Tersedia</div>
-              <div className="text-xl font-bold font-mono text-white">{campaigns.length} Iklan</div>
+              <div className="text-xs text-muted-foreground">Ads Available</div>
+              <div className="text-xl font-bold font-mono text-white">{campaigns.length} Ads</div>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -89,8 +89,8 @@ export default function PTCPage() {
               <Coins className="w-6 h-6 text-yellow-500" />
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Potensi Penghasilan</div>
-              <div className="text-xl font-bold font-mono text-yellow-500">+{totalPointsAvailable.toLocaleString()} Poin</div>
+              <div className="text-xs text-muted-foreground">Earning Potential</div>
+              <div className="text-xl font-bold font-mono text-yellow-500">+{totalPointsAvailable.toLocaleString()} Points</div>
             </div>
           </div>
         </div>
@@ -100,18 +100,18 @@ export default function PTCPage() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-sm font-semibold">Memuat daftar iklan PTC aktif...</p>
+          <p className="text-sm font-semibold">Loading active PTC ads list...</p>
         </div>
       ) : campaigns.length === 0 ? (
         <Card className="glass border-white/5 py-16 text-center">
           <CardContent className="flex flex-col items-center gap-4">
             <MousePointer2 className="w-16 h-16 text-primary/30" />
-            <h3 className="text-2xl font-bold text-white">Tidak ada iklan tersedia</h3>
+            <h3 className="text-2xl font-bold text-white">No ads available</h3>
             <p className="text-muted-foreground max-w-sm">
-              Semua iklan saat ini telah Anda kunjungi atau kuotanya sudah habis. Silakan kembali lagi nanti!
+              All ads have been visited or their daily limits/quotas have run out. Please check back later!
             </p>
             <Button className="mt-2 neon-glow font-semibold" onClick={() => router.push("/advertise")}>
-              Buat Iklan Anda Sendiri
+              Create Your Own Ad
             </Button>
           </CardContent>
         </Card>
@@ -123,11 +123,11 @@ export default function PTCPage() {
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                   <span className="flex items-center gap-1 font-mono">
                     <Clock className="w-3.5 h-3.5 text-primary" />
-                    {c.duration} Detik
+                    {c.duration} Seconds
                   </span>
                   <span className="flex items-center gap-1 font-mono text-yellow-500 font-bold bg-yellow-500/5 px-2 py-0.5 rounded-full">
                     <Coins className="w-3.5 h-3.5" />
-                    +{c.reward_per_view} Poin
+                    +{c.reward_per_view} Points
                   </span>
                 </div>
                 <CardTitle className="text-base line-clamp-2 text-white group-hover:text-primary transition-colors">
@@ -141,7 +141,7 @@ export default function PTCPage() {
                   className="w-full neon-glow font-bold text-xs gap-2 py-5"
                   onClick={() => handleWatchAd(c)}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" /> KUNJUNGI & KLAIM
+                  <ExternalLink className="w-3.5 h-3.5" /> VISIT & CLAIM
                 </Button>
               </CardContent>
             </Card>
@@ -152,9 +152,9 @@ export default function PTCPage() {
       {/* Trust Feature List */}
       <div className="grid gap-6 md:grid-cols-3 pt-6 border-t border-white/5">
         {[
-          { icon: ShieldCheck, title: 'Anti-Bot Protection', desc: 'Kami menggunakan verifikasi captcha berlapis untuk menjamin iklan ditonton manusia.' },
-          { icon: Sparkles, title: 'Instan Poin & XP', desc: 'Poin dan XP langsung masuk ke saldo Anda begitu verifikasi timer selesai.' },
-          { icon: MousePointer2, title: 'Siklus 24 Jam', desc: 'Iklan di-reset setiap 24 jam sekali dari waktu tonton Anda sebelumnya.' },
+          { icon: ShieldCheck, title: 'Anti-Bot Protection', desc: 'We use layered captcha verification to ensure ads are viewed by real humans.' },
+          { icon: Sparkles, title: 'Instant Points & XP', desc: 'Points and XP are directly added to your balance once the countdown finishes.' },
+          { icon: MousePointer2, title: '24-Hour Cycle', desc: 'Ads reset 24 hours after your last view.' },
         ].map((item, i) => (
           <div key={i} className="flex gap-4 p-4 rounded-2xl glass border-white/5">
             <item.icon className="w-6 h-6 text-primary flex-shrink-0" />

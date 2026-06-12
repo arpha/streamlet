@@ -70,7 +70,7 @@ function PTCViewContent() {
   // Fetch campaign details on mount
   useEffect(() => {
     if (!campaignId) {
-      toast.error("ID Kampanye tidak valid.")
+      toast.error("Invalid campaign ID.")
       router.push("/ptc")
       return
     }
@@ -85,7 +85,7 @@ function PTCViewContent() {
           .single()
 
         if (error || !data) {
-          toast.error("Iklan tidak ditemukan atau sudah tidak aktif.")
+          toast.error("Ad campaign not found or is no longer active.")
           router.push("/ptc")
           return
         }
@@ -94,7 +94,7 @@ function PTCViewContent() {
         setTimeLeft(data.duration)
         setTimerStarted(true)
       } catch (err) {
-        toast.error("Gagal menghubungkan ke database.")
+        toast.error("Failed to connect to database.")
         router.push("/ptc")
       } finally {
         setIsLoadingCampaign(false)
@@ -134,10 +134,10 @@ function PTCViewContent() {
           setCaptchaTimestamp(data.timestamp)
           setCaptchaSignature(data.signature)
         } else {
-          toast.error("Gagal mendapatkan kunci keamanan captcha.")
+          toast.error("Failed to retrieve security signature.")
         }
       } catch (err) {
-        toast.error("Kesalahan koneksi saat memuat captcha.")
+        toast.error("Connection error while loading captcha.")
       } finally {
         setIsLoadingCaptcha(false)
       }
@@ -244,11 +244,11 @@ function PTCViewContent() {
       const data = await res.json()
 
       if (data.success) {
-        toast.success(data.message || `Berhasil mengklaim +${campaign.reward_per_view} Poin!`)
+        toast.success(data.message || `Successfully claimed +${campaign.reward_per_view} Points!`)
         setBalance(data.new_balance)
         router.push("/ptc")
       } else {
-        toast.error(data.message || "Gagal mengklaim reward.")
+        toast.error(data.message || "Failed to claim reward.")
         // Reset Captcha if verification fails
         if (captchaType === "turnstile" && window.turnstile && turnstileWidgetId.current) {
           window.turnstile.reset(turnstileWidgetId.current)
@@ -259,7 +259,7 @@ function PTCViewContent() {
         setHcaptchaToken(null)
       }
     } catch (err) {
-      toast.error("Terjadi kesalahan koneksi.")
+      toast.error("Connection error occurred.")
     } finally {
       setIsClaiming(false)
     }
@@ -290,7 +290,7 @@ function PTCViewContent() {
         onClick={() => router.push("/ptc")}
         className="text-zinc-400 hover:text-white mb-2"
       >
-        <ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke PTC
+        <ArrowLeft className="w-4 h-4 mr-2" /> Back to PTC
       </Button>
 
       <Card className="glass border-primary/20 relative overflow-hidden bg-zinc-950/40">
@@ -301,7 +301,7 @@ function PTCViewContent() {
             </div>
           </div>
           <CardTitle className="text-xl font-bold text-white">
-            {isLoadingCampaign ? "Memuat Informasi Iklan..." : campaign?.title}
+            {isLoadingCampaign ? "Loading Ad Campaign Details..." : campaign?.title}
           </CardTitle>
           <CardDescription className="text-xs text-zinc-500 font-mono">
             {campaign?.url}
@@ -338,7 +338,7 @@ function PTCViewContent() {
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/10 text-left">
                   <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                   <span className="text-xs text-yellow-500/80 leading-relaxed">
-                    <strong>PENTING:</strong> Jangan tutup tab/jendela situs web yang baru saja Anda buka. Hitung mundur akan terus berjalan di halaman ini.
+                    <strong>IMPORTANT:</strong> Do not close the advertiser website tab/window that you just opened. The countdown will continue on this page.
                   </span>
                 </div>
               </motion.div>
@@ -351,7 +351,7 @@ function PTCViewContent() {
                 {isLoadingCaptcha ? (
                   <div className="flex flex-col items-center justify-center py-8 gap-2">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    <span className="text-xs text-muted-foreground">Memuat Kunci Keamanan...</span>
+                    <span className="text-xs text-muted-foreground">Loading Security Verification...</span>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -361,7 +361,7 @@ function PTCViewContent() {
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5" />
-                            Verifikasi Turnstile
+                            Turnstile Verification
                           </span>
                           {turnstileToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                         </div>
@@ -375,7 +375,7 @@ function PTCViewContent() {
                         <div className="flex items-center justify-between w-full">
                           <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5" />
-                            Verifikasi hCaptcha
+                            hCaptcha Verification
                           </span>
                           {hcaptchaToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                         </div>
@@ -398,7 +398,7 @@ function PTCViewContent() {
                       ) : (
                         <Coins className="w-5 h-5" />
                       )}
-                      {captchaVerified ? `KLAIM ${campaign?.reward_per_view} POIN` : "Selesaikan Verifikasi Keamanan"}
+                      {captchaVerified ? `CLAIM ${campaign?.reward_per_view} POINTS` : "Complete Security Verification"}
                     </Button>
                   </div>
                 )}
