@@ -465,6 +465,9 @@ function HomeContent() {
     async function fetchGlobalActivities() {
       try {
         const { data, error } = await supabase.rpc('get_recent_player_activities')
+        if (error) {
+          console.error("RPC Error get_recent_player_activities:", error)
+        }
         if (!error && data) {
           const mapped = data.map((act: any) => {
             let icon = Coins
