@@ -52,6 +52,8 @@ export function Navbar() {
               color = act.amount.startsWith('-') ? 'text-rose-400' : 'text-emerald-400'
             } else if (act.activity_type === 'checkin') {
               color = 'text-emerald-400'
+            } else if (act.activity_type === 'ptc') {
+              color = 'text-emerald-400'
             }
             return {
               ...act,

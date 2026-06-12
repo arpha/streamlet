@@ -101,6 +101,21 @@ BEGIN
     JOIN public.profiles p ON m.user_id = p.id
     ORDER BY m.claimed_at DESC
     LIMIT 10)
+
+    UNION ALL
+
+    -- PTC Ads
+    (SELECT 
+      'ptc'::TEXT as activity_type,
+      p.username,
+      ('+' || c.reward_per_view || ' Pts')::TEXT as amount,
+      ('PTC Ad: ' || c.title)::TEXT as details,
+      v.viewed_at as created_at
+    FROM public.ptc_views v
+    JOIN public.ptc_campaigns c ON v.campaign_id = c.id
+    JOIN public.profiles p ON v.user_id = p.id
+    ORDER BY v.viewed_at DESC
+    LIMIT 10)
   )
   SELECT 
     a.activity_type, 

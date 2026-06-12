@@ -304,11 +304,31 @@ function HomeContent() {
           .order('claimed_at', { ascending: false })
           .limit(5)
 
+        // 5d. Fetch recent PTC claims
+        const { count: ptcCount } = await supabase
+          .from('ptc_views')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+
+        const { data: ptcData } = await supabase
+          .from('ptc_views')
+          .select('ptc_campaigns(reward_per_view)')
+          .eq('user_id', userId)
+
+        const ptcTotal = ptcData?.reduce((acc, curr) => acc + Number((curr.ptc_campaigns as any)?.reward_per_view || 0), 0) || 0
+
+        const { data: recentPTC } = await supabase
+          .from('ptc_views')
+          .select('*, ptc_campaigns(title, reward_per_view)')
+          .eq('user_id', userId)
+          .order('viewed_at', { ascending: false })
+          .limit(5)
+
         setStatsData({
-          totalClaims: (faucetCount || 0) + (shortlinkCount || 0) + (offerwallCount || 0) + (miningCount || 0),
+          totalClaims: (faucetCount || 0) + (shortlinkCount || 0) + (offerwallCount || 0) + (miningCount || 0) + (ptcCount || 0),
           referrals: referralCount,
           activeToday: refStats?.active_today || 0,
-          totalEarned: faucetTotal + shortlinkTotal + offerwallTotal + miningTotal + referralCommissions
+          totalEarned: faucetTotal + shortlinkTotal + offerwallTotal + miningTotal + ptcTotal + referralCommissions
         })
 
         const activities: any[] = []
@@ -362,6 +382,20 @@ function HomeContent() {
               date: new Date(mining.claimed_at),
               icon: Cpu,
               color: isPurchase ? 'text-rose-400' : 'text-emerald-400'
+            })
+          })
+        }
+
+        if (recentPTC) {
+          recentPTC.forEach(v => {
+            const camp = v.ptc_campaigns as any
+            activities.push({
+              type: 'PTC Ads Claim',
+              amount: `+${Number(camp?.reward_per_view || 0)} Points`,
+              time: formatDistanceToNow(new Date(v.viewed_at), { addSuffix: true }),
+              date: new Date(v.viewed_at),
+              icon: MousePointer2,
+              color: 'text-emerald-400'
             })
           })
         }
