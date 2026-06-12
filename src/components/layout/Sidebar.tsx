@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Megaphone
+  Megaphone,
+  ShieldCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -38,7 +39,7 @@ const navItems: { name: string; icon: any; href: string; comingSoon?: boolean }[
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { isSidebarOpen, toggleSidebar, id: userId, balance } = useStore()
+  const { isSidebarOpen, toggleSidebar, id: userId, balance, isAdmin } = useStore()
   const [faucetCooldown, setFaucetCooldown] = useState(0)
   const [surveysAvailable, setSurveysAvailable] = useState(false)
 
@@ -249,6 +250,30 @@ export function Sidebar() {
             </Link>
           )
         })}
+        {isAdmin && (
+          <Link href="/admin">
+            <div className={cn(
+              "group flex items-center rounded-2xl transition-all duration-200 mt-4 border border-primary/20 bg-primary/5 cursor-pointer",
+              isSidebarOpen ? "gap-4 px-4 py-3.5 w-full" : "justify-center w-12 h-12 mx-auto",
+              pathname.startsWith("/admin") 
+                ? "bg-primary text-white shadow-lg shadow-primary/30 active-glow" 
+                : "text-primary/70 hover:text-white hover:bg-primary/20"
+            )}>
+              <div className="relative flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
+              </div>
+              {isSidebarOpen && (
+                <motion.span 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="font-bold text-sm whitespace-nowrap uppercase tracking-widest"
+                >
+                  Admin Console
+                </motion.span>
+              )}
+            </div>
+          </Link>
+        )}
       </nav>
 
       {/* Bottom Group */}

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     if (dbError) {
       return NextResponse.json(
-        { success: false, message: dbError.message || "Gagal mengambil daftar iklan." },
+        { success: false, message: dbError.message || "Failed to retrieve ad list." },
         { status: 500 }
       )
     }
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan." },
+      { success: false, message: error.message || "An error occurred." },
       { status: 500 }
     )
   }

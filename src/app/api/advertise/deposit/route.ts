@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     if (isNaN(tokensAmount) || tokensAmount < 1000) {
       return NextResponse.json(
-        { success: false, message: "Minimal deposit adalah 1,000 Token." },
+        { success: false, message: "Minimum deposit is 1,000 Tokens." },
         { status: 400 }
       )
     }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan." },
+      { success: false, message: error.message || "An error occurred." },
       { status: 500 }
     )
   }

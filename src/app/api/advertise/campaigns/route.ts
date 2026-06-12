@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     if (dbError) {
       return NextResponse.json(
-        { success: false, message: dbError.message || "Gagal mengambil data kampanye." },
+        { success: false, message: dbError.message || "Failed to retrieve campaign data." },
         { status: 500 }
       )
     }
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan." },
+      { success: false, message: error.message || "An error occurred." },
       { status: 500 }
     )
   }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (!title || !url || !duration || !totalViews) {
       return NextResponse.json(
-        { success: false, message: "Semua kolom wajib diisi." },
+        { success: false, message: "All fields are required." },
         { status: 400 }
       )
     }
@@ -58,28 +58,28 @@ export async function POST(req: NextRequest) {
 
     if (isNaN(views) || views <= 0) {
       return NextResponse.json(
-        { success: false, message: "Jumlah tayangan tidak valid." },
+        { success: false, message: "Invalid views count." },
         { status: 400 }
       )
     }
 
     if (dailyLimit !== null && (isNaN(dailyLimit) || dailyLimit <= 0)) {
       return NextResponse.json(
-        { success: false, message: "Limit tayangan harian tidak valid." },
+        { success: false, message: "Invalid daily views limit." },
         { status: 400 }
       )
     }
 
     if (dailyLimit !== null && dailyLimit > views) {
       return NextResponse.json(
-        { success: false, message: "Limit harian tidak boleh melebihi total tayangan." },
+        { success: false, message: "Daily limit cannot exceed total views." },
         { status: 400 }
       )
     }
 
     if (![10, 30, 60, 120].includes(dur)) {
       return NextResponse.json(
-        { success: false, message: "Durasi tidak valid." },
+        { success: false, message: "Invalid duration." },
         { status: 400 }
       )
     }
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 
     if (rpcError) {
       return NextResponse.json(
-        { success: false, message: rpcError.message || "Gagal membuat kampanye." },
+        { success: false, message: rpcError.message || "Failed to create campaign." },
         { status: 500 }
       )
     }
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Create Campaign API error:", error)
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan." },
+      { success: false, message: error.message || "An error occurred." },
       { status: 500 }
     )
   }

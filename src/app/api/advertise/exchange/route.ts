@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     if (isNaN(pointsAmount) || pointsAmount <= 0) {
       return NextResponse.json(
-        { success: false, message: "Jumlah poin tidak valid." },
+        { success: false, message: "Invalid points amount." },
         { status: 400 }
       )
     }
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized. Silakan login terlebih dahulu." },
+        { success: false, message: "Unauthorized. Please log in first." },
         { status: 401 }
       )
     }
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     if (rpcError) {
       return NextResponse.json(
-        { success: false, message: rpcError.message || "Gagal memproses penukaran." },
+        { success: false, message: rpcError.message || "Failed to process exchange." },
         { status: 500 }
       )
     }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Exchange API error:", error)
     return NextResponse.json(
-      { success: false, message: error.message || "Terjadi kesalahan yang tidak terduga." },
+      { success: false, message: error.message || "An unexpected error occurred." },
       { status: 500 }
     )
   }
