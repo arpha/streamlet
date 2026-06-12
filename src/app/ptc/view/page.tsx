@@ -11,7 +11,14 @@ import {
   Loader2, 
   ShieldCheck, 
   ArrowLeft,
-  AlertCircle 
+  AlertCircle,
+  Star,
+  Heart,
+  Smile,
+  Bell,
+  Flag,
+  Shield,
+  Sparkles 
 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase"
@@ -50,13 +57,15 @@ function PTCViewContent() {
   const [timerStarted, setTimerStarted] = useState(false)
 
   // Captcha States
-  const [captchaType, setCaptchaType] = useState<"turnstile" | "hcaptcha" | null>(null)
+  const [captchaType, setCaptchaType] = useState<"turnstile" | "hcaptcha" | "streamlet" | null>(null)
   const [captchaTimestamp, setCaptchaTimestamp] = useState<number | null>(null)
   const [captchaSignature, setCaptchaSignature] = useState<string | null>(null)
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
   const [hcaptchaLoaded, setHcaptchaLoaded] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null)
+  const [streamletChallenge, setStreamletChallenge] = useState<{ prompt: string; options: string[] } | null>(null)
+  const [streamletToken, setStreamletToken] = useState<string | null>(null)
   const [isLoadingCaptcha, setIsLoadingCaptcha] = useState(false)
 
   const turnstileRef = useRef<HTMLDivElement>(null)
@@ -157,6 +166,9 @@ function PTCViewContent() {
           setCaptchaType(data.captchaType)
           setCaptchaTimestamp(data.timestamp)
           setCaptchaSignature(data.signature)
+          if (data.captchaType === "streamlet") {
+            setStreamletChallenge(data.challenge)
+          }
         } else {
           toast.error("Failed to retrieve security signature.")
         }
@@ -246,7 +258,13 @@ function PTCViewContent() {
     }
   }, [captchaType, hcaptchaLoaded])
 
-  const captchaVerified = captchaType === "turnstile" ? !!turnstileToken : (captchaType === "hcaptcha" ? !!hcaptchaToken : false)
+  const captchaVerified = captchaType === "turnstile" 
+    ? !!turnstileToken 
+    : (captchaType === "hcaptcha" 
+      ? !!hcaptchaToken 
+      : (captchaType === "streamlet" 
+        ? !!streamletToken 
+        : false))
 
   // Handle Reward Claim Submission
   const handleClaimReward = async () => {
@@ -260,7 +278,11 @@ function PTCViewContent() {
         body: JSON.stringify({
           campaignId: campaign.id,
           captchaType,
-          captchaToken: captchaType === "turnstile" ? turnstileToken : hcaptchaToken,
+          captchaToken: captchaType === "turnstile" 
+            ? turnstileToken 
+            : (captchaType === "hcaptcha" 
+              ? hcaptchaToken 
+              : streamletToken),
           captchaTimestamp,
           captchaSignature,
         })
@@ -284,6 +306,7 @@ function PTCViewContent() {
         }
         setTurnstileToken(null)
         setHcaptchaToken(null)
+        setStreamletToken(null)
       }
     } catch (err) {
       toast.error("Connection error occurred.")
@@ -407,6 +430,54 @@ function PTCViewContent() {
                           {hcaptchaToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                         </div>
                         <div ref={hcaptchaRef} className="min-w-[303px] min-h-[78px] flex items-center justify-center" />
+                      </div>
+                    )}
+
+                    {/* Security Check 3: Streamlet Custom Captcha */}
+                    {captchaType === "streamlet" && streamletChallenge && (
+                      <div className="w-full p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5 font-mono">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Streamlet Security Check
+                          </span>
+                          {streamletToken && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                        </div>
+                        <p className="text-xs text-zinc-400 text-center">
+                          Please click the <span className="font-extrabold text-white underline decoration-primary decoration-2 underline-offset-4 font-mono">{streamletChallenge.prompt}</span> icon below:
+                        </p>
+                        <div className="flex justify-center gap-3 pt-1">
+                          {streamletChallenge.options.map((option) => {
+                            const IconComponent = (() => {
+                              switch (option) {
+                                case "star": return Star
+                                case "heart": return Heart
+                                case "smile": return Smile
+                                case "bell": return Bell
+                                case "flag": return Flag
+                                case "shield": return Shield
+                                default: return Sparkles
+                              }
+                            })()
+
+                            const isSelected = streamletToken === option
+
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => setStreamletToken(option)}
+                                className={`p-4 rounded-xl transition-all duration-200 border flex items-center justify-center ${
+                                  isSelected
+                                    ? "bg-primary border-primary text-white scale-110 shadow-lg shadow-primary/20"
+                                    : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 text-white/70 hover:text-white"
+                                }`}
+                              >
+                                <IconComponent className="w-5 h-5" />
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                     )}
 

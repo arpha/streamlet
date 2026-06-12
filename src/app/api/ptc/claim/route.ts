@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Validate Captcha Inputs & Signature
-    if (!captchaType || !['turnstile', 'hcaptcha'].includes(captchaType)) {
+    if (!captchaType || !['turnstile', 'hcaptcha', 'streamlet'].includes(captchaType)) {
       return NextResponse.json(
         { success: false, message: "Invalid security verification type." },
         { status: 400 }
@@ -59,10 +59,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify HMAC Signature
-    const expectedSignature = crypto
-      .createHmac("sha256", SECRET)
-      .update(`${user.id}:${captchaType}:${captchaTimestamp}`)
-      .digest("hex")
+    const expectedSignature = captchaType === "streamlet"
+      ? crypto
+          .createHmac("sha256", SECRET)
+          .update(`${user.id}:streamlet:${captchaTimestamp}:${captchaToken}`)
+          .digest("hex")
+      : crypto
+          .createHmac("sha256", SECRET)
+          .update(`${user.id}:${captchaType}:${captchaTimestamp}`)
+          .digest("hex")
 
     try {
       const isSignatureValid = crypto.timingSafeEqual(
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest) {
       )
       if (!isSignatureValid) {
         return NextResponse.json(
-          { success: false, message: "Security signature verification failed." },
+          { success: false, message: "Security signature verification failed. Make sure you clicked the correct icon." },
           { status: 400 }
         )
       }
@@ -84,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Verify token with provider
     if (captchaType === 'turnstile') {
-      const turnstileSecret = process.env.CF_TURNSTILE_SECRET_KEY || "1x00000000000000000000000000000000"
+      const turnstileSecret = process.env.CF_TURNSTILE_SECRET_KEY || "1x00000000000000000000AA"
       const turnstileRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -98,7 +103,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
-    } else {
+    } else if (captchaType === 'hcaptcha') {
       const hcaptchaSecret = process.env.HCAPTCHA_SECRET_KEY || "0x0000000000000000000000000000000000000000"
       const hcaptchaRes = await fetch("https://hcaptcha.com/siteverify", {
         method: "POST",
