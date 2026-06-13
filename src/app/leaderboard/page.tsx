@@ -78,6 +78,14 @@ export default function LeaderboardPage() {
   const [pastCycles, setPastCycles] = useState<Cycle[]>([])
   const [pastWinners, setPastWinners] = useState<PastWinner[]>([])
   const [selectedPastCycleId, setSelectedPastCycleId] = useState<number | null>(null)
+  const [settings, setSettings] = useState<{
+    faucet_shortlink_limit: number
+    faucet_shortlink_rewards: number[]
+    referral_limit: number
+    referral_rewards: number[]
+    offerwall_limit: number
+    offerwall_rewards: number[]
+  } | null>(null)
   
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null)
 
@@ -100,6 +108,7 @@ export default function LeaderboardPage() {
           setReferralList(data.referral_leaderboard || [])
           setPastCycles(data.past_cycles || [])
           setPastWinners(data.past_winners || [])
+          setSettings(data.settings || null)
           
           if (data.past_cycles && data.past_cycles.length > 0) {
             setSelectedPastCycleId(data.past_cycles[0].id)
@@ -162,6 +171,19 @@ export default function LeaderboardPage() {
   const pastOfferwallWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'offerwall')
 
   const getPrizeForRank = (tab: 'faucet_shortlink' | 'offerwall' | 'referral', rank: number) => {
+    if (settings) {
+      if (tab === 'faucet_shortlink' && settings.faucet_shortlink_rewards) {
+        return settings.faucet_shortlink_rewards[rank - 1] || 0
+      }
+      if (tab === 'referral' && settings.referral_rewards) {
+        return settings.referral_rewards[rank - 1] || 0
+      }
+      if (tab === 'offerwall' && settings.offerwall_rewards) {
+        return settings.offerwall_rewards[rank - 1] || 0
+      }
+    }
+
+    // Fallback defaults
     if (tab === 'faucet_shortlink') {
       if (rank === 1) return 50000
       if (rank === 2) return 35000
