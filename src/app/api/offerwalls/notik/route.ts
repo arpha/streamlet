@@ -187,8 +187,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   // 6. Validate UUID format for userId
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!uuidRegex.test(userId)) {
-    console.warn(`[Notik Debug] Blocked: Invalid UUID format for userId: ${userId}`)
-    return new NextResponse("ERROR: Invalid user_id format", { status: 400 })
+    console.log(`[Notik Debug] Non-UUID user_id "${userId}" detected with valid signature. Treating as a successful test/debug request.`)
+    return new NextResponse("ok", { headers: { "Content-Type": "text/plain" } })
   }
 
   // Check if this is a cancellation/reversal (status = 2 or negative reward)
