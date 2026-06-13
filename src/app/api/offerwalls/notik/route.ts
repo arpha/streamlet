@@ -158,7 +158,7 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     }
   }
 
-  // Temporary DB logging to inspect parameters sent by Notik
+  // Temporary DB logging via SECURITY DEFINER RPC to bypass RLS
   try {
     const supabase = await getServerSupabase()
     const logData = {
@@ -171,19 +171,9 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
         "x-signature": req.headers.get("x-signature") || req.headers.get("signature") || req.headers.get("hash")
       }
     }
-    const { data: firstUser } = await supabase.from("profiles").select("id").limit(1)
-    if (firstUser && firstUser.length > 0) {
-      await supabase.from("offerwall_claims").insert({
-        user_id: firstUser[0].id,
-        provider: `NOTIK_DEBUG_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-        transaction_id: JSON.stringify(logData),
-        points_reward: 0,
-        payout_usd: 0,
-        status: 'debug'
-      })
-    }
+    await supabase.rpc("log_notik_debug", { p_log: JSON.stringify(logData) })
   } catch (e: any) {
-    console.error("[Notik Debug] Failed to log request in DB:", e.message)
+    console.error("[Notik Debug] Failed to call log_notik_debug RPC:", e.message)
   }
 
   // 3. Extract parameters supporting multiple naming conventions
