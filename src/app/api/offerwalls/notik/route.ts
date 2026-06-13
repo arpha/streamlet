@@ -24,6 +24,75 @@ function cleanValue(val: string | null | undefined): string | null {
   return trimmed
 }
 
+function getNotikHashVariations(
+  params: {
+    event_id: string;
+    user_id: string;
+    amount: string;
+    payout: string;
+  },
+  secretKey: string
+) {
+  const { event_id, user_id, amount, payout } = params
+  const variations: { type: string; rawString: string; hash: string }[] = []
+
+  const addSha256 = (name: string, str: string) => {
+    try {
+      const hash = crypto.createHash("sha256").update(str).digest("hex")
+      variations.push({ type: `sha256(${name})`, rawString: str, hash })
+    } catch (e) {}
+  }
+
+  const addHmacSha256 = (name: string, str: string) => {
+    try {
+      const hash = crypto.createHmac("sha256", secretKey).update(str).digest("hex")
+      variations.push({ type: `hmac_sha256(${name})`, rawString: str, hash })
+    } catch (e) {}
+  }
+
+  const addMd5 = (name: string, str: string) => {
+    try {
+      const hash = crypto.createHash("md5").update(str).digest("hex")
+      variations.push({ type: `md5(${name})`, rawString: str, hash })
+    } catch (e) {}
+  }
+
+  const addHmacSha1 = (name: string, str: string) => {
+    try {
+      const hash = crypto.createHmac("sha1", secretKey).update(str).digest("hex")
+      variations.push({ type: `hmac_sha1(${name})`, rawString: str, hash })
+    } catch (e) {}
+  }
+
+  const patterns = [
+    { name: "event:user:amount:secret", str: `${event_id}:${user_id}:${amount}:${secretKey}` },
+    { name: "event:user:payout:secret", str: `${event_id}:${user_id}:${payout}:${secretKey}` },
+    { name: "event:user:amount", str: `${event_id}:${user_id}:${amount}` },
+    { name: "event:user:payout", str: `${event_id}:${user_id}:${payout}` },
+    { name: "event+user+amount+secret", str: `${event_id}${user_id}${amount}${secretKey}` },
+    { name: "event+user+payout+secret", str: `${event_id}${user_id}${payout}${secretKey}` },
+    { name: "event+user+amount", str: `${event_id}${user_id}${amount}` },
+    { name: "event+user+payout", str: `${event_id}${user_id}${payout}` },
+    { name: "secret+event+user+amount", str: `${secretKey}${event_id}${user_id}${amount}` },
+    { name: "secret+event+user+payout", str: `${secretKey}${event_id}${user_id}${payout}` },
+    { name: "user+event+amount+secret", str: `${user_id}${event_id}${amount}${secretKey}` },
+    { name: "user+event+payout+secret", str: `${user_id}${event_id}${payout}${secretKey}` },
+    { name: "user:event:amount", str: `${user_id}:${event_id}:${amount}` },
+    { name: "user+event+amount", str: `${user_id}${event_id}${amount}` },
+    { name: "event-secret", str: `${event_id}-${secretKey}` },
+    { name: "event+secret", str: `${event_id}${secretKey}` },
+  ]
+
+  for (const p of patterns) {
+    addSha256(p.name, p.str)
+    addHmacSha256(p.name, p.str)
+    addMd5(p.name, p.str)
+    addHmacSha1(p.name, p.str)
+  }
+
+  return variations
+}
+
 // Verify Notik.me signature hash (supporting standard combinations of parameters)
 function verifyNotikSignature(
   params: {
@@ -36,37 +105,10 @@ function verifyNotikSignature(
   receivedHash: string
 ): boolean {
   try {
-    const { event_id, user_id, amount, payout } = params
-
-    // Supported hash variations
-    const variations = [
-      // 1. sha256(event_id + ":" + user_id + ":" + amount + ":" + secret_key)
-      `${event_id}:${user_id}:${amount}:${secretKey}`,
-      // 2. sha256(event_id + ":" + user_id + ":" + payout + ":" + secret_key)
-      `${event_id}:${user_id}:${payout}:${secretKey}`,
-      // 3. sha256(event_id + user_id + amount + secret_key)
-      `${event_id}${user_id}${amount}${secretKey}`,
-      // 4. sha256(event_id + user_id + payout + secret_key)
-      `${event_id}${user_id}${payout}${secretKey}`,
-    ]
-
-    for (const dataToHash of variations) {
-      const sha256Hash = crypto.createHash("sha256").update(dataToHash).digest("hex")
-      if (sha256Hash.toLowerCase() === receivedHash.toLowerCase()) {
-        console.log(`[Notik Debug] Hash verified via SHA-256 with string: "${dataToHash}"`)
-        return true
-      }
-    }
-
-    // MD5 variations
-    const md5Variations = [
-      `${event_id}:${user_id}:${amount}:${secretKey}`,
-      `${event_id}${user_id}${amount}${secretKey}`,
-    ]
-    for (const dataToHash of md5Variations) {
-      const md5Hash = crypto.createHash("md5").update(dataToHash).digest("hex")
-      if (md5Hash.toLowerCase() === receivedHash.toLowerCase()) {
-        console.log(`[Notik Debug] Hash verified via MD5 with string: "${dataToHash}"`)
+    const variations = getNotikHashVariations(params, secretKey)
+    for (const v of variations) {
+      if (v.hash.toLowerCase() === receivedHash.toLowerCase()) {
+        console.log(`[Notik Debug] Hash verified via ${v.type} with raw string: "${v.rawString}"`)
         return true
       }
     }
@@ -180,8 +222,24 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     hash
   )
   if (!isSignatureValid) {
-    console.warn(`[Notik Debug] Blocked: Signature mismatch. Received: ${hash}`)
-    return new NextResponse("ERROR: Signature mismatch", { status: 400 })
+    const debugInfo = {
+      receivedHash: hash,
+      secretKeyLength: secretKey.length,
+      secretKeyPrefix: secretKey.substring(0, 4) + "...",
+      parameters: { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
+      computedHashes: getNotikHashVariations(
+        { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
+        secretKey
+      ).map(v => ({ type: v.type, hash: v.hash }))
+    }
+    console.warn(`[Notik Debug] Blocked: Signature mismatch. Received: ${hash}`, debugInfo)
+    return new NextResponse(
+      JSON.stringify({
+        error: "Signature mismatch",
+        debug: debugInfo
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
   }
 
   // 6. Validate UUID format for userId
