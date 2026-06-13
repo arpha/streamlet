@@ -31,7 +31,8 @@ function getNotikHashVariations(
     amount: string;
     payout: string;
   },
-  secretKey: string
+  secretKey: string,
+  fullUrl?: string
 ) {
   const { event_id, user_id, amount, payout } = params
   const variations: { type: string; rawString: string; hash: string }[] = []
@@ -90,6 +91,28 @@ function getNotikHashVariations(
     addHmacSha1(p.name, p.str)
   }
 
+  // Add full URL variations if fullUrl is provided (like BitLabs and TheoremReach)
+  if (fullUrl) {
+    const urlVariations = [fullUrl]
+    const hostSwapped: string[] = []
+    for (const u of urlVariations) {
+      if (u.includes("://www.streamlet.fun")) {
+        hostSwapped.push(u.replace("://www.streamlet.fun", "://streamlet.fun"))
+      } else if (u.includes("://streamlet.fun")) {
+        hostSwapped.push(u.replace("://streamlet.fun", "://www.streamlet.fun"))
+      }
+    }
+    urlVariations.push(...hostSwapped)
+
+    for (const u of urlVariations) {
+      const splitUrl = u.split("&hash=")
+      if (splitUrl.length >= 2) {
+        const urlWithoutHash = splitUrl[0]
+        addHmacSha1("url_without_hash", urlWithoutHash)
+      }
+    }
+  }
+
   return variations
 }
 
@@ -102,10 +125,11 @@ function verifyNotikSignature(
     payout: string;
   },
   secretKey: string,
-  receivedHash: string
+  receivedHash: string,
+  fullUrl?: string
 ): boolean {
   try {
-    const variations = getNotikHashVariations(params, secretKey)
+    const variations = getNotikHashVariations(params, secretKey, fullUrl)
     for (const v of variations) {
       if (v.hash.toLowerCase() === receivedHash.toLowerCase()) {
         console.log(`[Notik Debug] Hash verified via ${v.type} with raw string: "${v.rawString}"`)
@@ -237,7 +261,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
   const isSignatureValid = verifyNotikSignature(
     { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
     secretKey,
-    hash
+    hash,
+    req.url
   )
   if (!isSignatureValid) {
     const debugInfo = {
@@ -247,7 +272,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
       parameters: { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
       computedHashes: getNotikHashVariations(
         { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
-        secretKey
+        secretKey,
+        req.url
       ).map(v => ({ type: v.type, hash: v.hash }))
     }
     console.warn(`[Notik Debug] Blocked: Signature mismatch. Received: ${hash}`, debugInfo)
