@@ -489,7 +489,7 @@ export default function AdminLeaderboardPage() {
                                     disabled={actionLoadingId === winner.id || bulkLoading}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 rounded-xl border border-purple-500/20 hover:bg-purple-600 hover:text-white hover:border-transparent text-purple-400 font-black text-[10px] uppercase tracking-wider px-3 gap-1"
+                                    className="h-8 rounded-xl border border-purple-500/20 hover:bg-purple-600 hover:text-white hover:border-transparent text-purple-400 font-black text-[10px] uppercase tracking-wider px-3 gap-1 bg-clip-border"
                                   >
                                     {actionLoadingId === winner.id ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -688,7 +688,7 @@ export default function AdminLeaderboardPage() {
                         <Button
                           onClick={() => setShowResetConfirm(false)}
                           variant="ghost"
-                          className="rounded-xl border border-white/5 text-white/60 hover:text-white"
+                          className="rounded-xl border border-white/5 text-white/60 hover:text-white bg-clip-border"
                         >
                           Cancel
                         </Button>
@@ -696,7 +696,7 @@ export default function AdminLeaderboardPage() {
                           id="execute_reset_btn"
                           disabled={true}
                           onClick={handleResetCycle}
-                          className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-black"
+                          className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-black bg-clip-border"
                         >
                           {resettingCycle ? <Loader2 className="w-4 h-4 animate-spin" /> : "EXECUTE RESET"}
                         </Button>
@@ -705,7 +705,7 @@ export default function AdminLeaderboardPage() {
                   ) : (
                     <Button
                       onClick={() => setShowResetConfirm(true)}
-                      className="w-full rounded-2xl bg-red-950/40 hover:bg-red-900/40 border border-red-500/30 text-red-400 font-black text-xs uppercase tracking-widest gap-2 h-12 transition-all shadow-lg shadow-red-950/10"
+                      className="w-full rounded-2xl bg-red-950/40 hover:bg-red-900/40 border border-red-500/30 text-red-400 font-black text-xs uppercase tracking-widest gap-2 h-12 transition-all shadow-lg shadow-red-950/10 bg-clip-border"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Reset Leaderboard Cycle
