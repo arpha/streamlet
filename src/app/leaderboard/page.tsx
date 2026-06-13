@@ -52,9 +52,8 @@ interface PastWinner {
   reward_points: number
   payout_status: 'pending_approval' | 'approved' | 'rejected'
 }
-
 export default function LeaderboardPage() {
-  const { id: userId, isAdmin } = useStore()
+  const { id: userId, isAdmin, username } = useStore()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
 
@@ -66,7 +65,6 @@ export default function LeaderboardPage() {
   }, [user, authLoading, router])
 
   const [loading, setLoading] = useState(true)
-
 
   const [activeTab, setActiveTab] = useState<'faucet_shortlink' | 'offerwall' | 'referral'>('faucet_shortlink')
   
@@ -86,6 +84,12 @@ export default function LeaderboardPage() {
     offerwall_limit: number
     offerwall_rewards: number[]
   } | null>(null)
+
+  const [userStats, setUserStats] = useState<{
+    faucet_shortlink: { score: number; claims: number; rank: number | null }
+    referral: { score: number; rank: number | null }
+    offerwall: { score: number; claims: number; rank: number | null }
+  } | null>(null)
   
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null)
 
@@ -94,7 +98,11 @@ export default function LeaderboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { data, error } = await supabase.rpc("get_leaderboards")
+        const params: any = {}
+        if (userId) {
+          params.p_user_id = userId
+        }
+        const { data, error } = await supabase.rpc("get_leaderboards", params)
         if (error) throw error
 
         if (data) {
@@ -109,6 +117,7 @@ export default function LeaderboardPage() {
           setPastCycles(data.past_cycles || [])
           setPastWinners(data.past_winners || [])
           setSettings(data.settings || null)
+          setUserStats(data.user_stats || null)
           
           if (data.past_cycles && data.past_cycles.length > 0) {
             setSelectedPastCycleId(data.past_cycles[0].id)
@@ -122,9 +131,7 @@ export default function LeaderboardPage() {
     }
 
     loadData()
-  }, [])
-
-  // Timer countdown effect
+  }, [userId])  // Timer countdown effect
   useEffect(() => {
     if (!cycle?.end_at) return
 
@@ -450,6 +457,57 @@ export default function LeaderboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            
+            {/* CURRENT USER STANDING SUMMARY CARD */}
+            {user && userStats && (
+              <div className="max-w-4xl mx-auto mt-6 p-5 rounded-3xl border bg-purple-500/5 border-purple-500/20 shadow-lg shadow-purple-950/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-clip-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/10 border border-purple-500/25 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-black text-purple-300">
+                      {(() => {
+                        const rank = activeTab === 'faucet_shortlink'
+                          ? userStats.faucet_shortlink.rank
+                          : activeTab === 'offerwall'
+                          ? userStats.offerwall.rank
+                          : userStats.referral.rank
+                        return rank ? `#${rank}` : '-'
+                      })()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 font-bold block">Your Standing</span>
+                    <h4 className="text-sm font-black text-white mt-0.5">{username || user.email} (You)</h4>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center justify-center sm:justify-end gap-6 sm:gap-10">
+                  <div className="text-center sm:text-right">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Score</span>
+                    <span className="text-sm font-bold text-white mt-0.5 block font-mono">
+                      {activeTab === 'faucet_shortlink'
+                        ? `${userStats.faucet_shortlink.score.toLocaleString("id-ID")} Pts (${userStats.faucet_shortlink.claims} Claims)`
+                        : activeTab === 'offerwall'
+                        ? `${userStats.offerwall.score.toLocaleString("id-ID")} Pts (${userStats.offerwall.claims} Claims)`
+                        : `${userStats.referral.score} Referrals`
+                      }
+                    </span>
+                  </div>
+                  <div className="text-center sm:text-right">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Estimated Reward</span>
+                    <span className="text-sm font-black text-purple-400 mt-0.5 block font-mono">
+                      {(() => {
+                        const rank = activeTab === 'faucet_shortlink'
+                          ? userStats.faucet_shortlink.rank
+                          : activeTab === 'offerwall'
+                          ? userStats.offerwall.rank
+                          : userStats.referral.rank
+                        return rank ? `+${getPrizeForRank(activeTab, rank).toLocaleString("id-ID")} Pts` : 'No Reward'
+                      })()}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

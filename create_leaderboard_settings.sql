@@ -261,7 +261,9 @@ END;
 $$;
 
 -- 5. Perbarui fungsi RPC utama untuk mengembalikan data Leaderboard beserta Settings aktif
-CREATE OR REPLACE FUNCTION public.get_leaderboards()
+DROP FUNCTION IF EXISTS public.get_leaderboards();
+
+CREATE OR REPLACE FUNCTION public.get_leaderboards(p_user_id UUID DEFAULT NULL)
 RETURNS JSON
 SECURITY DEFINER
 SET search_path = public
@@ -275,6 +277,18 @@ DECLARE
   v_past_cycles JSON;
   v_past_winners JSON;
   v_settings JSON;
+
+  -- Stats khusus untuk user yang meminta
+  v_user_faucet_shortlink_score INT := 0;
+  v_user_faucet_shortlink_claims INT := 0;
+  v_user_faucet_shortlink_rank INT := NULL;
+
+  v_user_referral_score INT := 0;
+  v_user_referral_rank INT := NULL;
+
+  v_user_offerwall_score INT := 0;
+  v_user_offerwall_claims INT := 0;
+  v_user_offerwall_rank INT := NULL;
 BEGIN
   -- A. Dapatkan atau inisialisasi siklus aktif
   v_cycle := public.get_or_create_active_leaderboard_cycle();
@@ -381,6 +395,85 @@ BEGIN
     ORDER BY cycle_id DESC, leaderboard_type ASC, rank ASC
   ) t;
 
+  -- H. Hitung statistik spesifik user jika p_user_id diberikan
+  IF p_user_id IS NOT NULL THEN
+    -- 1. Faucet & Shortlink
+    SELECT total_points, total_claims, rank 
+    INTO v_user_faucet_shortlink_score, v_user_faucet_shortlink_claims, v_user_faucet_shortlink_rank
+    FROM (
+      SELECT 
+        p.id AS user_id,
+        (COALESCE(f.faucet_points, 0) + COALESCE(s.shortlink_points, 0))::INT AS total_points,
+        (COALESCE(f.faucet_claims, 0) + COALESCE(s.shortlink_claims, 0))::INT AS total_claims,
+        ROW_NUMBER() OVER (
+          ORDER BY (COALESCE(f.faucet_points, 0) + COALESCE(s.shortlink_points, 0)) DESC, 
+          GREATEST(f.last_claimed_at, s.last_completed_at) ASC
+        )::INT AS rank
+      FROM public.profiles p
+      LEFT JOIN (
+        SELECT 
+          user_id,
+          SUM(amount) AS faucet_points,
+          COUNT(id) AS faucet_claims,
+          MAX(claimed_at) AS last_claimed_at
+        FROM public.faucet_claims
+        WHERE claimed_at >= v_cycle.start_at
+          AND claimed_at <= v_cycle.end_at
+        GROUP BY user_id
+      ) f ON p.id = f.user_id
+      LEFT JOIN (
+        SELECT 
+          user_id,
+          SUM(points_reward) AS shortlink_points,
+          COUNT(id) AS shortlink_claims,
+          MAX(completed_at) AS last_completed_at
+        FROM public.shortlink_claims
+        WHERE status = 'completed'
+          AND completed_at >= v_cycle.start_at
+          AND completed_at <= v_cycle.end_at
+        GROUP BY user_id
+      ) s ON p.id = s.user_id
+      WHERE COALESCE(f.faucet_points, 0) > 0 OR COALESCE(s.shortlink_points, 0) > 0
+    ) r
+    WHERE user_id = p_user_id;
+
+    -- 2. Referral
+    SELECT total_referrals, rank 
+    INTO v_user_referral_score, v_user_referral_rank
+    FROM (
+      SELECT 
+        p.id AS user_id,
+        COUNT(ref.id)::INT AS total_referrals,
+        ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC, MAX(ref.created_at) ASC)::INT AS rank
+      FROM public.profiles p
+      JOIN public.profiles ref ON p.id = ref.referred_by_id
+      WHERE ref.referred_by_id IS NOT NULL
+        AND ref.created_at >= v_cycle.start_at
+        AND ref.created_at <= v_cycle.end_at
+        AND ref.xp >= 100
+      GROUP BY p.id
+    ) r
+    WHERE user_id = p_user_id;
+
+    -- 3. Offerwall
+    SELECT total_points, total_claims, rank 
+    INTO v_user_offerwall_score, v_user_offerwall_claims, v_user_offerwall_rank
+    FROM (
+      SELECT 
+        p.id AS user_id,
+        COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
+        COUNT(c.id)::INT AS total_claims,
+        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank
+      FROM public.profiles p
+      JOIN public.offerwall_claims c ON p.id = c.user_id
+      WHERE c.status = 'completed'
+        AND c.completed_at >= v_cycle.start_at
+        AND c.completed_at <= v_cycle.end_at
+      GROUP BY p.id
+    ) r
+    WHERE user_id = p_user_id;
+  END IF;
+
   RETURN json_build_object(
     'success', true,
     'cycle_id', v_cycle.id,
@@ -391,7 +484,23 @@ BEGIN
     'offerwall_leaderboard', COALESCE(v_offerwall_leaderboard, '[]'::JSON),
     'past_cycles', COALESCE(v_past_cycles, '[]'::JSON),
     'past_winners', COALESCE(v_past_winners, '[]'::JSON),
-    'settings', v_settings
+    'settings', v_settings,
+    'user_stats', json_build_object(
+      'faucet_shortlink', json_build_object(
+        'score', COALESCE(v_user_faucet_shortlink_score, 0),
+        'claims', COALESCE(v_user_faucet_shortlink_claims, 0),
+        'rank', v_user_faucet_shortlink_rank
+      ),
+      'referral', json_build_object(
+        'score', COALESCE(v_user_referral_score, 0),
+        'rank', v_user_referral_rank
+      ),
+      'offerwall', json_build_object(
+        'score', COALESCE(v_user_offerwall_score, 0),
+        'claims', COALESCE(v_user_offerwall_claims, 0),
+        'rank', v_user_offerwall_rank
+      )
+    )
   );
 END;
 $$;
