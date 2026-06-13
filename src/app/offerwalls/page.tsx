@@ -128,12 +128,16 @@ export default function OfferwallsPage() {
   const [apiKey, setApiKey] = useState<string>("")
   const [theoremreachApiKey, setTheoremreachApiKey] = useState<string>("")
   const [bitlabsApiKey, setBitlabsApiKey] = useState<string>("")
+  const [notikApiKey, setNotikApiKey] = useState<string>("")
+  const [notikPubId, setNotikPubId] = useState<string>("")
+  const [notikAppId, setNotikAppId] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx" | "theoremreach" | "bitlabs">("bitcotasks")
+  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx" | "theoremreach" | "bitlabs" | "notik">("bitcotasks")
   const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
   const [cpxEarnings, setCpxEarnings] = useState<number>(0)
   const [theoremreachEarnings, setTheoremreachEarnings] = useState<number>(0)
   const [bitlabsEarnings, setBitlabsEarnings] = useState<number>(0)
+  const [notikEarnings, setNotikEarnings] = useState<number>(0)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -154,6 +158,14 @@ export default function OfferwallsPage() {
     // Load the public BitLabs App Token from env
     const blKey = process.env.NEXT_PUBLIC_BITLABS_APP_TOKEN || ""
     setBitlabsApiKey(blKey)
+
+    // Load Notik.me details from env
+    const nKey = process.env.NEXT_PUBLIC_NOTIK_API_KEY || ""
+    const nPub = process.env.NEXT_PUBLIC_NOTIK_PUB_ID || ""
+    const nApp = process.env.NEXT_PUBLIC_NOTIK_APP_ID || ""
+    setNotikApiKey(nKey)
+    setNotikPubId(nPub)
+    setNotikAppId(nApp)
 
     setLoading(false)
   }, [])
@@ -214,6 +226,19 @@ export default function OfferwallsPage() {
       if (!blErr && blData) {
         const total = blData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
         setBitlabsEarnings(total)
+      }
+
+      // Fetch Notik earnings
+      const { data: notikData, error: notikErr } = await supabase
+        .from("offerwall_claims")
+        .select("points_reward")
+        .eq("user_id", userId)
+        .eq("provider", "notik")
+        .eq("status", "completed")
+
+      if (!notikErr && notikData) {
+        const total = notikData.reduce((sum, item) => sum + (item.points_reward || 0), 0)
+        setNotikEarnings(total)
       }
     }
 
@@ -286,6 +311,16 @@ export default function OfferwallsPage() {
         >
           BitLabs Surveys
         </button>
+        <button
+          onClick={() => setActiveTab("notik")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "notik"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          Notik
+        </button>
       </div>
 
       {/* EXPLANATION CARDS */}
@@ -296,7 +331,7 @@ export default function OfferwallsPage() {
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
               <span className="text-2xl font-black font-mono text-amber-400">
-                {activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : activeTab === "theoremreach" ? "TheoremReach" : "BitLabs"}
+                {activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : activeTab === "theoremreach" ? "TheoremReach" : activeTab === "bitlabs" ? "BitLabs" : "Notik"}
               </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
@@ -317,7 +352,9 @@ export default function OfferwallsPage() {
                   ? `${cpxEarnings.toLocaleString()} Pts`
                   : activeTab === "theoremreach"
                   ? `${theoremreachEarnings.toLocaleString()} Pts`
-                  : `${bitlabsEarnings.toLocaleString()} Pts`
+                  : activeTab === "bitlabs"
+                  ? `${bitlabsEarnings.toLocaleString()} Pts`
+                  : `${notikEarnings.toLocaleString()} Pts`
                 }
               </span>
             </div>
@@ -495,6 +532,55 @@ BITLABS_SECRET_KEY=your_bitlabs_secret_key`}
                 src={`https://web.bitlabs.ai/?uid=${userId}&token=${bitlabsApiKey}&theme=DARK`}
                 style={{ width: "100%", height: "800px", border: "none" }}
                 title="BitLabs Offerwall"
+                className="w-full"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        )
+      ) : activeTab === "notik" ? (
+        !notikApiKey || !notikPubId || !notikAppId ? (
+          // Guide to setup when Notik credentials are missing
+          <Card className="glass border-white/10 rounded-[2rem] p-8 space-y-6">
+            <div className="space-y-4 text-center max-w-2xl mx-auto">
+              <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-tight">Offerwall Configuration Needed</h3>
+              <p className="text-white/60 text-sm">
+                Notik API key, Publisher ID, or App ID has not been configured in the environment variables yet.
+              </p>
+              
+              <div className="text-left bg-black/40 border border-white/5 p-5 rounded-2xl font-mono text-xs text-white/80 space-y-2">
+                <p className="text-purple-400 font-bold"># How to enable Notik Offerwall:</p>
+                <p>1. Get your **API Key**, **Publisher ID**, and **App ID** from your Notik Publisher dashboard.</p>
+                <p>2. Add the following variables to your <code className="text-cyan-400">.env.local</code> file:</p>
+                <pre className="bg-black/60 p-3 rounded-lg mt-2 text-emerald-400">
+{`NEXT_PUBLIC_NOTIK_API_KEY=your_notik_api_key
+NEXT_PUBLIC_NOTIK_PUB_ID=your_notik_pub_id
+NEXT_PUBLIC_NOTIK_APP_ID=your_notik_app_id
+NOTIK_SECRET_KEY=your_notik_secret_key`}
+                </pre>
+                <p className="mt-2 text-white/40">3. Restart your dev server to apply the env changes.</p>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          // IFRAME INTEGRATION
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-4">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Notik Offerwall Loaded
+              </span>
+              <span className="text-xs text-white/40 font-mono">User: {userId.substring(0, 8)}...</span>
+            </div>
+            
+            <div className="glass border border-white/10 rounded-[2rem] overflow-hidden bg-black/20 shadow-2xl relative">
+              <iframe 
+                src={`https://notik.me/coins?api_key=${notikApiKey}&pub_id=${notikPubId}&app_id=${notikAppId}&user_id=${userId}`}
+                style={{ width: "100%", height: "800px", border: "none" }}
+                title="Notik Offerwall"
                 className="w-full"
                 scrolling="yes"
               />
