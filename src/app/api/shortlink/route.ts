@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     let fingerprint: string | null = null
     try {
       const body = await req.json()
-      if (body?.provider && ["shrinkme", "exeio", "fclc", "cuty"].includes(body.provider)) {
+      if (body?.provider && ["shrinkme", "exeio", "fclc", "shrinkearn"].includes(body.provider)) {
         provider = body.provider
       }
       if (body?.fingerprint) {
@@ -47,12 +47,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "FC.LC API key not configured on server. Please add FCLC_API_KEY to your environment." }, { status: 500 })
       }
       reward = 100
-    } else if (provider === "cuty") {
-      apiKey = process.env.CUTY_IO_API_KEY || ""
+    } else if (provider === "shrinkearn") {
+      apiKey = process.env.SHRINKEARN_API_KEY || ""
       if (!apiKey) {
-        return NextResponse.json({ error: "Cuty.io API key not configured on server. Please add CUTY_IO_API_KEY to your environment." }, { status: 500 })
+        return NextResponse.json({ error: "ShrinkEarn API key not configured on server. Please add SHRINKEARN_API_KEY to your environment." }, { status: 500 })
       }
-      reward = 200
+      reward = 100
     }
 
     // 2. Call start_shortlink_visit RPC to validate and insert pending claim
@@ -100,8 +100,8 @@ export async function POST(req: NextRequest) {
       apiUrl = `https://exe.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
     } else if (provider === "fclc") {
       apiUrl = `https://fc.lc/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
-    } else if (provider === "cuty") {
-      apiUrl = `https://cuty.io/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}`
+    } else if (provider === "shrinkearn") {
+      apiUrl = `https://shrinkearn.com/api?api=${apiKey}&url=${encodeURIComponent(callbackUrl)}&format=json`
     }
 
     const response = await fetch(apiUrl)

@@ -48,10 +48,11 @@ function ShortlinksContent() {
   const [completedShrinkme, setCompletedShrinkme] = useState<number>(0)
   const [completedExeio, setCompletedExeio] = useState<number>(0)
   const [completedFclc, setCompletedFclc] = useState<number>(0)
-  const [completedCuty, setCompletedCuty] = useState<number>(0)
+  const [completedShrinkearn, setCompletedShrinkearn] = useState<number>(0)
   const [cooldownExeio, setCooldownExeio] = useState<number>(0)
   const [cooldownFclc, setCooldownFclc] = useState<number>(0)
-  const cooldownRemaining = Math.max(cooldownExeio, cooldownFclc)
+  const [cooldownShrinkearn, setCooldownShrinkearn] = useState<number>(0)
+  const cooldownRemaining = Math.max(cooldownExeio, cooldownFclc, cooldownShrinkearn)
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
@@ -110,9 +111,10 @@ function ShortlinksContent() {
         setCompletedShrinkme(data.completed_shrinkme || 0)
         setCompletedExeio(data.completed_exeio || 0)
         setCompletedFclc(data.completed_fclc || 0)
-        setCompletedCuty(data.completed_cuty || 0)
+        setCompletedShrinkearn(data.completed_shrinkearn || 0)
         setCooldownExeio(data.cooldown_exeio || 0)
         setCooldownFclc(data.cooldown_fclc || 0)
+        setCooldownShrinkearn(data.cooldown_shrinkearn || 0)
         setTotalEarned(data.total_earned)
       }
       
@@ -150,6 +152,7 @@ function ShortlinksContent() {
     const timer = setInterval(() => {
       setCooldownExeio(prev => (prev > 0 ? prev - 1 : 0))
       setCooldownFclc(prev => (prev > 0 ? prev - 1 : 0))
+      setCooldownShrinkearn(prev => (prev > 0 ? prev - 1 : 0))
     }, 1000)
 
     return () => clearInterval(timer)
@@ -214,16 +217,16 @@ function ShortlinksContent() {
       tutorialUrl: "https://youtu.be/XeuR1v7oCgQ?si=Pd-dD6QVNySmmL7p"
     },
     {
-      id: "cuty",
-      name: "Cuty.io",
+      id: "shrinkearn",
+      name: "ShrinkEarn.com",
       tag: "Hot Reward",
-      description: "Cuty.io is a fast and secure shortlink service. Complete the verification steps to claim your reward points.",
+      description: "ShrinkEarn.com is a reliable, high-paying shortlink provider. Complete the verification steps to claim your reward points.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(200),
+      points: getAdjustedPoints(100),
       gradient: "from-orange-500 to-amber-600",
-      limit: 1,
-      completed: completedCuty,
-      cooldownRemaining: 0,
+      limit: 2,
+      completed: completedShrinkearn,
+      cooldownRemaining: cooldownShrinkearn,
       tagColor: "bg-orange-500/10 text-orange-400 border border-orange-500/20"
     }
   ]
@@ -240,9 +243,9 @@ function ShortlinksContent() {
       return
     }
 
-    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : 1))
-    const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : completedCuty))
-    const providerCooldown = provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : 0)
+    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : (provider === "shrinkearn" ? 2 : 1)))
+    const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : (provider === "shrinkearn" ? completedShrinkearn : 0)))
+    const providerCooldown = provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : (provider === "shrinkearn" ? cooldownShrinkearn : 0))
 
     if (providerCompleted >= providerLimit) {
       toast.warning(`Daily limit reached for this shortlink! Reset at 07:00 AM GMT+7.`)
