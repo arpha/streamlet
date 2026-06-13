@@ -49,10 +49,11 @@ function ShortlinksContent() {
   const [completedExeio, setCompletedExeio] = useState<number>(0)
   const [completedFclc, setCompletedFclc] = useState<number>(0)
   const [completedShrinkearn, setCompletedShrinkearn] = useState<number>(0)
+  const [cooldownShrinkme, setCooldownShrinkme] = useState<number>(0)
   const [cooldownExeio, setCooldownExeio] = useState<number>(0)
   const [cooldownFclc, setCooldownFclc] = useState<number>(0)
   const [cooldownShrinkearn, setCooldownShrinkearn] = useState<number>(0)
-  const cooldownRemaining = Math.max(cooldownExeio, cooldownFclc, cooldownShrinkearn)
+  const cooldownRemaining = Math.max(cooldownShrinkme, cooldownExeio, cooldownFclc, cooldownShrinkearn)
   const [totalEarned, setTotalEarned] = useState<number>(0)
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
@@ -112,6 +113,7 @@ function ShortlinksContent() {
         setCompletedExeio(data.completed_exeio || 0)
         setCompletedFclc(data.completed_fclc || 0)
         setCompletedShrinkearn(data.completed_shrinkearn || 0)
+        setCooldownShrinkme(data.cooldown_shrinkme || 0)
         setCooldownExeio(data.cooldown_exeio || 0)
         setCooldownFclc(data.cooldown_fclc || 0)
         setCooldownShrinkearn(data.cooldown_shrinkearn || 0)
@@ -150,6 +152,7 @@ function ShortlinksContent() {
   // Countdown timer for cooldowns
   useEffect(() => {
     const timer = setInterval(() => {
+      setCooldownShrinkme(prev => (prev > 0 ? prev - 1 : 0))
       setCooldownExeio(prev => (prev > 0 ? prev - 1 : 0))
       setCooldownFclc(prev => (prev > 0 ? prev - 1 : 0))
       setCooldownShrinkearn(prev => (prev > 0 ? prev - 1 : 0))
@@ -180,11 +183,11 @@ function ShortlinksContent() {
       tag: "High Reward",
       description: "ShrinkMe is an industry-leading high payout shortlink provider. Complete the captcha challenge to earn your points.",
       cooldown: "30 Mins",
-      points: getAdjustedPoints(250),
+      points: getAdjustedPoints(100),
       gradient: "from-purple-500 to-fuchsia-600",
-      limit: 1,
+      limit: 2,
       completed: completedShrinkme,
-      cooldownRemaining: 0,
+      cooldownRemaining: cooldownShrinkme,
       tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
       tutorialUrl: "https://www.youtube.com/watch?v=dQLbvJaJyxw"
     },
@@ -243,9 +246,9 @@ function ShortlinksContent() {
       return
     }
 
-    const providerLimit = provider === "shrinkme" ? 1 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : (provider === "shrinkearn" ? 2 : 1)))
+    const providerLimit = provider === "shrinkme" ? 2 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : (provider === "shrinkearn" ? 2 : 1)))
     const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : (provider === "shrinkearn" ? completedShrinkearn : 0)))
-    const providerCooldown = provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : (provider === "shrinkearn" ? cooldownShrinkearn : 0))
+    const providerCooldown = provider === "shrinkme" ? cooldownShrinkme : (provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : (provider === "shrinkearn" ? cooldownShrinkearn : 0)))
 
     if (providerCompleted >= providerLimit) {
       toast.warning(`Daily limit reached for this shortlink! Reset at 07:00 AM GMT+7.`)

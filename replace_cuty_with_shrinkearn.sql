@@ -22,7 +22,7 @@ DECLARE
 BEGIN
   -- Set limit berdasarkan aturan pembagian baru (reset jam 7 waktu GMT+7 / 00:00 UTC)
   IF p_provider = 'shrinkme' THEN
-    v_limit := 1;
+    v_limit := 2;
   ELSIF p_provider = 'exeio' THEN
     v_limit := 2;
   ELSIF p_provider = 'fclc' THEN
@@ -157,7 +157,7 @@ BEGIN
 
   -- Set limit berdasarkan provider (reset jam 7 waktu GMT+7 / 00:00 UTC)
   IF v_provider = 'shrinkme' THEN
-    v_limit := 1;
+    v_limit := 2;
   ELSIF v_provider = 'exeio' THEN
     v_limit := 2;
   ELSIF v_provider = 'fclc' THEN
@@ -252,6 +252,7 @@ DECLARE
   v_completed_fclc INT;
   v_completed_shrinkearn INT;
   v_last_completion TIMESTAMP WITH TIME ZONE;
+  v_cooldown_shrinkme INT := 0;
   v_cooldown_exeio INT := 0;
   v_cooldown_fclc INT := 0;
   v_cooldown_shrinkearn INT := 0;
@@ -294,6 +295,19 @@ BEGIN
     AND completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 
   -- 3. Hitung sisa cooldown per provider (hanya jika limit > 1)
+  -- ShrinkMe
+  SELECT completed_at INTO v_last_completion
+  FROM public.shortlink_claims
+  WHERE user_id = p_user_id
+    AND provider = 'shrinkme'
+    AND status = 'completed'
+    ORDER BY completed_at DESC
+    LIMIT 1;
+
+  IF v_last_completion IS NOT NULL AND (now() - v_last_completion) < interval '30 minutes' THEN
+    v_cooldown_shrinkme := EXTRACT(EPOCH FROM (interval '30 minutes' - (now() - v_last_completion)))::INT;
+  END IF;
+
   -- FC.LC
   SELECT completed_at INTO v_last_completion
   FROM public.shortlink_claims
@@ -345,6 +359,7 @@ BEGIN
     'completed_exeio', v_completed_exeio,
     'completed_fclc', v_completed_fclc,
     'completed_shrinkearn', v_completed_shrinkearn,
+    'cooldown_shrinkme', v_cooldown_shrinkme,
     'cooldown_exeio', v_cooldown_exeio,
     'cooldown_fclc', v_cooldown_fclc,
     'cooldown_shrinkearn', v_cooldown_shrinkearn,

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       if (!apiKey) {
         return NextResponse.json({ error: "ShrinkMe API key not configured on server." }, { status: 500 })
       }
-      reward = 250
+      reward = 100
     } else if (provider === "exeio") {
       apiKey = process.env.EXEIO_API_KEY || ""
       if (!apiKey) {
