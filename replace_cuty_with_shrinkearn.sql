@@ -204,10 +204,9 @@ BEGIN
       device_fingerprint = COALESCE(device_fingerprint, p_callback_device_fingerprint)
   WHERE id = p_visit_id;
 
-  -- 5. Berikan Poin & XP (10 XP), serta reset last_decay_checked_at
+  -- 5. Berikan Poin (TANPA XP), serta reset last_decay_checked_at
   UPDATE public.profiles
   SET balance = balance + v_reward,
-      xp = xp + 10,
       last_decay_checked_at = now()
   WHERE id = v_user_id
   RETURNING balance INTO v_new_balance;
@@ -229,7 +228,7 @@ BEGIN
 
   RETURN json_build_object(
     'success', true,
-    'message', 'Successfully claimed ' || v_reward || ' Points & 10 XP!',
+    'message', 'Successfully claimed ' || v_reward || ' Points!',
     'new_balance', v_new_balance,
     'reward_given', v_reward
   );
