@@ -373,10 +373,11 @@ BEGIN
     END IF;
   END IF;
 
-  -- 4. Tandai visit selesai
+  -- 4. Tandai visit selesai (update reward dengan bonus/penalti rank)
   UPDATE public.shortlink_claims
   SET status = 'completed',
       completed_at = now(),
+      points_reward = v_reward,
       ip_address = COALESCE(ip_address, p_callback_ip),
       user_agent = COALESCE(user_agent, p_callback_user_agent),
       device_fingerprint = COALESCE(device_fingerprint, p_callback_device_fingerprint)
