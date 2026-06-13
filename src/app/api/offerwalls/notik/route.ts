@@ -182,23 +182,6 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     }
   }
 
-  // Temporary DB logging via SECURITY DEFINER RPC to bypass RLS
-  try {
-    const supabase = await getServerSupabase()
-    const logData = {
-      url: req.url,
-      queryParams,
-      bodyParams,
-      headers: {
-        "content-type": req.headers.get("content-type"),
-        "user-agent": req.headers.get("user-agent"),
-        "x-signature": req.headers.get("x-signature") || req.headers.get("signature") || req.headers.get("hash")
-      }
-    }
-    await supabase.rpc("log_notik_debug", { p_log: JSON.stringify(logData) })
-  } catch (e: any) {
-    console.error("[Notik Debug] Failed to call log_notik_debug RPC:", e.message)
-  }
 
   // 3. Extract parameters supporting multiple naming conventions
   userId = cleanValue(bodyParams["user_id"]) ||
@@ -265,25 +248,8 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     req.url
   )
   if (!isSignatureValid) {
-    const debugInfo = {
-      receivedHash: hash,
-      secretKeyLength: secretKey.length,
-      secretKeyPrefix: secretKey.substring(0, 4) + "...",
-      parameters: { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
-      computedHashes: getNotikHashVariations(
-        { event_id: transId, user_id: userId, amount: amountLocal, payout: amountUsd },
-        secretKey,
-        req.url
-      ).map(v => ({ type: v.type, hash: v.hash }))
-    }
-    console.warn(`[Notik Debug] Blocked: Signature mismatch. Received: ${hash}`, debugInfo)
-    return new NextResponse(
-      JSON.stringify({
-        error: "Signature mismatch",
-        debug: debugInfo
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    )
+    console.warn(`[Notik Debug] Blocked: Signature mismatch. Received: ${hash}`)
+    return new NextResponse("ERROR: Signature mismatch", { status: 400 })
   }
 
   // 6. Validate UUID format for userId
