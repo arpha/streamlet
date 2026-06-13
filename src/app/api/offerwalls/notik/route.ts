@@ -158,6 +158,34 @@ async function handleRequest(req: NextRequest, isPost: boolean) {
     }
   }
 
+  // Temporary DB logging to inspect parameters sent by Notik
+  try {
+    const supabase = await getServerSupabase()
+    const logData = {
+      url: req.url,
+      queryParams,
+      bodyParams,
+      headers: {
+        "content-type": req.headers.get("content-type"),
+        "user-agent": req.headers.get("user-agent"),
+        "x-signature": req.headers.get("x-signature") || req.headers.get("signature") || req.headers.get("hash")
+      }
+    }
+    const { data: firstUser } = await supabase.from("profiles").select("id").limit(1)
+    if (firstUser && firstUser.length > 0) {
+      await supabase.from("offerwall_claims").insert({
+        user_id: firstUser[0].id,
+        provider: `NOTIK_DEBUG_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        transaction_id: JSON.stringify(logData),
+        points_reward: 0,
+        payout_usd: 0,
+        status: 'debug'
+      })
+    }
+  } catch (e: any) {
+    console.error("[Notik Debug] Failed to log request in DB:", e.message)
+  }
+
   // 3. Extract parameters supporting multiple naming conventions
   userId = cleanValue(bodyParams["user_id"]) ||
            cleanValue(bodyParams["uid"]) ||
