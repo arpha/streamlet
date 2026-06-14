@@ -324,55 +324,13 @@ function ShortlinksContent() {
         <p className="text-white/60 font-medium italic">Complete shortlink challenges to claim high-reward points!</p>
       </div>
 
-      {/* STATS CARDS */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Daily limit card */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Completed Today</span>
-              <span className="text-2xl font-black font-mono text-cyan-400">
-                {loadingStats ? "..." : `${completedToday} Claims`}
-              </span>
-              <span className="text-[9px] text-white/35 font-bold block mt-0.5">
-                Resets daily at 07:00 AM WIB (00:00 UTC)
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-              <Link2 className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Cooldown Status card */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Cooldown Status</span>
-              <span className={`text-2xl font-black font-mono ${cooldownRemaining > 0 ? "text-rose-400" : "text-emerald-400"}`}>
-                {loadingStats ? "..." : (cooldownRemaining > 0 ? formatTime(cooldownRemaining) : "Ready")}
-              </span>
-            </div>
-            <div className={`p-3.5 rounded-2xl border ${cooldownRemaining > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-400" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"}`}>
-              <Timer className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Earned card */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Total Shortlink Earnings</span>
-              <span className="text-2xl font-black font-mono text-purple-400">
-                {loadingStats ? "..." : `${totalEarned} Points`}
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
-              <Coins className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* A-Ads Banner */}
+      <div className="w-full h-[60px] md:h-[90px] rounded-2xl overflow-hidden border border-white/5 relative z-10 flex items-center justify-center bg-white/[0.02] shadow-lg">
+        <iframe 
+          data-aa="2442904" 
+          src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=00000000&title_color=c20ee9" 
+          style={{ width: '100%', height: '100%', border: '0px', padding: 0, overflow: 'hidden', backgroundColor: 'transparent' }}
+        />
       </div>
 
       {cpxAvailable && topSurvey && (
