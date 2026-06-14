@@ -160,7 +160,7 @@ BEGIN
       WHERE ref.referred_by_id IS NOT NULL
         AND ref.created_at >= v_active_cycle.start_at
         AND ref.created_at <= v_active_cycle.end_at
-        AND ref.xp >= 100
+        AND ref.xp >= 1000
       GROUP BY ref.referred_by_id
       HAVING COUNT(ref.id) > 0
     ) t
@@ -277,7 +277,7 @@ BEGIN
     WHERE ref.referred_by_id IS NOT NULL
       AND ref.created_at >= v_cycle.start_at
       AND ref.created_at <= v_cycle.end_at
-      AND ref.xp >= 100
+      AND ref.xp >= 1000
     GROUP BY p.id, p.username
     HAVING COUNT(ref.id) > 0
     ORDER BY total_referrals DESC, MAX(ref.created_at) ASC
@@ -416,7 +416,7 @@ BEGIN
     WHERE ref.referred_by_id IS NOT NULL
       AND ref.created_at >= v_cycle.start_at
       AND ref.created_at <= v_cycle.end_at
-      AND ref.xp >= 100
+      AND ref.xp >= 1000
     GROUP BY ref.referred_by_id
   ) t
   WHERE t.user_id = p_user_id;
