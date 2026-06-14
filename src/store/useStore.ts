@@ -6,6 +6,8 @@ interface UserState {
   username: string | null
   id: string | null
   isAdmin: boolean
+  isSuspended: boolean
+  suspensionReason: string | null
   isSidebarOpen: boolean
   lastDecayCheckedAt: string | null
   eventTickets: number
@@ -18,7 +20,7 @@ interface UserState {
   setCheckinStreak: (streak: number) => void
   setLastCheckinAt: (date: string | null) => void
   setAdvertiserTokens: (tokens: number) => void
-  setUser: (user: { id: string; username: string | null; balance: number; advertiser_tokens?: number; xp: number; isAdmin: boolean; eventTickets?: number; lastCheckinAt?: string | null; checkinStreak?: number; lastDecayCheckedAt?: string | null }) => void
+  setUser: (user: { id: string; username: string | null; balance: number; advertiser_tokens?: number; xp: number; isAdmin: boolean; isSuspended?: boolean; suspensionReason?: string | null; eventTickets?: number; lastCheckinAt?: string | null; checkinStreak?: number; lastDecayCheckedAt?: string | null }) => void
   toggleSidebar: () => void
   reset: () => void
 }
@@ -29,6 +31,8 @@ export const useStore = create<UserState>((set) => ({
   username: null,
   id: null,
   isAdmin: false,
+  isSuspended: false,
+  suspensionReason: null,
   isSidebarOpen: true,
   lastDecayCheckedAt: null,
   eventTickets: 0,
@@ -48,11 +52,13 @@ export const useStore = create<UserState>((set) => ({
     advertiserTokens: user.advertiser_tokens || 0,
     xp: user.xp, 
     isAdmin: user.isAdmin, 
+    isSuspended: user.isSuspended || false,
+    suspensionReason: user.suspensionReason || null,
     eventTickets: user.eventTickets || 0,
     lastCheckinAt: user.lastCheckinAt || null,
     checkinStreak: user.checkinStreak || 0,
     lastDecayCheckedAt: user.lastDecayCheckedAt || null 
   }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  reset: () => set({ balance: 0, xp: 0, username: null, id: null, isAdmin: false, isSidebarOpen: true, lastDecayCheckedAt: null, eventTickets: 0, lastCheckinAt: null, checkinStreak: 0, advertiserTokens: 0 }),
+  reset: () => set({ balance: 0, xp: 0, username: null, id: null, isAdmin: false, isSuspended: false, suspensionReason: null, isSidebarOpen: true, lastDecayCheckedAt: null, eventTickets: 0, lastCheckinAt: null, checkinStreak: 0, advertiserTokens: 0 }),
 }))

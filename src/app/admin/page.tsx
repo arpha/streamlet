@@ -207,9 +207,10 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ADMIN SHORTCUTS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-4">
         {[
           { name: "Player Activities", icon: Activity, href: "/admin/activities", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
+          { name: "Manage Users", icon: Users, href: "/admin/users", color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
           { name: "Manage Tasks", icon: ListTodo, href: "/admin/tasks", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
           { name: "Manage Withdrawals", icon: Wallet, href: "/admin/withdrawals", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
           { name: "Leaderboard Winner", icon: Award, href: "/admin/leaderboard", color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
