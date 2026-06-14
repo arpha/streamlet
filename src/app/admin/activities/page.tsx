@@ -79,23 +79,32 @@ export default function AdminActivitiesPage() {
       setActivities(logs)
       setHasMore(logs.length === limit)
 
-      // Calculate duplicates in current batch (anti-cheat indicator)
-      const ipCounts: Record<string, number> = {}
-      const fingerprintCounts: Record<string, number> = {}
+      // Calculate duplicates in current batch (anti-cheat indicator for DIFFERENT accounts)
+      const ipUsernames: Record<string, Set<string>> = {}
+      const fingerprintUsernames: Record<string, Set<string>> = {}
       const dupIps = new Set<string>()
       const dupFingerprints = new Set<string>()
 
       logs.forEach(log => {
-        if (log.ip_address && log.ip_address !== "127.0.0.1") {
-          ipCounts[log.ip_address] = (ipCounts[log.ip_address] || 0) + 1
-          if (ipCounts[log.ip_address] > 1) {
-            dupIps.add(log.ip_address)
+        if (log.username) {
+          const usernameLower = log.username.toLowerCase()
+          if (log.ip_address && log.ip_address !== "127.0.0.1") {
+            if (!ipUsernames[log.ip_address]) {
+              ipUsernames[log.ip_address] = new Set()
+            }
+            ipUsernames[log.ip_address].add(usernameLower)
+            if (ipUsernames[log.ip_address].size > 1) {
+              dupIps.add(log.ip_address)
+            }
           }
-        }
-        if (log.device_fingerprint) {
-          fingerprintCounts[log.device_fingerprint] = (fingerprintCounts[log.device_fingerprint] || 0) + 1
-          if (fingerprintCounts[log.device_fingerprint] > 1) {
-            dupFingerprints.add(log.device_fingerprint)
+          if (log.device_fingerprint) {
+            if (!fingerprintUsernames[log.device_fingerprint]) {
+              fingerprintUsernames[log.device_fingerprint] = new Set()
+            }
+            fingerprintUsernames[log.device_fingerprint].add(usernameLower)
+            if (fingerprintUsernames[log.device_fingerprint].size > 1) {
+              dupFingerprints.add(log.device_fingerprint)
+            }
           }
         }
       })
@@ -288,6 +297,11 @@ export default function AdminActivitiesPage() {
                                 </span>
                               ) : (
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/20" title={`Last active: ${log.last_active_at ? new Date(log.last_active_at).toLocaleString() : 'Never'}`} />
+                              )}
+                              {(isDupIp || isDupFingerprint) && (
+                                <span className="bg-rose-500/15 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 animate-pulse" title="Multi-Account Warning: Same IP/FP used by other accounts">
+                                  <ShieldAlert className="w-3.5 h-3.5" /> Cheat Alert
+                                </span>
                               )}
                             </div>
                             <span className="text-[10px] text-white/40 font-medium">{log.email}</span>
