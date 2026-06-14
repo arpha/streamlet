@@ -38,8 +38,9 @@ interface LeaderboardUser {
   total_points?: number
   total_referrals?: number
   total_claims?: number
+  xp?: number
   rank: number
-  estimated_prize: number
+  estimated_prize?: number
 }
 
 interface PastWinner {
@@ -66,12 +67,14 @@ export default function LeaderboardPage() {
 
   const [loading, setLoading] = useState(true)
 
-  const [activeTab, setActiveTab] = useState<'faucet_shortlink' | 'offerwall' | 'referral'>('faucet_shortlink')
+  const [activeTab, setActiveTab] = useState<'faucet_shortlink' | 'offerwall' | 'referral' | 'global_xp'>('faucet_shortlink')
   
   const [cycle, setCycle] = useState<Cycle | null>(null)
   const [faucetShortlinkList, setFaucetShortlinkList] = useState<LeaderboardUser[]>([])
   const [offerwallList, setOfferwallList] = useState<LeaderboardUser[]>([])
   const [referralList, setReferralList] = useState<LeaderboardUser[]>([])
+  const [globalXpList, setGlobalXpList] = useState<LeaderboardUser[]>([])
+  const [userGlobalXpStats, setUserGlobalXpStats] = useState<{ xp: number; rank: number | null } | null>(null)
   
   const [pastCycles, setPastCycles] = useState<Cycle[]>([])
   const [pastWinners, setPastWinners] = useState<PastWinner[]>([])
@@ -123,6 +126,16 @@ export default function LeaderboardPage() {
             setSelectedPastCycleId(data.past_cycles[0].id)
           }
         }
+
+        // Fetch Global XP Leaderboard
+        const { data: globalData, error: globalError } = await supabase.rpc("get_global_xp_leaderboard", params)
+        if (!globalError && globalData) {
+          setGlobalXpList(globalData.leaderboard || [])
+          setUserGlobalXpStats({
+            xp: globalData.user_xp || 0,
+            rank: globalData.user_rank || null
+          })
+        }
       } catch (err) {
         console.error("Failed to load leaderboard:", err)
       } finally {
@@ -163,7 +176,9 @@ export default function LeaderboardPage() {
     ? faucetShortlinkList 
     : activeTab === 'offerwall' 
     ? offerwallList 
-    : referralList
+    : activeTab === 'referral'
+    ? referralList
+    : globalXpList
 
   // Helper values for podium
   const rank1 = activeList.find(u => u.rank === 1)
@@ -253,7 +268,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* COUNTDOWN TIMER BAR */}
-      {timeLeft && (
+      {timeLeft && activeTab !== 'global_xp' && (
         <div className="glass border-white/10 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden bg-gradient-to-r from-purple-950/20 to-fuchsia-950/20">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
@@ -323,6 +338,17 @@ export default function LeaderboardPage() {
             <Users className="w-4 h-4" />
             Referrals
           </button>
+          <button
+            onClick={() => setActiveTab('global_xp')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+              activeTab === 'global_xp'
+                ? "bg-primary text-white shadow-lg shadow-primary/30"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            Global XP
+          </button>
         </div>
       </div>
 
@@ -353,14 +379,28 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank2.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'referral' ? `${rank2.total_referrals} Refs` : `${rank2.total_points?.toLocaleString("id-ID")} Pts`}
+                      {activeTab === 'referral' 
+                        ? `${rank2.total_referrals} Refs` 
+                        : activeTab === 'global_xp'
+                        ? `${rank2.xp?.toLocaleString("id-ID")} XP`
+                        : `${rank2.total_points?.toLocaleString("id-ID")} Pts`
+                      }
                     </span>
                     
                     {/* Podium block */}
-                    <div className="w-full h-28 bg-gradient-to-t from-slate-900/50 to-slate-800/20 border-t border-slate-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-lg font-black text-slate-300 font-mono mt-1">+{getPrizeForRank(activeTab, 2).toLocaleString("id-ID")} Pts</span>
-                    </div>
+                    {activeTab === 'global_xp' ? (
+                      <div className="w-full h-28 bg-gradient-to-t from-purple-950/20 to-purple-900/5 border-t border-purple-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block font-sans">Rank Level</span>
+                        <span className="text-sm font-black text-purple-300 uppercase mt-1 italic">
+                          {rank2.xp && rank2.xp >= 1000000 ? "Diamond" : (rank2.xp && rank2.xp >= 100000 ? "Platinum" : (rank2.xp && rank2.xp >= 10000 ? "Gold" : (rank2.xp && rank2.xp >= 1000 ? "Silver" : "Bronze")))}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-full h-28 bg-gradient-to-t from-slate-900/50 to-slate-800/20 border-t border-slate-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cycle Reward</span>
+                        <span className="text-lg font-black text-slate-300 font-mono mt-1">+{getPrizeForRank(activeTab, 2).toLocaleString("id-ID")} Pts</span>
+                      </div>
+                    )}
                   </motion.div>
                 ) : (
                   <div className="w-full h-28 bg-white/[0.01] border border-dashed border-white/5 rounded-3xl mt-4" />
@@ -383,14 +423,28 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-black text-base text-white max-w-[180px] truncate">{rank1.username}</span>
                     <span className="text-xs text-amber-400 font-bold font-mono mt-0.5">
-                      {activeTab === 'referral' ? `${rank1.total_referrals} Refs` : `${rank1.total_points?.toLocaleString("id-ID")} Pts`}
+                      {activeTab === 'referral' 
+                        ? `${rank1.total_referrals} Refs` 
+                        : activeTab === 'global_xp'
+                        ? `${rank1.xp?.toLocaleString("id-ID")} XP`
+                        : `${rank1.total_points?.toLocaleString("id-ID")} Pts`
+                      }
                     </span>
                     
                     {/* Podium block */}
-                    <div className="w-full h-36 bg-gradient-to-t from-amber-950/20 to-amber-900/5 border-t border-amber-500/30 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4 active-glow shadow-2xl shadow-amber-500/5">
-                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-xl font-black text-amber-300 font-mono mt-1">+{getPrizeForRank(activeTab, 1).toLocaleString("id-ID")} Pts</span>
-                    </div>
+                    {activeTab === 'global_xp' ? (
+                      <div className="w-full h-36 bg-gradient-to-t from-purple-950/20 to-purple-900/5 border-t border-purple-500/30 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4 active-glow shadow-2xl shadow-purple-500/5">
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block font-sans">Rank Level</span>
+                        <span className="text-sm font-black text-purple-300 uppercase mt-1 italic">
+                          {rank1.xp && rank1.xp >= 1000000 ? "Diamond" : (rank1.xp && rank1.xp >= 100000 ? "Platinum" : (rank1.xp && rank1.xp >= 10000 ? "Gold" : (rank1.xp && rank1.xp >= 1000 ? "Silver" : "Bronze")))}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-full h-36 bg-gradient-to-t from-amber-950/20 to-amber-900/5 border-t border-amber-500/30 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4 active-glow shadow-2xl shadow-amber-500/5">
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">Cycle Reward</span>
+                        <span className="text-xl font-black text-amber-300 font-mono mt-1">+{getPrizeForRank(activeTab, 1).toLocaleString("id-ID")} Pts</span>
+                      </div>
+                    )}
                   </motion.div>
                 ) : (
                   <div className="w-full h-36 bg-white/[0.01] border border-dashed border-white/5 rounded-3xl mt-4" />
@@ -412,14 +466,28 @@ export default function LeaderboardPage() {
                     </div>
                     <span className="font-bold text-sm text-white max-w-[150px] truncate">{rank3.username}</span>
                     <span className="text-xs text-white/40 font-mono mt-0.5">
-                      {activeTab === 'referral' ? `${rank3.total_referrals} Refs` : `${rank3.total_points?.toLocaleString("id-ID")} Pts`}
+                      {activeTab === 'referral' 
+                        ? `${rank3.total_referrals} Refs` 
+                        : activeTab === 'global_xp'
+                        ? `${rank3.xp?.toLocaleString("id-ID")} XP`
+                        : `${rank3.total_points?.toLocaleString("id-ID")} Pts`
+                      }
                     </span>
                     
                     {/* Podium block */}
-                    <div className="w-full h-24 bg-gradient-to-t from-amber-950/20 to-amber-950/5 border-t border-amber-700/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
-                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Cycle Reward</span>
-                      <span className="text-lg font-black text-amber-500 font-mono mt-1">+{getPrizeForRank(activeTab, 3).toLocaleString("id-ID")} Pts</span>
-                    </div>
+                    {activeTab === 'global_xp' ? (
+                      <div className="w-full h-24 bg-gradient-to-t from-purple-950/20 to-purple-900/5 border-t border-purple-500/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block font-sans">Rank Level</span>
+                        <span className="text-sm font-black text-purple-300 uppercase mt-1 italic">
+                          {rank3.xp && rank3.xp >= 1000000 ? "Diamond" : (rank3.xp && rank3.xp >= 100000 ? "Platinum" : (rank3.xp && rank3.xp >= 10000 ? "Gold" : (rank3.xp && rank3.xp >= 1000 ? "Silver" : "Bronze")))}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-full h-24 bg-gradient-to-t from-amber-950/20 to-amber-950/5 border-t border-amber-700/20 rounded-t-3xl mt-4 flex flex-col items-center justify-center p-4">
+                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">Cycle Reward</span>
+                        <span className="text-lg font-black text-amber-500 font-mono mt-1">+{getPrizeForRank(activeTab, 3).toLocaleString("id-ID")} Pts</span>
+                      </div>
+                    )}
                   </motion.div>
                 ) : (
                   <div className="w-full h-24 bg-white/[0.01] border border-dashed border-white/5 rounded-3xl mt-4" />
@@ -435,8 +503,12 @@ export default function LeaderboardPage() {
                     <tr className="border-b border-white/5 bg-white/[0.01]">
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider text-center w-20">Rank</th>
                       <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Username</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Score</th>
-                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">Estimated Reward</th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">
+                        {activeTab === 'global_xp' ? 'Experience Points' : 'Score'}
+                      </th>
+                      <th className="p-5 text-[10px] font-black text-white/40 uppercase tracking-wider">
+                        {activeTab === 'global_xp' ? 'Rank Level' : 'Estimated Reward'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 font-medium text-sm">
@@ -447,11 +519,19 @@ export default function LeaderboardPage() {
                         <td className="p-5 text-white/60 font-mono text-xs">
                           {activeTab === 'referral' 
                             ? `${user.total_referrals} Referrals`
+                            : activeTab === 'global_xp'
+                            ? `${user.xp?.toLocaleString("id-ID")} XP`
                             : `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims} Claims)`
                           }
                         </td>
                         <td className="p-5 text-purple-400 font-black font-mono">
-                          +{getPrizeForRank(activeTab, user.rank).toLocaleString("id-ID")} Pts
+                          {activeTab === 'global_xp' ? (
+                            <span className="text-xs font-bold uppercase tracking-wider text-purple-300 italic">
+                              {user.xp && user.xp >= 1000000 ? "Diamond" : (user.xp && user.xp >= 100000 ? "Platinum" : (user.xp && user.xp >= 10000 ? "Gold" : (user.xp && user.xp >= 1000 ? "Silver" : "Bronze")))}
+                            </span>
+                          ) : (
+                            `+${getPrizeForRank(activeTab, user.rank).toLocaleString("id-ID")} Pts`
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -467,6 +547,9 @@ export default function LeaderboardPage() {
                   <div className="w-12 h-12 rounded-full bg-purple-500/10 border border-purple-500/25 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-black text-purple-300">
                       {(() => {
+                        if (activeTab === 'global_xp') {
+                          return userGlobalXpStats?.rank ? `#${userGlobalXpStats.rank}` : '-'
+                        }
                         const rank = activeTab === 'faucet_shortlink'
                           ? userStats.faucet_shortlink.rank
                           : activeTab === 'offerwall'
@@ -490,21 +573,31 @@ export default function LeaderboardPage() {
                         ? `${userStats.faucet_shortlink.score.toLocaleString("id-ID")} Pts (${userStats.faucet_shortlink.claims} Claims)`
                         : activeTab === 'offerwall'
                         ? `${userStats.offerwall.score.toLocaleString("id-ID")} Pts (${userStats.offerwall.claims} Claims)`
+                        : activeTab === 'global_xp'
+                        ? `${userGlobalXpStats?.xp.toLocaleString("id-ID")} XP`
                         : `${userStats.referral.score} Referrals`
                       }
                     </span>
                   </div>
                   <div className="text-center sm:text-right">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Estimated Reward</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block">
+                      {activeTab === 'global_xp' ? 'Rank Level' : 'Estimated Reward'}
+                    </span>
                     <span className="text-sm font-black text-purple-400 mt-0.5 block font-mono">
-                      {(() => {
-                        const rank = activeTab === 'faucet_shortlink'
-                          ? userStats.faucet_shortlink.rank
-                          : activeTab === 'offerwall'
-                          ? userStats.offerwall.rank
-                          : userStats.referral.rank
-                        return rank ? `+${getPrizeForRank(activeTab, rank).toLocaleString("id-ID")} Pts` : 'No Reward'
-                      })()}
+                      {activeTab === 'global_xp' ? (
+                        <span className="text-xs font-bold uppercase tracking-wider text-purple-300 italic">
+                          {userGlobalXpStats && userGlobalXpStats.xp >= 1000000 ? "Diamond" : (userGlobalXpStats && userGlobalXpStats.xp >= 100000 ? "Platinum" : (userGlobalXpStats && userGlobalXpStats.xp >= 10000 ? "Gold" : (userGlobalXpStats && userGlobalXpStats.xp >= 1000 ? "Silver" : "Bronze")))}
+                        </span>
+                      ) : (
+                        (() => {
+                          const rank = activeTab === 'faucet_shortlink'
+                            ? userStats.faucet_shortlink.rank
+                            : activeTab === 'offerwall'
+                            ? userStats.offerwall.rank
+                            : userStats.referral.rank
+                          return rank ? `+${getPrizeForRank(activeTab, rank).toLocaleString("id-ID")} Pts` : 'No Reward'
+                        })()
+                      )}
                     </span>
                   </div>
                 </div>
