@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
     const bitcoApiKey = process.env.NEXT_PUBLIC_BITCOTASKS_API_KEY
     const bitcoBearerToken = process.env.BITCOTASKS_BEARER_TOKEN
 
+    console.log("[PTC Debug] apiKey:", bitcoApiKey ? "configured" : "NOT configured", "bearerToken:", bitcoBearerToken ? "configured" : "NOT configured")
+
     if (bitcoApiKey && bitcoBearerToken) {
       try {
         // Retrieve client IP address
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
         }
 
         const bitcoUrl = `https://bitcotasks.com/api/${bitcoApiKey}/${user.id}/${clientIp}`
+        console.log("[PTC Debug] Fetching BitcoTasks URL:", bitcoUrl)
         
         const response = await fetch(bitcoUrl, {
           headers: {
@@ -57,8 +60,11 @@ export async function GET(req: NextRequest) {
           next: { revalidate: 15 },
         })
 
+        console.log("[PTC Debug] BitcoTasks API status:", response.status)
+
         if (response.ok) {
           const resData = await response.json()
+          console.log("[PTC Debug] BitcoTasks response:", JSON.stringify(resData))
           if (resData && resData.success && Array.isArray(resData.data)) {
             const parsedBitcoAds = resData.data.map((item: any) => ({
               id: `bitco_${item.id || Math.random().toString(36).substr(2, 9)}`,
@@ -80,6 +86,8 @@ export async function GET(req: NextRequest) {
       } catch (bitcoErr: any) {
         console.error("[BitcoTasks PTC API] Request failed:", bitcoErr.message)
       }
+    } else {
+      console.log("[PTC Debug] Skipping BitcoTasks fetch because credentials are missing")
     }
 
     return NextResponse.json({
