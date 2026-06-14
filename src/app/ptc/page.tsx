@@ -77,6 +77,11 @@ export default function PTCPage() {
   }, [])
 
   const handleWatchAd = (campaign: any) => {
+    if (campaign.provider === "bitcotasks") {
+      window.open(campaign.url, "_blank", "noopener,noreferrer")
+      toast.success("BitcoTasks PTC ad opened! Complete the task in the new tab to earn offerwall points.")
+      return
+    }
     const isYoutube = getYouTubeVideoId(campaign.url) !== null
     if (isYoutube) {
       router.push(`/ptc/view?id=${campaign.id}`)
@@ -177,8 +182,13 @@ export default function PTCPage() {
                     +{c.reward_per_view} Points
                   </span>
                 </div>
-                <CardTitle className="text-base line-clamp-2 text-white group-hover:text-primary transition-colors">
-                  {c.title}
+                <CardTitle className="text-base line-clamp-2 text-white group-hover:text-primary transition-colors flex flex-col gap-1.5 items-start">
+                  {c.provider === "bitcotasks" && (
+                    <span className="text-[10px] uppercase tracking-wider font-extrabold text-cyan-400 bg-cyan-400/10 px-2.5 py-0.5 rounded-md border border-cyan-500/20">
+                      BitcoTasks Offerwall
+                    </span>
+                  )}
+                  <span>{c.title}</span>
                 </CardTitle>
               </CardHeader>
               
