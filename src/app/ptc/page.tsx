@@ -110,6 +110,15 @@ export default function PTCPage() {
         </Button>
       </div>
 
+      {/* A-Ads Banner */}
+      <div className="w-full h-[60px] md:h-[90px] rounded-2xl overflow-hidden border border-white/5 relative z-10 flex items-center justify-center bg-white/[0.02] shadow-lg">
+        <iframe 
+          data-aa="2442904" 
+          src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=00000000&title_color=c20ee9" 
+          style={{ width: '100%', height: '100%', border: '0px', padding: 0, overflow: 'hidden', backgroundColor: 'transparent' }}
+        />
+      </div>
+
       {/* Stats Summary Banner */}
       {!isLoading && campaigns.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-2xl glass border-primary/20 relative overflow-hidden bg-primary/5">
