@@ -122,3 +122,80 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const supabase = await getServerSupabase()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized." },
+        { status: 401 }
+      )
+    }
+
+    const bitcoApiKey = process.env.NEXT_PUBLIC_BITCOTASKS_API_KEY
+    const bitcoBearerToken = process.env.BITCOTASKS_BEARER_TOKEN
+
+    let bitcoShortlinks: any[] = []
+
+    if (bitcoApiKey && bitcoBearerToken) {
+      try {
+        const forwardedFor = req.headers.get("x-forwarded-for")
+        const realIp = req.headers.get("x-real-ip")
+        let clientIp = forwardedFor ? forwardedFor.split(",")[0].trim() : (realIp || "127.0.0.1")
+
+        if (clientIp.includes(":") || clientIp === "127.0.0.1" || clientIp === "localhost") {
+          clientIp = "103.120.244.1" // A public IP address (Indonesia)
+        }
+
+        const bitcoUrl = `https://bitcotasks.com/sl-api/${bitcoApiKey}/${user.id}/${clientIp}`
+
+        const response = await fetch(bitcoUrl, {
+          headers: {
+            "Authorization": `Bearer ${bitcoBearerToken}`,
+            "User-Agent": req.headers.get("user-agent") || "Mozilla/5.0",
+          },
+          next: { revalidate: 15 },
+        })
+
+        if (response.ok) {
+          const resData = await response.json()
+          if (resData && (resData.status === "200" || resData.message === "success") && Array.isArray(resData.data)) {
+            bitcoShortlinks = resData.data.map((item: any) => ({
+              id: `bitco_${item.id}`,
+              name: item.title || "BitcoTasks Shortlink",
+              tag: "Offerwall",
+              description: `Powered by BitcoTasks. Complete the shortlink to earn points.`,
+              cooldown: "Daily",
+              points: Number(item.reward || 0),
+              gradient: "from-cyan-500 to-blue-600",
+              limit: Number(item.limit || 1),
+              completed: Number(item.limit || 1) - Number(item.available || 0),
+              cooldownRemaining: 0,
+              tagColor: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
+              url: item.url,
+              provider: "bitcotasks"
+            }))
+          }
+        }
+      } catch (err: any) {
+        console.error("[BitcoTasks Shortlinks API] Fetch failed:", err.message)
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      shortlinks: bitcoShortlinks,
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: error.message || "An error occurred." },
+      { status: 500 }
+    )
+  }
+}

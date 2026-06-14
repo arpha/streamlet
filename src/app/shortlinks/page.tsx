@@ -58,6 +58,8 @@ function ShortlinksContent() {
   const [loadingStats, setLoadingStats] = useState<boolean>(true)
   const [isGenerating, setIsGenerating] = useState<boolean>(false)
   const [adBlockActive, setAdBlockActive] = useState<boolean>(false)
+  const [bitcoShortlinks, setBitcoShortlinks] = useState<any[]>([])
+  const [loadingBitco, setLoadingBitco] = useState<boolean>(true)
 
   const [cpxAvailable, setCpxAvailable] = useState(false)
   const [topSurvey, setTopSurvey] = useState<{ provider: string, reward: number, href: string } | null>(null)
@@ -93,6 +95,25 @@ function ShortlinksContent() {
       window.history.replaceState({}, "", url.pathname + url.search)
     }
   }, [searchParams, userId])
+
+  // Fetch BitcoTasks shortlinks
+  const fetchBitcoShortlinks = async () => {
+    if (!userId) return
+    setLoadingBitco(true)
+    try {
+      const res = await fetch("/api/shortlink")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          setBitcoShortlinks(data.shortlinks || [])
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch BitcoTasks shortlinks:", e)
+    } finally {
+      setLoadingBitco(false)
+    }
+  }
 
   // Fetch shortlink stats
   const fetchStats = async () => {
@@ -133,6 +154,9 @@ function ShortlinksContent() {
       } catch (e) {
         console.warn("Failed to check surveys:", e)
       }
+
+      // Also fetch BitcoTasks shortlinks
+      await fetchBitcoShortlinks()
     } catch (err) {
       console.error("Unexpected error fetching stats:", err)
     } finally {
@@ -234,7 +258,12 @@ function ShortlinksContent() {
     }
   ]
 
-  const handleVisit = async (provider: string) => {
+  const allProviders = [
+    ...providers,
+    ...bitcoShortlinks
+  ]
+
+  const handleVisit = async (p: any) => {
     if (adBlockActive) {
       toast.error("Please disable your ad blocker to visit shortlinks.")
       return
@@ -246,6 +275,13 @@ function ShortlinksContent() {
       return
     }
 
+    if (p.provider === "bitcotasks") {
+      window.open(p.url, "_blank", "noopener,noreferrer")
+      toast.success("BitcoTasks shortlink opened! Complete it in the new tab to earn points.")
+      return
+    }
+
+    const provider = p.id
     const providerLimit = provider === "shrinkme" ? 2 : (provider === "exeio" ? 2 : (provider === "fclc" ? 2 : (provider === "shrinkearn" ? 2 : 1)))
     const providerCompleted = provider === "shrinkme" ? completedShrinkme : (provider === "exeio" ? completedExeio : (provider === "fclc" ? completedFclc : (provider === "shrinkearn" ? completedShrinkearn : 0)))
     const providerCooldown = provider === "shrinkme" ? cooldownShrinkme : (provider === "exeio" ? cooldownExeio : (provider === "fclc" ? cooldownFclc : (provider === "shrinkearn" ? cooldownShrinkearn : 0)))
@@ -373,7 +409,7 @@ function ShortlinksContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-6 animate-none">
-            {providers.map((p, idx) => (
+            {allProviders.map((p, idx) => (
               <Fragment key={p.id}>
                 <div className="space-y-6">
                   <div className="p-6 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all group">
@@ -427,11 +463,11 @@ function ShortlinksContent() {
                         </a>
                       )}
                       <Button
-                        onClick={() => handleVisit(p.id)}
+                        onClick={() => handleVisit(p)}
                         disabled={isGenerating || p.completed >= p.limit || p.cooldownRemaining > 0}
                         className="w-full md:w-auto rounded-2xl h-11 px-6 bg-primary hover:bg-primary/80 font-black uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-primary/20 flex-1"
                       >
-                        {isGenerating ? (
+                        {isGenerating && p.provider !== "bitcotasks" ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
                             Generating...
