@@ -450,7 +450,7 @@ BEGIN
       WHERE ref.referred_by_id IS NOT NULL
         AND ref.created_at >= v_cycle.start_at
         AND ref.created_at <= v_cycle.end_at
-        AND ref.xp >= 100
+        AND ref.xp >= 1000
       GROUP BY p.id
     ) r
     WHERE user_id = p_user_id;
