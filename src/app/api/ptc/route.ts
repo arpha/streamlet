@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
         if (response.ok) {
           const resData = await response.json()
           console.log("[PTC Debug] BitcoTasks response:", JSON.stringify(resData))
-          if (resData && resData.success && Array.isArray(resData.data)) {
+          if (resData && (resData.success || resData.status === "200" || resData.message === "success") && Array.isArray(resData.data)) {
             const parsedBitcoAds = resData.data.map((item: any) => ({
               id: `bitco_${item.id || Math.random().toString(36).substr(2, 9)}`,
               title: item.name || item.title || "BitcoTasks PTC Ad",
