@@ -324,6 +324,14 @@ function ShortlinksContent() {
         <p className="text-white/60 font-medium italic">Complete shortlink challenges to claim high-reward points!</p>
       </div>
 
+      {/* A-Ads Banner */}
+      <div className="w-full h-[60px] md:h-[90px] rounded-2xl overflow-hidden border border-white/5 relative z-10 flex items-center justify-center bg-white/[0.02] shadow-lg">
+        <iframe 
+          data-aa="2442904" 
+          src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=00000000&title_color=c20ee9" 
+          style={{ width: '100%', height: '100%', border: '0px', padding: 0, overflow: 'hidden', backgroundColor: 'transparent' }}
+        />
+      </div>
 
       {/* STATS CARDS */}
       <div className="grid gap-6 md:grid-cols-3">
