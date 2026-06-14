@@ -95,14 +95,74 @@ BEFORE INSERT OR UPDATE ON public.offerwall_claims
 FOR EACH ROW
 EXECUTE FUNCTION public.trg_check_user_suspension();
 
--- 5. Add RLS policy to allow Admins to update all user profiles
-DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles;
-CREATE POLICY "Admins can update all profiles"
-ON public.profiles
-FOR UPDATE
-USING (
-  public.is_admin(auth.uid())
+-- 5. Create RPC function for suspending users (bypasses direct client-side UPDATE limitations)
+CREATE OR REPLACE FUNCTION public.suspend_user(
+  p_admin_id UUID,
+  p_target_id UUID,
+  p_reason TEXT
 )
-WITH CHECK (
-  public.is_admin(auth.uid())
-);
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_is_admin BOOLEAN;
+  v_target_is_admin BOOLEAN;
+BEGIN
+  -- 1. Check if caller is admin
+  SELECT is_admin INTO v_is_admin FROM public.profiles WHERE id = p_admin_id;
+  IF v_is_admin IS NOT TRUE THEN
+    RAISE EXCEPTION 'Akses ditolak. Anda bukan Admin.';
+  END IF;
+
+  -- 2. Check if target is admin (cannot suspend admins)
+  SELECT is_admin INTO v_target_is_admin FROM public.profiles WHERE id = p_target_id;
+  IF v_target_is_admin IS TRUE THEN
+    RAISE EXCEPTION 'Akses ditolak. Anda tidak bisa menangguhkan sesama Admin.';
+  END IF;
+
+  -- 3. Perform update
+  UPDATE public.profiles
+  SET is_suspended = true,
+      suspension_reason = p_reason
+  WHERE id = p_target_id;
+
+  RETURN true;
+END;
+$$;
+
+-- Grant execution permissions
+GRANT EXECUTE ON FUNCTION public.suspend_user(UUID, UUID, TEXT) TO authenticated;
+
+-- 6. Create RPC function for unsuspending users
+CREATE OR REPLACE FUNCTION public.unsuspend_user(
+  p_admin_id UUID,
+  p_target_id UUID
+)
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_is_admin BOOLEAN;
+BEGIN
+  -- 1. Check if caller is admin
+  SELECT is_admin INTO v_is_admin FROM public.profiles WHERE id = p_admin_id;
+  IF v_is_admin IS NOT TRUE THEN
+    RAISE EXCEPTION 'Akses ditolak. Anda bukan Admin.';
+  END IF;
+
+  -- 2. Perform update
+  UPDATE public.profiles
+  SET is_suspended = false,
+      suspension_reason = NULL
+  WHERE id = p_target_id;
+
+  RETURN true;
+END;
+$$;
+
+-- Grant execution permissions
+GRANT EXECUTE ON FUNCTION public.unsuspend_user(UUID, UUID) TO authenticated;

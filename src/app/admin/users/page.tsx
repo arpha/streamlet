@@ -109,13 +109,10 @@ export default function AdminUsersPage() {
 
   const handleUnsuspend = async (targetUser: UserProfile) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          is_suspended: false,
-          suspension_reason: null
-        })
-        .eq("id", targetUser.id)
+      const { error } = await supabase.rpc("unsuspend_user", {
+        p_admin_id: userId,
+        p_target_id: targetUser.id
+      })
 
       if (error) throw error
 
@@ -136,13 +133,11 @@ export default function AdminUsersPage() {
 
     setIsSubmittingSuspension(true)
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          is_suspended: true,
-          suspension_reason: suspensionReason.trim()
-        })
-        .eq("id", selectedUser.id)
+      const { error } = await supabase.rpc("suspend_user", {
+        p_admin_id: userId,
+        p_target_id: selectedUser.id,
+        p_reason: suspensionReason.trim()
+      })
 
       if (error) throw error
 
