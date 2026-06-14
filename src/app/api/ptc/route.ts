@@ -38,10 +38,11 @@ export async function GET(req: NextRequest) {
       try {
         // Retrieve client IP address
         const forwardedFor = req.headers.get("x-forwarded-for")
-        let clientIp = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1"
+        const realIp = req.headers.get("x-real-ip")
+        let clientIp = forwardedFor ? forwardedFor.split(",")[0].trim() : (realIp || "127.0.0.1")
         
-        // Fallback for localhost testing to a public IP so BitcoTasks works
-        if (clientIp === "127.0.0.1" || clientIp === "::1" || clientIp === "localhost") {
+        // Fallback for localhost or IPv6 to a valid public IPv4 address so BitcoTasks works
+        if (clientIp.includes(":") || clientIp === "127.0.0.1" || clientIp === "localhost") {
           clientIp = "103.120.244.1" // A public IP address
         }
 
