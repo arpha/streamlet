@@ -3,21 +3,9 @@
 -- Jalankan skrip ini di SQL Editor dashboard Supabase Anda.
 -- ====================================================================
 
--- 1. Buat tabel penyimpanan pengaturan leaderboard
-CREATE TABLE IF NOT EXISTS public.leaderboard_settings (
-  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  faucet_shortlink_limit INT NOT NULL DEFAULT 20,
-  faucet_shortlink_rewards INT[] NOT NULL DEFAULT '{200000, 150000, 100000, 75000, 60000, 50000, 45000, 40000, 35000, 30000, 20000, 20000, 20000, 20000, 20000, 15000, 15000, 15000, 15000, 15000}',
-  referral_limit INT NOT NULL DEFAULT 10,
-  referral_rewards INT[] NOT NULL DEFAULT '{300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000}',
-  offerwall_limit INT NOT NULL DEFAULT 10,
-  offerwall_rewards INT[] NOT NULL DEFAULT '{300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000}'
-);
+-- Catatan: Tabel leaderboard_settings dan data di dalamnya tidak disentuh
+-- untuk mencegah terhapus/ter-resetnya setelan khusus Anda yang sudah ada.
 
--- Masukkan data awal jika belum ada
-INSERT INTO public.leaderboard_settings (id) 
-VALUES (1) 
-ON CONFLICT (id) DO NOTHING;
 
 -- 2. Nonaktifkan alur auto-reset pada get_or_create_active_leaderboard_cycle
 CREATE OR REPLACE FUNCTION public.get_or_create_active_leaderboard_cycle()
