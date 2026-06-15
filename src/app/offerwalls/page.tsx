@@ -372,62 +372,7 @@ export default function OfferwallsPage() {
         </button>
       </div>
 
-      {/* EXPLANATION CARDS */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Card 1: Provider Name */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
-              <span className="text-2xl font-black font-mono text-amber-400">
-                {activeTab === "home" ? "Home / Populer" : activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : activeTab === "theoremreach" ? "TheoremReach" : activeTab === "bitlabs" ? "BitLabs" : "Notik"}
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              {activeTab === "home" ? <Sparkles className="w-6 h-6" /> : activeTab === "bitcotasks" ? <Gamepad2 className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Card 2: Total Earnings */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Total Earnings</span>
-              <span className="text-2xl font-black font-mono text-cyan-400">
-                {activeTab === "home"
-                  ? `${(bitcotasksEarnings + cpxEarnings + theoremreachEarnings + bitlabsEarnings + notikEarnings).toLocaleString()} Pts`
-                  : activeTab === "bitcotasks" 
-                  ? `${bitcotasksEarnings.toLocaleString()} Pts` 
-                  : activeTab === "cpx"
-                  ? `${cpxEarnings.toLocaleString()} Pts`
-                  : activeTab === "theoremreach"
-                  ? `${theoremreachEarnings.toLocaleString()} Pts`
-                  : activeTab === "bitlabs"
-                  ? `${bitlabsEarnings.toLocaleString()} Pts`
-                  : `${notikEarnings.toLocaleString()} Pts`
-                }
-              </span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-              <Coins className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 3: Referral Commission */}
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden relative group">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Referral Bonus</span>
-              <span className="text-2xl font-black font-mono text-emerald-400">10% Commission</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <MousePointer2 className="w-6 h-6" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* USER & CONFIG INTEGRATION */}
       {!userId ? (
