@@ -793,6 +793,15 @@ function HomeContent() {
       {/* DAILY & WEEKLY TASKS BOARD */}
       <DashboardTasksBoard />
 
+      {/* A-ADS Banner Ad */}
+      <div className="w-full flex justify-center">
+        <iframe 
+          data-aa="2442904" 
+          src="//acceptable.a-ads.com/2442904/?size=Adaptive&background_color=020617&title_color=c20ee9"
+          style={{ border: 0, padding: 0, width: "100%", height: "100px", overflow: "hidden", display: "block" }}
+        />
+      </div>
+
       <motion.div 
         variants={container}
         initial="hidden"
