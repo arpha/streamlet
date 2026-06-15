@@ -62,14 +62,16 @@ export async function GET() {
     if (withdrawalsError) {
       console.warn("RPC get_recent_withdrawals failed, using empty array:", withdrawalsError.message)
     } else if (withdrawalsData) {
-      recent_withdrawals = withdrawalsData.map((w: any) => ({
-        coin: w.coin,
-        amount: w.amount,
-        usd_value: w.usd_value || (w.amount * 0.000005),
-        address: maskEmail(w.address),
-        status: w.status,
-        created_at: w.created_at
-      }))
+      recent_withdrawals = withdrawalsData
+        .filter((w: any) => w.status === "completed")
+        .map((w: any) => ({
+          coin: w.coin,
+          amount: w.amount,
+          usd_value: w.usd_value || (w.amount * 0.000005),
+          address: maskEmail(w.address),
+          status: w.status,
+          created_at: w.created_at
+        }))
     }
 
     // Hitung umur website

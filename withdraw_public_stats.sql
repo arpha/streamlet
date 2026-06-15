@@ -81,6 +81,7 @@ BEGIN
     w.status,
     w.created_at
   FROM public.withdrawals w
+  WHERE w.status = 'completed'
   ORDER BY w.created_at DESC
   LIMIT 10;
 END;
