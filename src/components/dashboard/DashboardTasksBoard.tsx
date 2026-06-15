@@ -197,6 +197,22 @@ export function DashboardTasksBoard() {
         </div>
       </div>
 
+      {/* HighPerformanceFormat Banner Ad */}
+      <div className="w-full flex justify-center py-2">
+        <div ref={(el) => {
+          if (el && !el.dataset.adLoaded) {
+            el.dataset.adLoaded = "true"
+            const configScript = document.createElement("script")
+            configScript.textContent = `atOptions = { 'key': 'd99ba076bdb6aa90fc1176bc0c12c9c7', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`
+            el.appendChild(configScript)
+            const adScript = document.createElement("script")
+            adScript.src = "https://www.highperformanceformat.com/d99ba076bdb6aa90fc1176bc0c12c9c7/invoke.js"
+            adScript.async = true
+            el.appendChild(adScript)
+          }
+        }} className="max-w-full overflow-hidden" />
+      </div>
+
       {/* Countdown Alert Banner */}
       <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
         <div className="flex items-center gap-2 text-xs font-bold text-white/40 uppercase tracking-wider">
