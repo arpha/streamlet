@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
 
       if (!response.ok) return []
       const data = await response.json()
-      const offersList = data?.offers || []
+      const offersList = data?.offers?.data || data?.offers || []
 
       if (!Array.isArray(offersList)) return []
 
