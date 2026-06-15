@@ -146,10 +146,19 @@ export async function GET(request: NextRequest) {
           ? descList.join("\n\n") 
           : "Successfully complete this offer's instructions to earn reward points."
 
+        const events = Array.isArray(offer.events) 
+          ? offer.events.map((e: any) => ({
+              id: e.id,
+              name: e.name,
+              payout: Number(e.payout || 0),
+              reward: Math.floor(Number(e.payout || 0) * 200000)
+            }))
+          : undefined
+
         return {
           id: `notik_${offer.offer_id}`,
           provider: "notik" as const,
-          title: offer.name || "Penawaran Aplikasi",
+          title: offer.name || "Application Offer",
           description: shortDesc,
           reward: rewardPoints,
           url: clickUrl,
@@ -158,7 +167,8 @@ export async function GET(request: NextRequest) {
           type: "offer" as const,
           os: Array.isArray(offer.os) ? offer.os : [],
           devices: Array.isArray(offer.devices) ? offer.devices : [],
-          description_long: longDesc
+          description_long: longDesc,
+          events: events
         }
       })
     })()

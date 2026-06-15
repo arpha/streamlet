@@ -18,6 +18,13 @@ import {
   AlertCircle
 } from "lucide-react"
 
+export interface OfferwallTaskEvent {
+  id: string
+  name: string
+  payout: number
+  reward: number
+}
+
 export interface OfferwallTask {
   id: string
   provider: "cpx" | "notik"
@@ -31,6 +38,7 @@ export interface OfferwallTask {
   os?: string[]
   devices?: string[]
   description_long?: string
+  events?: OfferwallTaskEvent[]
 }
 
 interface TaskDetailsModalProps {
@@ -187,6 +195,30 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
             </div>
           </div>
         </div>
+
+        {/* Task Milestones & Rewards */}
+        {task.events && task.events.length > 0 && (
+          <div className="relative z-10 py-2 space-y-3">
+            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Task Milestones & Rewards</h4>
+            <div className="bg-black/40 border border-white/5 rounded-2xl p-4 max-h-[25vh] overflow-y-auto custom-scrollbar space-y-2">
+              {task.events.map((event) => (
+                <div key={event.id} className="flex items-center justify-between text-xs py-1.5 border-b border-white/[0.03] last:border-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0"></div>
+                    <span className="text-white/80 font-medium">
+                      {event.name
+                        .replace(/[_-]/g, " ")
+                        .replace(/\b\w/g, c => c.toUpperCase())}
+                    </span>
+                  </div>
+                  <div className="text-amber-400 font-bold font-mono shrink-0">
+                    +{event.reward.toLocaleString()} Pts
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Verification Info */}
         <div className="relative z-10 py-3 flex items-start gap-2 text-white/40">
