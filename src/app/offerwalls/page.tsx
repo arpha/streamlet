@@ -455,9 +455,9 @@ export default function OfferwallsPage() {
             <div>
               <h3 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-400" />
-                Tugas Rekomendasi Terpopuler
+                Recommended Popular Tasks
               </h3>
-              <p className="text-white/40 text-xs mt-1">Selesaikan survei atau penawaran di bawah ini untuk mendapatkan poin secara instan.</p>
+              <p className="text-white/40 text-xs mt-1">Complete surveys or offers below to earn points instantly.</p>
             </div>
             
             {/* Filters */}
@@ -474,7 +474,7 @@ export default function OfferwallsPage() {
                         : "text-white/40 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    {filter === "all" ? "Semua" : filter === "survey" ? "Survei" : "Aplikasi"}
+                    {filter === "all" ? "All" : filter === "survey" ? "Surveys" : "Apps"}
                   </button>
                 ))}
               </div>
@@ -491,7 +491,7 @@ export default function OfferwallsPage() {
                         : "text-white/40 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    {filter === "all" ? "Semua Perangkat" : filter === "android" ? "Android" : filter === "ios" ? "iOS" : "Desktop"}
+                    {filter === "all" ? "All Devices" : filter === "android" ? "Android" : filter === "ios" ? "iOS" : "Desktop"}
                   </button>
                 ))}
               </div>
@@ -552,10 +552,10 @@ export default function OfferwallsPage() {
                         <Info className="w-8 h-8" />
                       </div>
                       <h3 className="text-lg font-bold text-white uppercase tracking-tight">
-                        Tidak Ada {taskTypeFilter === "survey" ? "Survei" : taskTypeFilter === "offer" ? "Tugas Aplikasi" : "Tugas"} Tersedia
+                        No {taskTypeFilter === "survey" ? "Surveys" : taskTypeFilter === "offer" ? "App Tasks" : "Tasks"} Available
                       </h3>
                       <p className="text-white/60 text-xs leading-relaxed">
-                        Saat ini tidak ada {taskTypeFilter === "survey" ? "survei" : taskTypeFilter === "offer" ? "penawaran aplikasi" : "survei atau penawaran"} yang sesuai dengan kriteria filter Anda. Silakan coba filter lain atau kunjungi tab provider secara langsung.
+                        Currently, there are no {taskTypeFilter === "survey" ? "surveys" : taskTypeFilter === "offer" ? "app offers" : "surveys or offers"} matching your filter criteria. Please try another filter or visit the provider tab directly.
                       </p>
                     </div>
                   </Card>
@@ -598,7 +598,7 @@ export default function OfferwallsPage() {
                                   ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" 
                                   : "bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30"
                               }`}>
-                                {task.type === "survey" ? "Survei" : "Penawaran"}
+                                {task.type === "survey" ? "Survey" : "Offer"}
                               </span>
                               <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest font-mono">
                                 {task.provider === "cpx" ? "CPX" : "Notik"}
@@ -642,7 +642,7 @@ export default function OfferwallsPage() {
                           rel="noopener noreferrer"
                           className="flex-[2] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/10 uppercase tracking-widest text-center"
                         >
-                          Mulai <ArrowRight className="w-3.5 h-3.5" />
+                          START <ArrowRight className="w-3.5 h-3.5" />
                         </a>
                       </div>
                     </div>

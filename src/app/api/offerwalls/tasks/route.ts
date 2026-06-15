@@ -83,16 +83,16 @@ export async function GET(request: NextRequest) {
       return surveys.map((survey: any) => ({
         id: `cpx_${survey.id}`,
         provider: "cpx" as const,
-        title: `Survei CPX Research`,
-        description: `Selesaikan survei berdurasi ${survey.lo} menit. Rating: ${survey.stars} bintang.`,
+        title: `CPX Research Survey`,
+        description: `Complete a ${survey.lo}-minute survey. Rating: ${survey.stars} stars.`,
         reward: Number(survey.payout),
         url: survey.href_new || survey.href,
         image: undefined,
-        duration: `${survey.lo} menit`,
+        duration: `${survey.lo} mins`,
         type: "survey" as const,
         os: ["android", "ios", "windows", "mac os x"],
         devices: ["mobile", "tablet", "desktop"],
-        description_long: `Dapatkan koin dengan menyelesaikan survei ini secara jujur.\nDurasi: ${survey.lo} menit.\nRating Survei: ${survey.stars} / 5 bintang.`
+        description_long: `Earn coins by completing this survey honestly.\nDuration: ${survey.lo} minutes.\nSurvey Rating: ${survey.stars} / 5 stars.`
       }))
     })()
 
@@ -141,10 +141,10 @@ export async function GET(request: NextRequest) {
           .filter(Boolean)
           .map(d => d.trim())
         
-        const shortDesc = offer.description1 || "Unduh dan selesaikan petunjuk untuk mendapatkan koin."
+        const shortDesc = offer.description1 || "Download and complete instructions to earn points."
         const longDesc = descList.length > 0 
           ? descList.join("\n\n") 
-          : "Selesaikan instruksi penawaran ini dengan sukses untuk mendapatkan reward poin."
+          : "Successfully complete this offer's instructions to earn reward points."
 
         return {
           id: `notik_${offer.offer_id}`,

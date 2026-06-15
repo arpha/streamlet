@@ -101,7 +101,7 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
     if (badges.length === 0) {
       badges.push(
         <span key="all" className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs font-bold">
-          <Monitor className="w-3 h-3" /> Semua Device
+          <Monitor className="w-3 h-3" /> All Devices
         </span>
       )
     }
@@ -147,7 +147,7 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
                     ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" 
                     : "bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30"
                 }`}>
-                  {task.type === "survey" ? "Survei" : "Penawaran"}
+                  {task.type === "survey" ? "Survey" : "Offer"}
                 </span>
                 <span className="text-[10px] font-black uppercase text-white/40 tracking-widest font-mono">
                   {task.provider === "cpx" ? "CPX Research" : "Notik"}
@@ -168,7 +168,7 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
         {/* Task Rewards Card */}
         <div className="relative z-10 my-4 bg-gradient-to-r from-purple-500/10 to-fuchsia-500/10 border border-white/5 rounded-2xl p-4 flex items-center justify-between shadow-inner">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block">Reward Tugas</span>
+            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest block">Task Reward</span>
             <span className="text-2xl font-black font-mono text-amber-400 flex items-center gap-1.5 animate-pulse">
               +{task.reward.toLocaleString()} <span className="text-sm font-bold text-white/60">Pts</span>
             </span>
@@ -180,10 +180,10 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
 
         {/* Long Instructions */}
         <div className="relative z-10 py-2 space-y-3">
-          <h4 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Instruksi Penyelesaian</h4>
+          <h4 className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Completion Instructions</h4>
           <div className="bg-black/40 border border-white/5 rounded-2xl p-4 max-h-[30vh] overflow-y-auto custom-scrollbar">
             <div className="text-white/80 text-xs leading-relaxed whitespace-pre-wrap font-medium">
-              {task.description_long || task.description || "Selesaikan tugas ini untuk mendapatkan koin."}
+              {task.description_long || task.description || "Complete this task to earn coins."}
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
         <div className="relative z-10 py-3 flex items-start gap-2 text-white/40">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-purple-400" />
           <p className="text-[10px] font-semibold leading-relaxed">
-            Poin akan masuk secara otomatis setelah konversi sukses dilaporkan oleh provider. Pastikan Anda memenuhi semua persyaratan di atas.
+            Points will be credited automatically once successful completion is reported by the provider. Please ensure you meet all requirements listed above.
           </p>
         </div>
 
@@ -202,14 +202,14 @@ export function TaskDetailsModal({ task, isOpen, onClose }: TaskDetailsModalProp
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition-all border border-white/5 hover:border-white/10 uppercase tracking-wider"
           >
-            Batal
+            Cancel
           </button>
           
           <button
             onClick={handleStartTask}
             className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs transition-all flex items-center gap-2 shadow-lg shadow-purple-500/20 uppercase tracking-widest"
           >
-            <Play className="w-3.5 h-3.5 fill-current" /> Mulai Tugas
+            <Play className="w-3.5 h-3.5 fill-current" /> Start Task
           </button>
         </div>
       </DialogContent>
