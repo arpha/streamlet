@@ -29,6 +29,24 @@ export async function GET(request: NextRequest) {
       || "0.0.0.0"
     const userAgent = request.headers.get("user-agent") || ""
 
+    // Get user country from Cloudflare header or fall back to GeoIP lookup
+    const cfCountry = request.headers.get("cf-ipcountry")
+    let userCountry = cfCountry ? cfCountry.toUpperCase() : null
+
+    if (!userCountry && ip && ip !== "127.0.0.1" && ip !== "::1" && ip !== "0.0.0.0") {
+      try {
+        const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode`)
+        if (geoRes.ok) {
+          const geoData = await geoRes.json()
+          if (geoData?.countryCode) {
+            userCountry = geoData.countryCode.toUpperCase()
+          }
+        }
+      } catch (err) {
+        console.error("GeoIP lookup failed:", err)
+      }
+    }
+
     // 1. Fetch CPX Research Surveys in parallel
     const cpxPromise = (async () => {
       const appId = process.env.NEXT_PUBLIC_CPX_RESEARCH_APP_ID || ""
@@ -101,7 +119,17 @@ export async function GET(request: NextRequest) {
 
       if (!Array.isArray(offersList)) return []
 
-      return offersList.map((offer: any) => {
+      // Filter offers by country targeting
+      const filteredOffers = offersList.filter((offer: any) => {
+        if (Array.isArray(offer.country_code) && offer.country_code.length > 0) {
+          if (offer.country_code.some((c: string) => c.toUpperCase() === "ALL")) return true
+          if (!userCountry) return true
+          return offer.country_code.map((c: string) => c.toUpperCase()).includes(userCountry)
+        }
+        return true
+      })
+
+      return filteredOffers.map((offer: any) => {
         // Convert USD payout to Streamlet Points: $1 USD = 200,000 Pts
         const rewardPoints = Math.floor(Number(offer.payout || 0) * 200000)
 

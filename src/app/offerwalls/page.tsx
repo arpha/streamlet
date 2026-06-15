@@ -154,6 +154,7 @@ export default function OfferwallsPage() {
   const [selectedTask, setSelectedTask] = useState<OfferwallTask | null>(null)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [deviceFilter, setDeviceFilter] = useState<"all" | "android" | "ios" | "desktop">("all")
+  const [taskTypeFilter, setTaskTypeFilter] = useState<"all" | "survey" | "offer">("all")
 
   // Redirect if not logged in
   useEffect(() => {
@@ -459,21 +460,41 @@ export default function OfferwallsPage() {
               <p className="text-white/40 text-xs mt-1">Selesaikan survei atau penawaran di bawah ini untuk mendapatkan poin secara instan.</p>
             </div>
             
-            {/* Device Filter pills */}
-            <div className="flex flex-wrap items-center gap-2 bg-black/40 border border-white/5 p-1 rounded-2xl shrink-0 self-start md:self-auto">
-              {(["all", "android", "ios", "desktop"] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setDeviceFilter(filter)}
-                  className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                    deviceFilter === filter
-                      ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
-                      : "text-white/40 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {filter === "all" ? "Semua" : filter === "android" ? "Android" : filter === "ios" ? "iOS" : "Desktop"}
-                </button>
-              ))}
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-4 shrink-0 self-start md:self-auto">
+              {/* Category Filter */}
+              <div className="flex flex-wrap items-center gap-1 bg-black/40 border border-white/5 p-1 rounded-2xl">
+                {(["all", "survey", "offer"] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setTaskTypeFilter(filter)}
+                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                      taskTypeFilter === filter
+                        ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
+                        : "text-white/40 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {filter === "all" ? "Semua" : filter === "survey" ? "Survei" : "Aplikasi"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Device Filter */}
+              <div className="flex flex-wrap items-center gap-1 bg-black/40 border border-white/5 p-1 rounded-2xl">
+                {(["all", "android", "ios", "desktop"] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setDeviceFilter(filter)}
+                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                      deviceFilter === filter
+                        ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
+                        : "text-white/40 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {filter === "all" ? "Semua Perangkat" : filter === "android" ? "Android" : filter === "ios" ? "iOS" : "Desktop"}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -499,8 +520,14 @@ export default function OfferwallsPage() {
             </div>
           ) : (
             (() => {
-              // Filter home tasks based on deviceFilter
+              // Filter home tasks based on deviceFilter and taskTypeFilter
               const filtered = homeTasks.filter(t => {
+                // Filter by task type
+                if (taskTypeFilter !== "all" && t.type !== taskTypeFilter) {
+                  return false
+                }
+
+                // Filter by device
                 if (deviceFilter === "all") return true
                 const osList = t.os || []
                 const deviceList = t.devices || []
@@ -524,9 +551,11 @@ export default function OfferwallsPage() {
                       <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
                         <Info className="w-8 h-8" />
                       </div>
-                      <h3 className="text-lg font-bold text-white uppercase tracking-tight">Tidak Ada Tugas Tersedia</h3>
+                      <h3 className="text-lg font-bold text-white uppercase tracking-tight">
+                        Tidak Ada {taskTypeFilter === "survey" ? "Survei" : taskTypeFilter === "offer" ? "Tugas Aplikasi" : "Tugas"} Tersedia
+                      </h3>
                       <p className="text-white/60 text-xs leading-relaxed">
-                        Saat ini tidak ada survei atau penawaran yang sesuai dengan kriteria filter Anda. Silakan coba filter lain atau kunjungi tab provider secara langsung.
+                        Saat ini tidak ada {taskTypeFilter === "survey" ? "survei" : taskTypeFilter === "offer" ? "penawaran aplikasi" : "survei atau penawaran"} yang sesuai dengan kriteria filter Anda. Silakan coba filter lain atau kunjungi tab provider secara langsung.
                       </p>
                     </div>
                   </Card>
