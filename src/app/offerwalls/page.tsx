@@ -11,12 +11,21 @@ import {
   CheckCircle2, 
   ShieldCheck,
   MousePointer2,
-  FileText
+  FileText,
+  Smartphone,
+  Monitor,
+  Tablet,
+  Play,
+  ArrowRight,
+  Loader2,
+  Sparkles
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { useAuth } from "@/components/providers/AuthProvider"
+import { TaskDetailsModal, OfferwallTask } from "@/components/dashboard/TaskDetailsModal"
+
 
 // Subcomponent to handle CPX Research lifecycle
 function CPXWidget({ userId }: { userId: string }) {
@@ -132,12 +141,19 @@ export default function OfferwallsPage() {
   const [notikPubId, setNotikPubId] = useState<string>("")
   const [notikAppId, setNotikAppId] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<"bitcotasks" | "cpx" | "theoremreach" | "bitlabs" | "notik">("bitcotasks")
+  const [activeTab, setActiveTab] = useState<"home" | "bitcotasks" | "cpx" | "theoremreach" | "bitlabs" | "notik">("home")
   const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
   const [cpxEarnings, setCpxEarnings] = useState<number>(0)
   const [theoremreachEarnings, setTheoremreachEarnings] = useState<number>(0)
   const [bitlabsEarnings, setBitlabsEarnings] = useState<number>(0)
   const [notikEarnings, setNotikEarnings] = useState<number>(0)
+
+  // Home tasks state
+  const [homeTasks, setHomeTasks] = useState<OfferwallTask[]>([])
+  const [tasksLoading, setTasksLoading] = useState<boolean>(true)
+  const [selectedTask, setSelectedTask] = useState<OfferwallTask | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [deviceFilter, setDeviceFilter] = useState<"all" | "android" | "ios" | "desktop">("all")
 
   // Redirect if not logged in
   useEffect(() => {
@@ -245,6 +261,28 @@ export default function OfferwallsPage() {
     fetchEarnings()
   }, [userId])
 
+  // Fetch unified home tasks (CPX Research & Notik)
+  useEffect(() => {
+    if (!userId) return
+
+    async function fetchHomeTasks() {
+      setTasksLoading(true)
+      try {
+        const res = await fetch(`/api/offerwalls/tasks?user_id=${userId}`)
+        const data = await res.json()
+        if (data.success) {
+          setHomeTasks(data.tasks || [])
+        }
+      } catch (err) {
+        console.error("Error fetching home tasks:", err)
+      } finally {
+        setTasksLoading(false)
+      }
+    }
+
+    fetchHomeTasks()
+  }, [userId])
+
   const handleLoginRedirect = () => {
     router.push("/auth/login")
   }
@@ -271,6 +309,16 @@ export default function OfferwallsPage() {
 
       {/* PROVIDER SWITCHER TABS */}
       <div className="flex flex-wrap justify-center md:justify-start gap-4 border-b border-white/5 pb-2">
+        <button
+          onClick={() => setActiveTab("home")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "home"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          ⚡ Home / Populer
+        </button>
         <button
           onClick={() => setActiveTab("bitcotasks")}
           className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
@@ -331,11 +379,11 @@ export default function OfferwallsPage() {
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Offerwall Provider</span>
               <span className="text-2xl font-black font-mono text-amber-400">
-                {activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : activeTab === "theoremreach" ? "TheoremReach" : activeTab === "bitlabs" ? "BitLabs" : "Notik"}
+                {activeTab === "home" ? "Home / Populer" : activeTab === "bitcotasks" ? "BitcoTasks" : activeTab === "cpx" ? "CPX Research" : activeTab === "theoremreach" ? "TheoremReach" : activeTab === "bitlabs" ? "BitLabs" : "Notik"}
               </span>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              {activeTab === "bitcotasks" ? <Gamepad2 className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+              {activeTab === "home" ? <Sparkles className="w-6 h-6" /> : activeTab === "bitcotasks" ? <Gamepad2 className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
             </div>
           </CardContent>
         </Card>
@@ -346,7 +394,9 @@ export default function OfferwallsPage() {
             <div className="space-y-1">
               <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] block">Total Earnings</span>
               <span className="text-2xl font-black font-mono text-cyan-400">
-                {activeTab === "bitcotasks" 
+                {activeTab === "home"
+                  ? `${(bitcotasksEarnings + cpxEarnings + theoremreachEarnings + bitlabsEarnings + notikEarnings).toLocaleString()} Pts`
+                  : activeTab === "bitcotasks" 
                   ? `${bitcotasksEarnings.toLocaleString()} Pts` 
                   : activeTab === "cpx"
                   ? `${cpxEarnings.toLocaleString()} Pts`
@@ -397,6 +447,182 @@ export default function OfferwallsPage() {
             </Button>
           </div>
         </Card>
+      ) : activeTab === "home" ? (
+        <div className="space-y-6">
+          {/* Header & Filter */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                Tugas Rekomendasi Terpopuler
+              </h3>
+              <p className="text-white/40 text-xs mt-1">Selesaikan survei atau penawaran di bawah ini untuk mendapatkan poin secara instan.</p>
+            </div>
+            
+            {/* Device Filter pills */}
+            <div className="flex flex-wrap items-center gap-2 bg-black/40 border border-white/5 p-1 rounded-2xl shrink-0 self-start md:self-auto">
+              {(["all", "android", "ios", "desktop"] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setDeviceFilter(filter)}
+                  className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                    deviceFilter === filter
+                      ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
+                      : "text-white/40 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {filter === "all" ? "Semua" : filter === "android" ? "Android" : filter === "ios" ? "iOS" : "Desktop"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tasks Loading State */}
+          {tasksLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="glass border border-white/5 rounded-[2rem] p-6 space-y-4 animate-pulse bg-white/[0.02] h-64 flex flex-col justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 bg-white/5 rounded-2xl shrink-0"></div>
+                    <div className="space-y-2 flex-1 pt-1">
+                      <div className="h-3 bg-white/10 rounded w-16"></div>
+                      <div className="h-4 bg-white/10 rounded w-32"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-white/5 rounded w-full"></div>
+                    <div className="h-3 bg-white/5 rounded w-5/6"></div>
+                  </div>
+                  <div className="h-10 bg-white/10 rounded-2xl w-full"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            (() => {
+              // Filter home tasks based on deviceFilter
+              const filtered = homeTasks.filter(t => {
+                if (deviceFilter === "all") return true
+                const osList = t.os || []
+                const deviceList = t.devices || []
+                
+                if (deviceFilter === "android") {
+                  return osList.some(o => o.toLowerCase().includes("android"))
+                }
+                if (deviceFilter === "ios") {
+                  return osList.some(o => o.toLowerCase().includes("ios") || o.toLowerCase().includes("iphone") || o.toLowerCase().includes("ipad"))
+                }
+                if (deviceFilter === "desktop") {
+                  return osList.some(o => o.toLowerCase().includes("windows") || o.toLowerCase().includes("mac os")) || deviceList.some(d => d.toLowerCase().includes("desktop"))
+                }
+                return true
+              })
+
+              if (filtered.length === 0) {
+                return (
+                  <Card className="glass border-white/10 rounded-[2rem] p-12 text-center">
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                        <Info className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white uppercase tracking-tight">Tidak Ada Tugas Tersedia</h3>
+                      <p className="text-white/60 text-xs leading-relaxed">
+                        Saat ini tidak ada survei atau penawaran yang sesuai dengan kriteria filter Anda. Silakan coba filter lain atau kunjungi tab provider secara langsung.
+                      </p>
+                    </div>
+                  </Card>
+                )
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filtered.map((task) => (
+                    <div 
+                      key={task.id} 
+                      className="glass border border-white/10 rounded-[2rem] overflow-hidden hover:border-white/20 transition-all duration-300 relative group flex flex-col justify-between h-full bg-[#090d16]/30 p-6"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-4">
+                          {/* Image Thumbnail */}
+                          <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-white/5 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+                            {task.image ? (
+                              <img 
+                                src={task.image} 
+                                alt={task.title} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as any).src = ""
+                                  ;(e.target as any).classList.add("hidden")
+                                }}
+                              />
+                            ) : null}
+                            {!task.image || task.provider === "cpx" ? (
+                              <div className="w-full h-full flex items-center justify-center bg-purple-500/10 text-purple-400">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                                task.type === "survey" 
+                                  ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" 
+                                  : "bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30"
+                              }`}>
+                                {task.type === "survey" ? "Survei" : "Penawaran"}
+                              </span>
+                              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest font-mono">
+                                {task.provider === "cpx" ? "CPX" : "Notik"}
+                              </span>
+                            </div>
+                            <h4 className="text-sm font-black text-white truncate leading-tight mt-1">
+                              {task.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-white/60 text-xs font-medium line-clamp-2 leading-relaxed">
+                            {task.description}
+                          </p>
+                          
+                          {/* Reward points */}
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-sm font-black">
+                            <Coins className="w-4 h-4" />
+                            +{task.reward.toLocaleString()} <span className="text-[10px] font-bold text-white/50">Pts</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="flex items-center gap-2 pt-6 mt-auto">
+                        {task.provider === "notik" && (
+                          <button
+                            onClick={() => {
+                              setSelectedTask(task)
+                              setIsModalOpen(true)
+                            }}
+                            className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition-all border border-white/5 hover:border-white/10 uppercase tracking-wider text-center"
+                          >
+                            Detail
+                          </button>
+                        )}
+                        <a
+                          href={task.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-[2] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/10 uppercase tracking-widest text-center"
+                        >
+                          Mulai <ArrowRight className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()
+          )}
+        </div>
       ) : activeTab === "bitcotasks" ? (
         !apiKey ? (
           // Guide to setup when BitcoTasks API key is missing
@@ -619,6 +845,16 @@ NOTIK_SECRET_KEY=your_notik_secret_key`}
           </ul>
         </div>
       </Card>
+
+      {/* Task details modal */}
+      <TaskDetailsModal 
+        task={selectedTask}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedTask(null)
+        }}
+      />
     </div>
   )
 }
