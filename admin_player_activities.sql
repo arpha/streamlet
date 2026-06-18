@@ -145,6 +145,41 @@ BEGIN
       p.last_active_at
     FROM public.daily_checkin_logs d
     JOIN public.profiles p ON d.user_id = p.id
+
+    UNION ALL
+
+    -- Miner Claims & Purchases
+    SELECT 
+      'mining'::TEXT as activity_type,
+      p.username,
+      p.email,
+      (CASE WHEN m.amount > 0 THEN '+' ELSE '' END || m.amount || ' Pts')::TEXT as amount,
+      COALESCE(m.user_agent, CASE WHEN m.claim_type = 'purchase' THEN 'Miner Purchase' ELSE 'Miner Claim' END)::TEXT as details,
+      m.ip_address::TEXT,
+      NULL::TEXT as device_fingerprint,
+      'completed'::TEXT as status,
+      m.claimed_at as created_at,
+      p.last_active_at
+    FROM public.mining_claims m
+    JOIN public.profiles p ON m.user_id = p.id
+
+    UNION ALL
+
+    -- Offerwall Booster Logs
+    SELECT 
+      'booster'::TEXT as activity_type,
+      p.username,
+      p.email,
+      ('+' || b.points_boosted || ' Pts')::TEXT as amount,
+      ('Offerwall Booster (' || o.provider || ')')::TEXT as details,
+      NULL::TEXT as ip_address,
+      NULL::TEXT as device_fingerprint,
+      'completed'::TEXT as status,
+      b.created_at as created_at,
+      p.last_active_at
+    FROM public.offerwall_booster_logs b
+    JOIN public.profiles p ON b.user_id = p.id
+    JOIN public.offerwall_claims o ON b.claim_id = o.id
   )
   SELECT 
     a.activity_type, 

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   Loader2, Search, Filter, RefreshCw, AlertTriangle, Shield, ShieldAlert,
-  ChevronLeft, ChevronRight, Flame, Link2, Coins, Users, CalendarCheck, HelpCircle
+  ChevronLeft, ChevronRight, Flame, Link2, Coins, Users, CalendarCheck, HelpCircle,
+  Cpu, Ticket
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDistanceToNow } from 'date-fns'
@@ -142,6 +143,10 @@ export default function AdminActivitiesPage() {
         return <Users className="w-4 h-4 text-rose-400" />
       case "checkin":
         return <CalendarCheck className="w-4 h-4 text-emerald-400" />
+      case "mining":
+        return <Cpu className="w-4 h-4 text-emerald-400" />
+      case "booster":
+        return <Ticket className="w-4 h-4 text-purple-400" />
       default:
         return <HelpCircle className="w-4 h-4 text-white/40" />
     }
@@ -159,6 +164,10 @@ export default function AdminActivitiesPage() {
         return "bg-rose-500/10 text-rose-400 border border-rose-500/20"
       case "checkin":
         return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+      case "mining":
+        return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+      case "booster":
+        return "bg-purple-500/10 text-purple-400 border border-purple-500/20"
       default:
         return "bg-white/10 text-white/60"
     }
@@ -225,6 +234,8 @@ export default function AdminActivitiesPage() {
             <option className="bg-[#0f172a] text-white" value="offerwall">Offerwalls</option>
             <option className="bg-[#0f172a] text-white" value="withdrawal">Withdrawals</option>
             <option className="bg-[#0f172a] text-white" value="checkin">Daily Checkins</option>
+            <option className="bg-[#0f172a] text-white" value="mining">Miner Claims</option>
+            <option className="bg-[#0f172a] text-white" value="booster">Offerwall Boosters</option>
           </select>
         </div>
 
