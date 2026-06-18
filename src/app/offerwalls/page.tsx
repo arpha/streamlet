@@ -938,6 +938,20 @@ function BoosterHistoryView({
   boostingId: string | null
   onApplyBoost: (claimId: string) => void
 }) {
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const itemsPerPage = 10
+  const totalPages = Math.max(1, Math.ceil(completedClaims.length / itemsPerPage))
+  
+  // Reset current page if it exceeds total pages after a claim is removed or list updates
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [completedClaims.length, totalPages, currentPage])
+
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedClaims = completedClaims.slice(startIndex, startIndex + itemsPerPage)
+
   return (
     <div className="space-y-6">
       {/* Ticket Stats */}
@@ -996,80 +1010,109 @@ function BoosterHistoryView({
             No completed offerwall tasks found. Complete some tasks first!
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
-            {completedClaims.map((claim) => {
-              const timeSinceCompletion = Date.now() - new Date(claim.completed_at).getTime()
-              const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000
-              const timeRemaining = sevenDaysInMs - timeSinceCompletion
-              const isExpired = timeRemaining <= 0
+          <div>
+            <div className="divide-y divide-white/5">
+              {paginatedClaims.map((claim) => {
+                const timeSinceCompletion = Date.now() - new Date(claim.completed_at).getTime()
+                const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000
+                const timeRemaining = sevenDaysInMs - timeSinceCompletion
+                const isExpired = timeRemaining <= 0
 
-              const daysLeft = Math.floor(timeRemaining / (24 * 60 * 60 * 1000))
-              const hoursLeft = Math.floor((timeRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
-              const timeLabel = daysLeft > 0 ? `${daysLeft}d ${hoursLeft}h left` : `${hoursLeft}h left`
+                const daysLeft = Math.floor(timeRemaining / (24 * 60 * 60 * 1000))
+                const hoursLeft = Math.floor((timeRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
+                const timeLabel = daysLeft > 0 ? `${daysLeft}d ${hoursLeft}h left` : `${hoursLeft}h left`
 
-              return (
-                <div key={claim.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4 hover:bg-white/[0.02] transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase text-purple-400 tracking-wider">
-                        {claim.provider}
-                      </span>
-                      <span className="text-xs font-mono text-white/40">
-                        TX: {claim.transaction_id.substring(0, 12)}...
-                      </span>
-                    </div>
-                    <div className="text-sm font-bold text-white flex items-center gap-2">
-                      Points Earned: <span className="font-mono text-purple-400 font-black">{claim.points_reward.toLocaleString()} Pts</span>
-                    </div>
-                    <div className="text-[10px] text-white/40 font-medium flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {new Date(claim.completed_at).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 self-end sm:self-center">
-                    {claim.is_boosted ? (
-                      <div className="flex flex-col items-end">
-                        <span className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-xs px-3 py-1 rounded-xl">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Boosted (+50%)
+                return (
+                  <div key={claim.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4 hover:bg-white/[0.02] transition-colors">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase text-purple-400 tracking-wider">
+                          {claim.provider}
                         </span>
-                        <span className="text-[10px] font-mono text-emerald-400/80 font-bold mt-1">
-                          +{claim.boost_points_added.toLocaleString()} Pts added
+                        <span className="text-xs font-mono text-white/40">
+                          TX: {claim.transaction_id.substring(0, 12)}...
                         </span>
                       </div>
-                    ) : isExpired ? (
-                      <span className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/30 font-black text-xs px-3 py-1 rounded-xl cursor-not-allowed">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Expired
-                      </span>
-                    ) : (
-                      <div className="flex flex-col sm:items-end gap-1.5">
-                        <Button
-                          size="sm"
-                          disabled={eventTickets < 1 || boostingId !== null}
-                          onClick={() => onApplyBoost(claim.id)}
-                          className="bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-500/10"
-                        >
-                          {boostingId === claim.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <>
-                              <Zap className="w-3.5 h-3.5" />
-                              Boost +50%
-                            </>
-                          )}
-                        </Button>
-                        <span className="text-[10px] text-amber-400/80 font-bold flex items-center gap-1">
-                          <Timer className="w-3 h-3 animate-pulse" />
-                          {timeLabel}
-                        </span>
+                      <div className="text-sm font-bold text-white flex items-center gap-2">
+                        Points Earned: <span className="font-mono text-purple-400 font-black">{claim.points_reward.toLocaleString()} Pts</span>
                       </div>
-                    )}
+                      <div className="text-[10px] text-white/40 font-medium flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(claim.completed_at).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 self-end sm:self-center">
+                      {claim.is_boosted ? (
+                        <div className="flex flex-col items-end">
+                          <span className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-xs px-3 py-1 rounded-xl">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Boosted (+50%)
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-400/80 font-bold mt-1">
+                            +{claim.boost_points_added.toLocaleString()} Pts added
+                          </span>
+                        </div>
+                      ) : isExpired ? (
+                        <span className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/30 font-black text-xs px-3 py-1 rounded-xl cursor-not-allowed">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Expired
+                        </span>
+                      ) : (
+                        <div className="flex flex-col sm:items-end gap-1.5">
+                          <Button
+                            size="sm"
+                            disabled={eventTickets < 1 || boostingId !== null}
+                            onClick={() => onApplyBoost(claim.id)}
+                            className="bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-500/10"
+                          >
+                            {boostingId === claim.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5" />
+                                Boost +50%
+                              </>
+                            )}
+                          </Button>
+                          <span className="text-[10px] text-amber-400/80 font-bold flex items-center gap-1">
+                            <Timer className="w-3 h-3 animate-pulse" />
+                            {timeLabel}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-black/20 border-t border-white/5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl px-4"
+                >
+                  Previous
+                </Button>
+                <span className="text-xs font-bold text-white/60">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl px-4"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>
