@@ -18,13 +18,19 @@ import {
   Play,
   ArrowRight,
   Loader2,
-  Sparkles
+  Sparkles,
+  Ticket,
+  Zap,
+  Calendar,
+  AlertCircle,
+  Timer
 } from "lucide-react"
 import { useStore } from "@/store/useStore"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { TaskDetailsModal, OfferwallTask } from "@/components/dashboard/TaskDetailsModal"
+import { toast } from "sonner"
 
 
 // Subcomponent to handle CPX Research lifecycle
@@ -132,7 +138,7 @@ CPX_RESEARCH_SECRET_KEY=your_cpx_secret_key`}
 
 export default function OfferwallsPage() {
   const router = useRouter()
-  const { id: userId } = useStore()
+  const { id: userId, eventTickets, balance, setEventTickets, setBalance } = useStore()
   const { user, loading: authLoading } = useAuth()
   const [apiKey, setApiKey] = useState<string>("")
   const [theoremreachApiKey, setTheoremreachApiKey] = useState<string>("")
@@ -141,7 +147,7 @@ export default function OfferwallsPage() {
   const [notikPubId, setNotikPubId] = useState<string>("")
   const [notikAppId, setNotikAppId] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<"home" | "bitcotasks" | "cpx" | "theoremreach" | "bitlabs" | "notik">("home")
+  const [activeTab, setActiveTab] = useState<"home" | "bitcotasks" | "cpx" | "theoremreach" | "bitlabs" | "notik" | "booster_history">("home")
   const [bitcotasksEarnings, setBitcotasksEarnings] = useState<number>(0)
   const [cpxEarnings, setCpxEarnings] = useState<number>(0)
   const [theoremreachEarnings, setTheoremreachEarnings] = useState<number>(0)
@@ -284,6 +290,73 @@ export default function OfferwallsPage() {
     fetchHomeTasks()
   }, [userId])
 
+  // Booster History states and actions
+  const [completedClaims, setCompletedClaims] = useState<any[]>([])
+  const [claimsLoading, setClaimsLoading] = useState<boolean>(false)
+  const [boostingId, setBoostingId] = useState<string | null>(null)
+
+  const fetchCompletedClaims = async () => {
+    if (!userId) return
+    setClaimsLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("offerwall_claims")
+        .select("id, provider, transaction_id, points_reward, status, is_boosted, boost_points_added, completed_at")
+        .eq("user_id", userId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+
+      if (error) throw error
+      setCompletedClaims(data || [])
+    } catch (err) {
+      console.error("Error fetching completed claims:", err)
+      toast.error("Failed to load completed tasks.")
+    } finally {
+      setClaimsLoading(false)
+    }
+  }
+
+  const handleApplyBooster = async (claimId: string) => {
+    if (!userId) return
+    if (eventTickets < 1) {
+      toast.error("You don't have any Event Tickets left!")
+      return
+    }
+    setBoostingId(claimId)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.rpc("apply_offerwall_booster", {
+        p_claim_id: claimId
+      })
+      if (error) throw error
+      
+      const result = data as any
+      if (result.success) {
+        toast.success(result.message || "Booster applied successfully!", {
+          icon: <Sparkles className="w-5 h-5 text-purple-400" />
+        })
+        if (result.new_balance !== undefined) setBalance(Number(result.new_balance))
+        if (result.new_tickets !== undefined) setEventTickets(Number(result.new_tickets))
+        
+        await fetchCompletedClaims()
+      } else {
+        toast.error(result.message || "Failed to apply booster.")
+      }
+    } catch (err: any) {
+      console.error("Error applying booster:", err)
+      toast.error(err.message || "Failed to apply booster.")
+    } finally {
+      setBoostingId(null)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "booster_history" && userId) {
+      fetchCompletedClaims()
+    }
+  }, [activeTab, userId])
+
   const handleLoginRedirect = () => {
     router.push("/auth/login")
   }
@@ -369,6 +442,16 @@ export default function OfferwallsPage() {
           }`}
         >
           Notik
+        </button>
+        <button
+          onClick={() => setActiveTab("booster_history")}
+          className={`px-6 py-2.5 rounded-full font-black uppercase text-xs tracking-wider transition-all duration-300 ${
+            activeTab === "booster_history"
+              ? "bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-600/30"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          🎫 Booster & History
         </button>
       </div>
 
@@ -787,10 +870,19 @@ NOTIK_SECRET_KEY=your_notik_secret_key`}
             </div>
           </div>
         )
-      ) : (
+      ) : activeTab === "cpx" ? (
         // CPX Research dynamic widget
         <CPXWidget userId={userId} />
-      )}
+      ) : activeTab === "booster_history" ? (
+        // Booster & History View
+        <BoosterHistoryView 
+          eventTickets={eventTickets}
+          completedClaims={completedClaims}
+          claimsLoading={claimsLoading}
+          boostingId={boostingId}
+          onApplyBoost={handleApplyBooster}
+        />
+      ) : null}
 
       {/* FOOTER RULES */}
       <Card className="glass border-white/10 rounded-[2rem] overflow-hidden relative group">
@@ -829,6 +921,158 @@ NOTIK_SECRET_KEY=your_notik_secret_key`}
           setSelectedTask(null)
         }}
       />
+    </div>
+  )
+}
+
+function BoosterHistoryView({ 
+  eventTickets, 
+  completedClaims, 
+  claimsLoading, 
+  boostingId, 
+  onApplyBoost 
+}: { 
+  eventTickets: number
+  completedClaims: any[]
+  claimsLoading: boolean
+  boostingId: string | null
+  onApplyBoost: (claimId: string) => void
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Ticket Stats */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="glass border-white/10 rounded-[2rem] p-6 col-span-1 md:col-span-1 bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <Ticket className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest">Available Tickets</h3>
+              <p className="text-4xl font-black font-mono text-white mt-1">{eventTickets} 🎫</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-white/40 mt-4 leading-relaxed font-medium">
+            *Earn Event Tickets by keeping up your Daily Check-in streak (Claim on Day 7).
+          </p>
+        </Card>
+
+        <Card className="glass border-white/10 rounded-[2rem] p-6 col-span-1 md:col-span-2 space-y-4">
+          <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+            <Zap className="w-5 h-5 text-purple-400" />
+            How does it work?
+          </h3>
+          <div className="grid gap-4 text-xs md:text-sm text-white/70 font-medium">
+            <div className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 font-bold font-mono">1</span>
+              <p>Complete any offerwall task (CPX, Notik, BitLabs, etc.) to get points.</p>
+            </div>
+            <div className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 font-bold font-mono">2</span>
+              <p>Spend <strong>1 Event Ticket</strong> to boost the rewards of that task by <strong>50%</strong>.</p>
+            </div>
+            <div className="flex gap-3 items-start">
+              <span className="w-6 h-6 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 font-bold font-mono">3</span>
+              <p>The extra points are credited directly to your balance and added to your offerwall leaderboard score.</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Completed Tasks List */}
+      <Card className="glass border-white/10 rounded-[2rem] overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+          <h3 className="text-sm font-black uppercase tracking-wider text-white">
+            Completed Offerwall Tasks
+          </h3>
+        </div>
+        
+        {claimsLoading ? (
+          <div className="flex h-48 items-center justify-center">
+            <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+          </div>
+        ) : completedClaims.length === 0 ? (
+          <div className="p-8 text-center text-white/40 text-sm font-medium">
+            No completed offerwall tasks found. Complete some tasks first!
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {completedClaims.map((claim) => {
+              const timeSinceCompletion = Date.now() - new Date(claim.completed_at).getTime()
+              const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000
+              const timeRemaining = sevenDaysInMs - timeSinceCompletion
+              const isExpired = timeRemaining <= 0
+
+              const daysLeft = Math.floor(timeRemaining / (24 * 60 * 60 * 1000))
+              const hoursLeft = Math.floor((timeRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
+              const timeLabel = daysLeft > 0 ? `${daysLeft}d ${hoursLeft}h left` : `${hoursLeft}h left`
+
+              return (
+                <div key={claim.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-black uppercase text-purple-400 tracking-wider">
+                        {claim.provider}
+                      </span>
+                      <span className="text-xs font-mono text-white/40">
+                        TX: {claim.transaction_id.substring(0, 12)}...
+                      </span>
+                    </div>
+                    <div className="text-sm font-bold text-white flex items-center gap-2">
+                      Points Earned: <span className="font-mono text-purple-400 font-black">{claim.points_reward.toLocaleString()} Pts</span>
+                    </div>
+                    <div className="text-[10px] text-white/40 font-medium flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(claim.completed_at).toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-center">
+                    {claim.is_boosted ? (
+                      <div className="flex flex-col items-end">
+                        <span className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black text-xs px-3 py-1 rounded-xl">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Boosted (+50%)
+                        </span>
+                        <span className="text-[10px] font-mono text-emerald-400/80 font-bold mt-1">
+                          +{claim.boost_points_added.toLocaleString()} Pts added
+                        </span>
+                      </div>
+                    ) : isExpired ? (
+                      <span className="flex items-center gap-1 bg-white/5 border border-white/10 text-white/30 font-black text-xs px-3 py-1 rounded-xl cursor-not-allowed">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Expired
+                      </span>
+                    ) : (
+                      <div className="flex flex-col sm:items-end gap-1.5">
+                        <Button
+                          size="sm"
+                          disabled={eventTickets < 1 || boostingId !== null}
+                          onClick={() => onApplyBoost(claim.id)}
+                          className="bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-600 hover:to-fuchsia-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-purple-500/10"
+                        >
+                          {boostingId === claim.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5" />
+                              Boost +50%
+                            </>
+                          )}
+                        </Button>
+                        <span className="text-[10px] text-amber-400/80 font-bold flex items-center gap-1">
+                          <Timer className="w-3 h-3 animate-pulse" />
+                          {timeLabel}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
