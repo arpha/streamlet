@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle, CalendarCheck, Cpu } from "lucide-react"
+import { Coins, Clock, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Sparkles, Loader2, MousePointer2, Shield, Crown, Award, Gem, Link2, Info, X, Gamepad2, CheckCircle2, AlertCircle, CalendarCheck, Cpu, Ticket } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useStore } from "@/store/useStore"
 import { Button } from "@/components/ui/button"
@@ -324,6 +324,14 @@ function HomeContent() {
           .order('viewed_at', { ascending: false })
           .limit(5)
 
+        // 5e. Fetch recent offerwall booster logs
+        const { data: recentBoosters } = await supabase
+          .from('offerwall_booster_logs')
+          .select('*, offerwall_claims(provider)')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(5)
+
         setStatsData({
           totalClaims: (faucetCount || 0) + (shortlinkCount || 0) + (offerwallCount || 0) + (miningCount || 0) + (ptcCount || 0),
           referrals: referralCount,
@@ -396,6 +404,20 @@ function HomeContent() {
               date: new Date(v.viewed_at),
               icon: MousePointer2,
               color: 'text-emerald-400'
+            })
+          })
+        }
+
+        if (recentBoosters) {
+          recentBoosters.forEach(boost => {
+            const providerName = (boost.offerwall_claims as any)?.provider || 'Offerwall'
+            activities.push({
+              type: `Offerwall Booster (${providerName === 'bitcotasks' ? 'BitcoTasks' : providerName})`,
+              amount: `+${Number(boost.points_boosted)} Points`,
+              time: formatDistanceToNow(new Date(boost.created_at), { addSuffix: true }),
+              date: new Date(boost.created_at),
+              icon: Ticket,
+              color: 'text-purple-400'
             })
           })
         }
