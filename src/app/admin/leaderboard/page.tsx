@@ -39,7 +39,7 @@ interface Cycle {
 interface Winner {
   id: number
   cycle_id: number
-  leaderboard_type: 'faucet_shortlink' | 'referral' | 'offerwall'
+  leaderboard_type: 'faucet_shortlink' | 'faucet' | 'shortlink' | 'referral' | 'offerwall'
   username: string
   score: number
   rank: number
@@ -48,8 +48,10 @@ interface Winner {
 }
 
 interface LeaderboardSettings {
-  faucet_shortlink_limit: number
-  faucet_shortlink_rewards: number[]
+  faucet_limit: number
+  faucet_rewards: number[]
+  shortlink_limit: number
+  shortlink_rewards: number[]
   referral_limit: number
   referral_rewards: number[]
   offerwall_limit: number
@@ -74,6 +76,8 @@ export default function AdminLeaderboardPage() {
   // Dynamic Settings states
   const [faucetLimit, setFaucetLimit] = useState<number>(20)
   const [faucetRewards, setFaucetRewards] = useState<string>("")
+  const [shortlinkLimit, setShortlinkLimit] = useState<number>(10)
+  const [shortlinkRewards, setShortlinkRewards] = useState<string>("")
   const [referralLimit, setReferralLimit] = useState<number>(10)
   const [referralRewards, setReferralRewards] = useState<string>("")
   const [offerwallLimit, setOfferwallLimit] = useState<number>(10)
@@ -114,12 +118,14 @@ export default function AdminLeaderboardPage() {
         
         // Populate settings from database
         if (data.settings) {
-          setFaucetLimit(data.settings.faucet_shortlink_limit)
-          setFaucetRewards(data.settings.faucet_shortlink_rewards.join(", "))
+          setFaucetLimit(data.settings.faucet_limit)
+          setFaucetRewards(data.settings.faucet_rewards ? data.settings.faucet_rewards.join(", ") : "")
+          setShortlinkLimit(data.settings.shortlink_limit)
+          setShortlinkRewards(data.settings.shortlink_rewards ? data.settings.shortlink_rewards.join(", ") : "")
           setReferralLimit(data.settings.referral_limit)
-          setReferralRewards(data.settings.referral_rewards.join(", "))
+          setReferralRewards(data.settings.referral_rewards ? data.settings.referral_rewards.join(", ") : "")
           setOfferwallLimit(data.settings.offerwall_limit)
-          setOfferwallRewards(data.settings.offerwall_rewards.join(", "))
+          setOfferwallRewards(data.settings.offerwall_rewards ? data.settings.offerwall_rewards.join(", ") : "")
         }
         
         // Select latest cycle by default if available
@@ -194,15 +200,18 @@ export default function AdminLeaderboardPage() {
         .filter(x => !isNaN(x))
     }
 
-    const fsRewardsArray = parseRewards(faucetRewards)
+    const faucetRewardsArray = parseRewards(faucetRewards)
+    const shortlinkRewardsArray = parseRewards(shortlinkRewards)
     const refRewardsArray = parseRewards(referralRewards)
     const offRewardsArray = parseRewards(offerwallRewards)
 
     try {
       const { data, error } = await supabase.rpc("update_leaderboard_settings", {
         p_admin_id: userId,
-        p_faucet_shortlink_limit: faucetLimit,
-        p_faucet_shortlink_rewards: fsRewardsArray,
+        p_faucet_limit: faucetLimit,
+        p_faucet_rewards: faucetRewardsArray,
+        p_shortlink_limit: shortlinkLimit,
+        p_shortlink_rewards: shortlinkRewardsArray,
         p_referral_limit: referralLimit,
         p_referral_rewards: refRewardsArray,
         p_offerwall_limit: offerwallLimit,
@@ -428,12 +437,28 @@ export default function AdminLeaderboardPage() {
                               {/* Type Column */}
                               <td className="p-5">
                                 <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                                  winner.leaderboard_type === 'faucet_shortlink'
+                                  winner.leaderboard_type === 'faucet'
+                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                    : winner.leaderboard_type === 'shortlink'
+                                    ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                    : winner.leaderboard_type === 'faucet_shortlink'
                                     ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                     : winner.leaderboard_type === 'offerwall'
                                     ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                                     : "bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20"
                                 }`}>
+                                  {winner.leaderboard_type === 'faucet' && (
+                                    <>
+                                      <Coins className="w-3 h-3" />
+                                      Faucet
+                                    </>
+                                  )}
+                                  {winner.leaderboard_type === 'shortlink' && (
+                                    <>
+                                      <TrendingUp className="w-3 h-3" />
+                                      Shortlink
+                                    </>
+                                  )}
                                   {winner.leaderboard_type === 'faucet_shortlink' && (
                                     <>
                                       <Coins className="w-3 h-3" />
@@ -530,11 +555,11 @@ export default function AdminLeaderboardPage() {
               </div>
               <CardContent className="p-6 md:p-8 space-y-6">
                 
-                {/* 1. FAUCET & SHORTLINK CONFIG */}
+                {/* 1. FAUCET CONFIG */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-black uppercase text-emerald-400 flex items-center gap-1.5">
                     <Coins className="w-4 h-4" />
-                    Faucet & Shortlink
+                    Faucet
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-1 md:col-span-1">
@@ -555,6 +580,39 @@ export default function AdminLeaderboardPage() {
                         value={faucetRewards}
                         onChange={(e) => setFaucetRewards(e.target.value)}
                         placeholder="200000, 150000, 100000..."
+                        className="w-full p-3 rounded-xl bg-white/[0.02] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-purple-500/50 transition-colors resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-white/5" />
+
+                {/* 1b. SHORTLINK CONFIG */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-sky-400 flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4" />
+                    Shortlink
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-1 md:col-span-1">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-wider">Winners Count</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={shortlinkLimit}
+                        onChange={(e) => setShortlinkLimit(parseInt(e.target.value, 10) || 1)}
+                        className="w-full h-11 px-4 rounded-xl bg-white/[0.02] border border-white/10 text-white text-sm font-bold focus:outline-none focus:border-purple-500/50 transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-3">
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-wider">Rewards per Rank (Rank 1, 2, 3...)</label>
+                      <textarea
+                        rows={2}
+                        value={shortlinkRewards}
+                        onChange={(e) => setShortlinkRewards(e.target.value)}
+                        placeholder="300000, 200000, 150000..."
                         className="w-full p-3 rounded-xl bg-white/[0.02] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-purple-500/50 transition-colors resize-none"
                       />
                     </div>

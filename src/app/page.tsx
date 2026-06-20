@@ -63,10 +63,12 @@ function HomeContent() {
   
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [leaderboardRanks, setLeaderboardRanks] = useState<{
-    faucet_shortlink_rank: number | null;
+    faucet_rank: number | null;
+    shortlink_rank: number | null;
     offerwall_rank: number | null;
     referral_rank: number | null;
-    faucet_shortlink_points: number;
+    faucet_points: number;
+    shortlink_points: number;
     offerwall_points: number;
     referral_count: number;
   } | null>(null)
@@ -658,12 +660,21 @@ function HomeContent() {
               🏆 Your active ranks:
             </div>
             
-            {/* Faucet & Shortlink Rank */}
+            {/* Faucet Rank */}
             <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30 transition-all group">
               <Coins className="w-3.5 h-3.5 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-white/60">Faucet & Shortlink:</span>
+              <span className="text-xs font-bold text-white/60">Faucet:</span>
               <span className="text-xs font-black text-purple-400">
-                {leaderboardRanks.faucet_shortlink_rank ? `#${leaderboardRanks.faucet_shortlink_rank}` : 'Unranked'}
+                {leaderboardRanks.faucet_rank ? `#${leaderboardRanks.faucet_rank}` : 'Unranked'}
+              </span>
+            </Link>
+
+            {/* Shortlink Rank */}
+            <Link href="/leaderboard" className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-sky-500/10 border border-sky-500/20 hover:bg-sky-500/20 hover:border-sky-500/30 transition-all group">
+              <TrendingUp className="w-3.5 h-3.5 text-sky-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white/60">Shortlinks:</span>
+              <span className="text-xs font-black text-sky-400">
+                {leaderboardRanks.shortlink_rank ? `#${leaderboardRanks.shortlink_rank}` : 'Unranked'}
               </span>
             </Link>
 

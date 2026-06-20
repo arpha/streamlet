@@ -46,7 +46,7 @@ interface LeaderboardUser {
 interface PastWinner {
   id: number
   cycle_id: number
-  leaderboard_type: 'faucet_shortlink' | 'referral' | 'offerwall'
+  leaderboard_type: 'faucet_shortlink' | 'faucet' | 'shortlink' | 'referral' | 'offerwall'
   username: string
   score: number
   rank: number
@@ -67,10 +67,11 @@ export default function LeaderboardPage() {
 
   const [loading, setLoading] = useState(true)
 
-  const [activeTab, setActiveTab] = useState<'faucet_shortlink' | 'offerwall' | 'referral' | 'global_xp'>('faucet_shortlink')
+  const [activeTab, setActiveTab] = useState<'faucet' | 'shortlink' | 'offerwall' | 'referral' | 'global_xp'>('faucet')
   
   const [cycle, setCycle] = useState<Cycle | null>(null)
-  const [faucetShortlinkList, setFaucetShortlinkList] = useState<LeaderboardUser[]>([])
+  const [faucetList, setFaucetList] = useState<LeaderboardUser[]>([])
+  const [shortlinkList, setShortlinkList] = useState<LeaderboardUser[]>([])
   const [offerwallList, setOfferwallList] = useState<LeaderboardUser[]>([])
   const [referralList, setReferralList] = useState<LeaderboardUser[]>([])
   const [globalXpList, setGlobalXpList] = useState<LeaderboardUser[]>([])
@@ -80,8 +81,10 @@ export default function LeaderboardPage() {
   const [pastWinners, setPastWinners] = useState<PastWinner[]>([])
   const [selectedPastCycleId, setSelectedPastCycleId] = useState<number | null>(null)
   const [settings, setSettings] = useState<{
-    faucet_shortlink_limit: number
-    faucet_shortlink_rewards: number[]
+    faucet_limit: number
+    faucet_rewards: number[]
+    shortlink_limit: number
+    shortlink_rewards: number[]
     referral_limit: number
     referral_rewards: number[]
     offerwall_limit: number
@@ -89,7 +92,8 @@ export default function LeaderboardPage() {
   } | null>(null)
 
   const [userStats, setUserStats] = useState<{
-    faucet_shortlink: { score: number; claims: number; rank: number | null }
+    faucet: { score: number; claims: number; rank: number | null }
+    shortlink: { score: number; claims: number; rank: number | null }
     referral: { score: number; rank: number | null }
     offerwall: { score: number; claims: number; rank: number | null }
   } | null>(null)
@@ -114,7 +118,8 @@ export default function LeaderboardPage() {
             start_at: data.start_at,
             end_at: data.end_at
           })
-          setFaucetShortlinkList(data.faucet_shortlink_leaderboard || [])
+          setFaucetList(data.faucet_leaderboard || [])
+          setShortlinkList(data.shortlink_leaderboard || [])
           setOfferwallList(data.offerwall_leaderboard || [])
           setReferralList(data.referral_leaderboard || [])
           setPastCycles(data.past_cycles || [])
@@ -172,8 +177,10 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer)
   }, [cycle])
 
-  const activeList = activeTab === 'faucet_shortlink' 
-    ? faucetShortlinkList 
+  const activeList = activeTab === 'faucet' 
+    ? faucetList 
+    : activeTab === 'shortlink'
+    ? shortlinkList
     : activeTab === 'offerwall' 
     ? offerwallList 
     : activeTab === 'referral'
@@ -188,14 +195,19 @@ export default function LeaderboardPage() {
 
   // Past winners for selection
   const filteredPastWinners = pastWinners.filter(w => w.cycle_id === selectedPastCycleId)
+  const pastFaucetWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'faucet')
+  const pastShortlinkWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'shortlink')
   const pastFaucetShortlinkWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'faucet_shortlink')
   const pastReferralWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'referral')
   const pastOfferwallWinners = filteredPastWinners.filter(w => w.leaderboard_type === 'offerwall')
 
-  const getPrizeForRank = (tab: 'faucet_shortlink' | 'offerwall' | 'referral', rank: number) => {
+  const getPrizeForRank = (tab: 'faucet' | 'shortlink' | 'offerwall' | 'referral', rank: number) => {
     if (settings) {
-      if (tab === 'faucet_shortlink' && settings.faucet_shortlink_rewards) {
-        return settings.faucet_shortlink_rewards[rank - 1] || 0
+      if (tab === 'faucet' && settings.faucet_rewards) {
+        return settings.faucet_rewards[rank - 1] || 0
+      }
+      if (tab === 'shortlink' && settings.shortlink_rewards) {
+        return settings.shortlink_rewards[rank - 1] || 0
       }
       if (tab === 'referral' && settings.referral_rewards) {
         return settings.referral_rewards[rank - 1] || 0
@@ -206,22 +218,17 @@ export default function LeaderboardPage() {
     }
 
     // Fallback defaults
-    if (tab === 'faucet_shortlink') {
-      if (rank === 1) return 50000
-      if (rank === 2) return 35000
-      if (rank === 3) return 25000
-      if (rank === 4) return 20000
-      if (rank === 5) return 15000
-      if (rank === 6) return 12500
-      if (rank === 7) return 10000
-      if (rank === 8) return 9000
-      if (rank === 9) return 8000
-      if (rank === 10) return 7500
-      if (rank >= 11 && rank <= 15) return 5000
-      if (rank >= 16 && rank <= 20) return 3000
-      return 0
+    if (tab === 'faucet') {
+      const pool = [200000, 150000, 100000, 75000, 60000, 50000, 45000, 40000, 35000, 30000, 20000, 20000, 20000, 20000, 20000, 15000, 15000, 15000, 15000, 15000]
+      return pool[rank - 1] || 0
+    } else if (tab === 'shortlink') {
+      const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
+      return pool[rank - 1] || 0
+    } else if (tab === 'referral') {
+      const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
+      return pool[rank - 1] || 0
     } else {
-      const pool = [75000, 50000, 37500, 25000, 18750, 12500, 10000, 8750, 7500, 5000]
+      const pool = [300000, 200000, 150000, 100000, 75000, 50000, 40000, 35000, 30000, 20000]
       return pool[rank - 1] || 0
     }
   }
@@ -303,22 +310,33 @@ export default function LeaderboardPage() {
 
 
       {/* TABS SELECTOR */}
-      <div className="flex justify-center">
-        <div className="inline-flex p-1.5 bg-white/[0.02] border border-white/5 rounded-2xl gap-2">
+      <div className="flex justify-center max-w-full overflow-hidden">
+        <div className="inline-flex p-1.5 bg-white/[0.02] border border-white/5 rounded-2xl gap-2 overflow-x-auto max-w-full scrollbar-none">
           <button
-            onClick={() => setActiveTab('faucet_shortlink')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-              activeTab === 'faucet_shortlink'
+            onClick={() => setActiveTab('faucet')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'faucet'
                 ? "bg-primary text-white shadow-lg shadow-primary/30"
                 : "text-white/40 hover:text-white"
             }`}
           >
             <Coins className="w-4 h-4" />
-            Faucet & Shortlink
+            Faucet
+          </button>
+          <button
+            onClick={() => setActiveTab('shortlink')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'shortlink'
+                ? "bg-primary text-white shadow-lg shadow-primary/30"
+                : "text-white/40 hover:text-white"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            Shortlinks
           </button>
           <button
             onClick={() => setActiveTab('offerwall')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
               activeTab === 'offerwall'
                 ? "bg-primary text-white shadow-lg shadow-primary/30"
                 : "text-white/40 hover:text-white"
@@ -329,7 +347,7 @@ export default function LeaderboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('referral')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
               activeTab === 'referral'
                 ? "bg-primary text-white shadow-lg shadow-primary/30"
                 : "text-white/40 hover:text-white"
@@ -340,7 +358,7 @@ export default function LeaderboardPage() {
           </button>
           <button
             onClick={() => setActiveTab('global_xp')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap ${
               activeTab === 'global_xp'
                 ? "bg-primary text-white shadow-lg shadow-primary/30"
                 : "text-white/40 hover:text-white"
@@ -383,7 +401,7 @@ export default function LeaderboardPage() {
                         ? `${rank2.total_referrals} Refs` 
                         : activeTab === 'global_xp'
                         ? `${rank2.xp?.toLocaleString("id-ID")} XP`
-                        : `${rank2.total_points?.toLocaleString("id-ID")} Pts`
+                        : `${rank2.total_points?.toLocaleString("id-ID")} Pts (${rank2.total_claims || 0} Claims)`
                       }
                     </span>
                     
@@ -427,7 +445,7 @@ export default function LeaderboardPage() {
                         ? `${rank1.total_referrals} Refs` 
                         : activeTab === 'global_xp'
                         ? `${rank1.xp?.toLocaleString("id-ID")} XP`
-                        : `${rank1.total_points?.toLocaleString("id-ID")} Pts`
+                        : `${rank1.total_points?.toLocaleString("id-ID")} Pts (${rank1.total_claims || 0} Claims)`
                       }
                     </span>
                     
@@ -470,7 +488,7 @@ export default function LeaderboardPage() {
                         ? `${rank3.total_referrals} Refs` 
                         : activeTab === 'global_xp'
                         ? `${rank3.xp?.toLocaleString("id-ID")} XP`
-                        : `${rank3.total_points?.toLocaleString("id-ID")} Pts`
+                        : `${rank3.total_points?.toLocaleString("id-ID")} Pts (${rank3.total_claims || 0} Claims)`
                       }
                     </span>
                     
@@ -521,7 +539,7 @@ export default function LeaderboardPage() {
                             ? `${user.total_referrals} Referrals`
                             : activeTab === 'global_xp'
                             ? `${user.xp?.toLocaleString("id-ID")} XP`
-                            : `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims} Claims)`
+                            : `${user.total_points?.toLocaleString("id-ID")} Pts (${user.total_claims || 0} Claims)`
                           }
                         </td>
                         <td className="p-5 text-purple-400 font-black font-mono">
@@ -550,11 +568,13 @@ export default function LeaderboardPage() {
                         if (activeTab === 'global_xp') {
                           return userGlobalXpStats?.rank ? `#${userGlobalXpStats.rank}` : '-'
                         }
-                        const rank = activeTab === 'faucet_shortlink'
-                          ? userStats.faucet_shortlink.rank
+                        const rank = activeTab === 'faucet'
+                          ? userStats.faucet?.rank
+                          : activeTab === 'shortlink'
+                          ? userStats.shortlink?.rank
                           : activeTab === 'offerwall'
-                          ? userStats.offerwall.rank
-                          : userStats.referral.rank
+                          ? userStats.offerwall?.rank
+                          : userStats.referral?.rank
                         return rank ? `#${rank}` : '-'
                       })()}
                     </span>
@@ -569,13 +589,15 @@ export default function LeaderboardPage() {
                   <div className="text-center sm:text-right">
                     <span className="text-[10px] font-black uppercase tracking-wider text-white/40 block">Score</span>
                     <span className="text-sm font-bold text-white mt-0.5 block font-mono">
-                      {activeTab === 'faucet_shortlink'
-                        ? `${userStats.faucet_shortlink.score.toLocaleString("id-ID")} Pts (${userStats.faucet_shortlink.claims} Claims)`
+                      {activeTab === 'faucet'
+                        ? `${(userStats.faucet?.score || 0).toLocaleString("id-ID")} Pts (${userStats.faucet?.claims || 0} Claims)`
+                        : activeTab === 'shortlink'
+                        ? `${(userStats.shortlink?.score || 0).toLocaleString("id-ID")} Pts (${userStats.shortlink?.claims || 0} Claims)`
                         : activeTab === 'offerwall'
-                        ? `${userStats.offerwall.score.toLocaleString("id-ID")} Pts (${userStats.offerwall.claims} Claims)`
+                        ? `${(userStats.offerwall?.score || 0).toLocaleString("id-ID")} Pts (${userStats.offerwall?.claims || 0} Claims)`
                         : activeTab === 'global_xp'
                         ? `${userGlobalXpStats?.xp.toLocaleString("id-ID")} XP`
-                        : `${userStats.referral.score} Referrals`
+                        : `${userStats.referral?.score || 0} Referrals`
                       }
                     </span>
                   </div>
@@ -590,11 +612,13 @@ export default function LeaderboardPage() {
                         </span>
                       ) : (
                         (() => {
-                          const rank = activeTab === 'faucet_shortlink'
-                            ? userStats.faucet_shortlink.rank
+                          const rank = activeTab === 'faucet'
+                            ? userStats.faucet?.rank
+                            : activeTab === 'shortlink'
+                            ? userStats.shortlink?.rank
                             : activeTab === 'offerwall'
-                            ? userStats.offerwall.rank
-                            : userStats.referral.rank
+                            ? userStats.offerwall?.rank
+                            : userStats.referral?.rank
                           return rank ? `+${getPrizeForRank(activeTab, rank).toLocaleString("id-ID")} Pts` : 'No Reward'
                         })()
                       )}
@@ -608,19 +632,19 @@ export default function LeaderboardPage() {
       </div>
 
       {/* RULES & INSTRUCTIONS BOX */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-6">
         <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
           <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
             <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
               <Coins className="w-5 h-5 text-purple-400" />
-              FAUCET & SHORTLINK RULES
+              FAUCET RULES
             </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How faucet & shortlink leaderboard scores are calculated.</CardDescription>
+            <CardDescription className="text-white/40 font-medium italic">How faucet leaderboard scores are calculated.</CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Faucet & Shortlink leaderboard is calculated based on the total combined points earned from completing faucet claims and shortlink visits during the active cycle.</p>
+              <p>Faucet leaderboard is calculated based on the total points earned from completing faucet claims during the active cycle.</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
@@ -628,7 +652,31 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Points earned from referral commissions are **not included** in this Leaderboard score.</p>
+              <p>Points earned from shortlinks and referral commissions are **not included** in this score.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
+          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
+            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-purple-400" />
+              SHORTLINK RULES
+            </CardTitle>
+            <CardDescription className="text-white/40 font-medium italic">How shortlink leaderboard scores are calculated.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>Shortlinks leaderboard is calculated based on the total points earned from completing shortlinks during the active cycle.</p>
+            </div>
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
+            </div>
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+              <p>Points earned from faucets and referral commissions are **not included** in this score.</p>
             </div>
           </CardContent>
         </Card>
@@ -706,18 +754,50 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* PAST FAUCET & SHORTLINK WINNERS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            {/* PAST FAUCET WINNERS */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 px-2">
                 <Coins className="w-4 h-4" />
-                Faucet & Shortlink Winners (Cycle #{selectedPastCycleId})
+                Faucet Winners (Cycle #{selectedPastCycleId})
               </h4>
               <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
-                {pastFaucetShortlinkWinners.length === 0 ? (
+                {pastFaucetWinners.length === 0 ? (
                   <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
                 ) : (
-                  pastFaucetShortlinkWinners.map((winner) => (
+                  pastFaucetWinners.map((winner) => (
+                    <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>
+                        <span className="font-bold text-sm text-white">{winner.username}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Pts</span>
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          winner.payout_status === 'approved' 
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}>
+                          {winner.payout_status === 'approved' ? "Paid" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* PAST SHORTLINK WINNERS */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-sky-400 flex items-center gap-1.5 px-2">
+                <TrendingUp className="w-4 h-4" />
+                Shortlink Winners (Cycle #{selectedPastCycleId})
+              </h4>
+              <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+                {pastShortlinkWinners.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-white/40">No data available for this category.</div>
+                ) : (
+                  pastShortlinkWinners.map((winner) => (
                     <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>
@@ -802,6 +882,36 @@ export default function LeaderboardPage() {
                 )}
               </div>
             </div>
+
+            {/* LEGACY WINNERS */}
+            {pastFaucetShortlinkWinners.length > 0 && (
+              <div className="space-y-4 col-span-full">
+                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-600 flex items-center gap-1.5 px-2">
+                  <Coins className="w-4 h-4" />
+                  Legacy Faucet & Shortlink Winners (Cycle #{selectedPastCycleId})
+                </h4>
+                <div className="bg-white/[0.01] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+                  {pastFaucetShortlinkWinners.map((winner) => (
+                    <div key={winner.id} className="p-4 flex items-center justify-between hover:bg-white/[0.005] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs font-bold text-white/40 w-6">#{winner.rank}</span>
+                        <span className="font-bold text-sm text-white">{winner.username}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-mono text-xs text-purple-400 font-bold">+{winner.reward_points.toLocaleString("id-ID")} Pts</span>
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          winner.payout_status === 'approved' 
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}>
+                          {winner.payout_status === 'approved' ? "Paid" : "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
