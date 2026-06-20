@@ -481,7 +481,7 @@ BEGIN
     INTO v_user_referral_score, v_user_referral_rank
     FROM (
       SELECT 
-        p.id AS user_id,
+        ref.referred_by_id AS user_id,
         COUNT(ref.id)::INT AS total_referrals,
         ROW_NUMBER() OVER (ORDER BY COUNT(ref.id) DESC, MAX(ref.created_at) ASC)::INT AS rank
       FROM public.profiles ref
