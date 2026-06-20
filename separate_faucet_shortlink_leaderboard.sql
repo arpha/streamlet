@@ -203,7 +203,7 @@ BEGIN
     WHERE ref.referred_by_id IS NOT NULL
       AND ref.created_at >= v_active_cycle.start_at
       AND ref.created_at <= v_now
-      AND ref.xp >= 1000
+      AND ref.xp >= 500
     GROUP BY ref.referred_by_id
     HAVING COUNT(ref.id) > 0
   ) t
@@ -374,7 +374,7 @@ BEGIN
       AND ref.referred_by_id IS NOT NULL
       AND ref.created_at >= v_cycle.start_at
       AND ref.created_at <= v_cycle.end_at
-      AND ref.xp >= 1000
+      AND ref.xp >= 500
     GROUP BY p.id, p.username, s.referral_rewards
     HAVING COUNT(ref.id) > 0
     ORDER BY total_referrals DESC, MAX(ref.created_at) ASC
@@ -488,7 +488,7 @@ BEGIN
       WHERE ref.referred_by_id IS NOT NULL
         AND ref.created_at >= v_cycle.start_at
         AND ref.created_at <= v_cycle.end_at
-        AND ref.xp >= 1000
+        AND ref.xp >= 500
       GROUP BY ref.referred_by_id
     ) r
     WHERE user_id = p_user_id;
@@ -645,7 +645,7 @@ BEGIN
     WHERE ref.referred_by_id IS NOT NULL
       AND ref.created_at >= v_cycle.start_at
       AND ref.created_at <= v_cycle.end_at
-      AND ref.xp >= 1000
+      AND ref.xp >= 500
     GROUP BY ref.referred_by_id
   ) t
   WHERE t.user_id = p_user_id;

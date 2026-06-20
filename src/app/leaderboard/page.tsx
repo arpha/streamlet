@@ -716,7 +716,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Referred accounts are only valid and counted if **they have collected at least 1000 XP** (to prevent fake or spam accounts).</p>
+              <p>Referred accounts are only valid and counted if **they have collected at least 500 XP** (to prevent fake or spam accounts).</p>
             </div>
             <div className="flex gap-3">
               <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
