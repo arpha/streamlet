@@ -659,7 +659,7 @@ export default function LeaderboardPage() {
 
       {/* RULES DIALOG */}
       <Dialog open={isRulesOpen} onOpenChange={setIsRulesOpen}>
-        <DialogContent className="glass border-white/10 max-w-4xl rounded-3xl overflow-hidden bg-[#020617]/95 backdrop-blur-2xl p-6 md:p-8 shadow-[0_25px_50px_rgba(0,0,0,0.8)] text-white max-h-[85vh] overflow-y-auto">
+        <DialogContent className="glass border-white/10 sm:max-w-4xl w-[95vw] rounded-3xl overflow-hidden bg-[#020617]/95 backdrop-blur-2xl p-6 md:p-8 shadow-[0_25px_50px_rgba(0,0,0,0.8)] text-white max-h-[85vh] overflow-y-auto">
           {/* Background Decoration */}
           <div className="absolute -top-12 -left-12 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
