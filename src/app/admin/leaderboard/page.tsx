@@ -82,6 +82,7 @@ export default function AdminLeaderboardPage() {
   const [savingSettings, setSavingSettings] = useState<boolean>(false)
   const [resettingCycle, setResettingCycle] = useState<boolean>(false)
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false)
+  const [confirmText, setConfirmText] = useState<string>("")
 
   const supabase = createClient()
 
@@ -237,6 +238,7 @@ export default function AdminLeaderboardPage() {
       if (data && data.success) {
         toast.success("Leaderboard reset and archived successfully!")
         setShowResetConfirm(false)
+        setConfirmText("")
         setActiveTab("payouts")
         setSelectedCycleId(null) // Reset selection to load the latest
         fetchLeaderboardData()
@@ -678,15 +680,16 @@ export default function AdminLeaderboardPage() {
                         type="text"
                         placeholder="RESET"
                         id="confirm_reset_text"
-                        onChange={(e) => {
-                          const btn = document.getElementById("execute_reset_btn") as HTMLButtonElement
-                          if (btn) btn.disabled = e.target.value !== "RESET"
-                        }}
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
                         className="w-full h-11 px-4 text-center rounded-xl bg-white/[0.02] border border-red-500/35 text-white text-sm font-mono focus:outline-none"
                       />
                       <div className="grid grid-cols-2 gap-3">
                         <Button
-                          onClick={() => setShowResetConfirm(false)}
+                          onClick={() => {
+                            setShowResetConfirm(false)
+                            setConfirmText("")
+                          }}
                           variant="ghost"
                           className="rounded-xl border border-white/5 text-white/60 hover:text-white bg-clip-border"
                         >
@@ -694,7 +697,7 @@ export default function AdminLeaderboardPage() {
                         </Button>
                         <Button
                           id="execute_reset_btn"
-                          disabled={true}
+                          disabled={confirmText !== "RESET" || resettingCycle}
                           onClick={handleResetCycle}
                           className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-black bg-clip-border"
                         >
