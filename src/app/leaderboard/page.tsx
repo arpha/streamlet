@@ -20,6 +20,13 @@ import {
   Gamepad2
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase"
 import { useStore } from "@/store/useStore"
@@ -99,20 +106,22 @@ export default function LeaderboardPage() {
   } | null>(null)
   
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null)
+  const [isRulesOpen, setIsRulesOpen] = useState(false)
 
   const supabase = createClient()
 
   useEffect(() => {
+    if (!userId) return
+
+    let active = true
+
     async function loadData() {
       try {
-        const params: any = {}
-        if (userId) {
-          params.p_user_id = userId
-        }
+        const params = { p_user_id: userId }
         const { data, error } = await supabase.rpc("get_leaderboards", params)
         if (error) throw error
 
-        if (data) {
+        if (data && active) {
           setCycle({
             id: data.cycle_id,
             start_at: data.start_at,
@@ -134,7 +143,7 @@ export default function LeaderboardPage() {
 
         // Fetch Global XP Leaderboard
         const { data: globalData, error: globalError } = await supabase.rpc("get_global_xp_leaderboard", params)
-        if (!globalError && globalData) {
+        if (!globalError && globalData && active) {
           setGlobalXpList(globalData.leaderboard || [])
           setUserGlobalXpStats({
             xp: globalData.user_xp || 0,
@@ -142,13 +151,21 @@ export default function LeaderboardPage() {
           })
         }
       } catch (err) {
-        console.error("Failed to load leaderboard:", err)
+        if (active) {
+          console.error("Failed to load leaderboard:", err)
+        }
       } finally {
-        setLoading(false)
+        if (active) {
+          setLoading(false)
+        }
       }
     }
 
     loadData()
+
+    return () => {
+      active = false
+    }
   }, [userId])  // Timer countdown effect
   useEffect(() => {
     if (!cycle?.end_at) return
@@ -260,7 +277,16 @@ export default function LeaderboardPage() {
             <Trophy className="w-3.5 h-3.5" />
             COMPETITION ARENA
           </div>
-          <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase">STREAMLET LEADERBOARD</h2>
+          <h2 className="text-4xl md:text-5xl font-black tracking-tighter italic uppercase flex items-center gap-3">
+            STREAMLET LEADERBOARD
+            <button 
+              onClick={() => setIsRulesOpen(true)}
+              className="p-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white/60 hover:text-white transition-all cursor-pointer flex items-center justify-center self-center"
+              title="Show Rules"
+            >
+              <HelpCircle className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+          </h2>
           <p className="text-white/60 font-medium italic">Collect as many points as possible and win up to 75,000 points!</p>
         </div>
 
@@ -631,100 +657,119 @@ export default function LeaderboardPage() {
         )}
       </div>
 
-      {/* RULES & INSTRUCTIONS BOX */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-6">
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
-          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
-              <Coins className="w-5 h-5 text-purple-400" />
-              FAUCET RULES
-            </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How faucet leaderboard scores are calculated.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Faucet leaderboard is calculated based on the total points earned from completing faucet claims during the active cycle.</p>
-            </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
-            </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Points earned from shortlinks and referral commissions are **not included** in this score.</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* RULES DIALOG */}
+      <Dialog open={isRulesOpen} onOpenChange={setIsRulesOpen}>
+        <DialogContent className="glass border-white/10 max-w-4xl rounded-3xl overflow-hidden bg-[#020617]/95 backdrop-blur-2xl p-6 md:p-8 shadow-[0_25px_50px_rgba(0,0,0,0.8)] text-white max-h-[85vh] overflow-y-auto">
+          {/* Background Decoration */}
+          <div className="absolute -top-12 -left-12 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
-          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
-              SHORTLINK RULES
-            </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How shortlink leaderboard scores are calculated.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Shortlinks leaderboard is calculated based on the total points earned from completing shortlinks during the active cycle.</p>
-            </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
-            </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Points earned from faucets and referral commissions are **not included** in this score.</p>
-            </div>
-          </CardContent>
-        </Card>
+          <DialogHeader className="relative z-10 space-y-2 mb-6 border-b border-white/5 pb-4">
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight italic flex items-center gap-2.5 text-white">
+              <Trophy className="w-6 h-6 text-purple-400" />
+              Leaderboard Rules & Info
+            </DialogTitle>
+            <DialogDescription className="text-white/60 font-medium text-xs">
+              Detailed guidelines on how scores and points are calculated for each category.
+            </DialogDescription>
+          </DialogHeader>
 
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
-          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
-              <Gamepad2 className="w-5 h-5 text-purple-400" />
-              OFFERWALL RULES
-            </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How offerwall leaderboard scores are calculated.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Offerwall leaderboard is calculated based on the total points earned from completing offerwall tasks and surveys from any provider.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            {/* Faucet Rules */}
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+              <h4 className="text-sm font-black uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                <Coins className="w-4 h-4" />
+                Faucet Rules
+              </h4>
+              <div className="space-y-2.5 text-xs text-white/70">
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <p>Faucet leaderboard is calculated based on the total points earned from completing faucet claims during the active cycle.</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <p>Points earned from shortlinks and referral commissions are **not included** in this score.</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Commissions earned from your referrals completing offerwalls are **not included** in this Leaderboard score.</p>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="glass border-white/10 rounded-[2rem] shadow-xl overflow-hidden">
-          <CardHeader className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-            <CardTitle className="text-lg font-black uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-400" />
-              REFERRAL RULES
-            </CardTitle>
-            <CardDescription className="text-white/40 font-medium italic">How referral leaderboard scores are calculated.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 md:p-8 space-y-4 text-sm text-white/60">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Referral leaderboard is calculated based on the number of new friends you invite (registered with your referral code) during the active cycle.</p>
+            {/* Shortlink Rules */}
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+              <h4 className="text-sm font-black uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Shortlink Rules
+              </h4>
+              <div className="space-y-2.5 text-xs text-white/70">
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                  <p>Shortlinks leaderboard is calculated based on the total points earned from completing shortlinks during the active cycle.</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                  <p>The calculated scores **include additional point bonuses based on your rank level** (Silver +3%, Gold +6%, Platinum +10%, Diamond +15%).</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                  <p>Points earned from faucets and referral commissions are **not included** in this score.</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Referred accounts are only valid and counted if **they have collected at least 500 XP** (to prevent fake or spam accounts).</p>
+
+            {/* Offerwall Rules */}
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+              <h4 className="text-sm font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                <Gamepad2 className="w-4 h-4" />
+                Offerwall Rules
+              </h4>
+              <div className="space-y-2.5 text-xs text-white/70">
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p>Offerwall leaderboard is calculated based on the total points earned from completing offerwall tasks and surveys from any provider.</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p>Commissions earned from your referrals completing offerwalls are **not included** in this Leaderboard score.</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <p>Prizes are automatically logged at the end of the 7-day cycle, and rankings will reset. Referrals from past cycles are not carried over.</p>
+
+            {/* Referral Rules */}
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+              <h4 className="text-sm font-black uppercase tracking-wider text-fuchsia-400 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Referral Rules
+              </h4>
+              <div className="space-y-2.5 text-xs text-white/70">
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-fuchsia-400 flex-shrink-0 mt-0.5" />
+                  <p>Referral leaderboard is calculated based on the number of new friends you invite (registered with your referral code) during the active cycle.</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-fuchsia-400 flex-shrink-0 mt-0.5" />
+                  <p>Referred accounts are only valid and counted if **they have collected at least 500 XP** (to prevent fake or spam accounts).</p>
+                </div>
+                <div className="flex gap-2">
+                  <AlertCircle className="w-4 h-4 text-fuchsia-400 flex-shrink-0 mt-0.5" />
+                  <p>Prizes are automatically logged at the end of the 7-day cycle, and rankings will reset. Referrals from past cycles are not carried over.</p>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          <div className="mt-8 flex justify-end relative z-10 border-t border-white/5 pt-4">
+            <button
+              onClick={() => setIsRulesOpen(false)}
+              className="px-6 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-widest transition-all border border-white/5 hover:border-white/10 cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* PAST WINNERS LOG ARCHIVE */}
       {pastCycles.length > 0 && (
