@@ -222,15 +222,39 @@ BEGIN
     COALESCE(v_settings.offerwall_rewards[t.rank], 0)
   FROM (
     SELECT 
-      c.user_id,
-      COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
-      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank
-    FROM public.offerwall_claims c
-    WHERE c.status = 'completed'
-      AND c.completed_at >= v_active_cycle.start_at
-      AND c.completed_at <= v_now
-    GROUP BY c.user_id
-    HAVING SUM(c.points_reward) > 0
+      user_id,
+      total_points,
+      ROW_NUMBER() OVER (ORDER BY total_points DESC, last_activity_at ASC)::INT AS rank
+    FROM (
+      SELECT 
+        user_id,
+        SUM(points)::INT AS total_points,
+        MAX(last_activity_at) AS last_activity_at
+      FROM (
+        SELECT 
+          c.user_id,
+          SUM(c.points_reward - COALESCE(c.boost_points_added, 0))::INT AS points,
+          MAX(c.completed_at) AS last_activity_at
+        FROM public.offerwall_claims c
+        WHERE c.status = 'completed'
+          AND c.completed_at >= v_active_cycle.start_at
+          AND c.completed_at <= v_now
+        GROUP BY c.user_id
+        
+        UNION ALL
+        
+        SELECT 
+          l.user_id,
+          SUM(l.points_boosted)::INT AS points,
+          MAX(l.created_at) AS last_activity_at
+        FROM public.offerwall_booster_logs l
+        WHERE l.created_at >= v_active_cycle.start_at
+          AND l.created_at <= v_now
+        GROUP BY l.user_id
+      ) sub2
+      GROUP BY user_id
+    ) sub
+    WHERE total_points > 0
   ) t
   JOIN public.profiles p ON t.user_id = p.id
   WHERE t.rank <= v_settings.offerwall_limit;
@@ -386,19 +410,57 @@ BEGIN
   FROM (
     SELECT 
       p.username,
-      COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
-      COUNT(c.id)::INT AS total_claims,
-      ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank,
-      COALESCE(s.offerwall_rewards[ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT], 0) AS estimated_prize
+      u.total_points::INT AS total_points,
+      u.total_claims::INT AS total_claims,
+      ROW_NUMBER() OVER (
+        ORDER BY u.total_points DESC, 
+        u.last_activity_at ASC
+      )::INT AS rank,
+      COALESCE(
+        s.offerwall_rewards[
+          ROW_NUMBER() OVER (
+            ORDER BY u.total_points DESC, 
+            u.last_activity_at ASC
+          )::INT
+        ], 
+        0
+      ) AS estimated_prize
     FROM public.profiles p
-    JOIN public.offerwall_claims c ON p.id = c.user_id
+    JOIN (
+      SELECT 
+        user_id,
+        SUM(points)::INT AS total_points,
+        SUM(claims)::INT AS total_claims,
+        MAX(last_activity_at) AS last_activity_at
+      FROM (
+        SELECT 
+          c.user_id,
+          SUM(c.points_reward - COALESCE(c.boost_points_added, 0))::INT AS points,
+          COUNT(c.id)::INT AS claims,
+          MAX(c.completed_at) AS last_activity_at
+        FROM public.offerwall_claims c
+        WHERE c.status = 'completed'
+          AND c.completed_at >= v_cycle.start_at
+          AND c.completed_at <= v_cycle.end_at
+        GROUP BY c.user_id
+        
+        UNION ALL
+        
+        SELECT 
+          l.user_id,
+          SUM(l.points_boosted)::INT AS points,
+          0::INT AS claims,
+          MAX(l.created_at) AS last_activity_at
+        FROM public.offerwall_booster_logs l
+        WHERE l.created_at >= v_cycle.start_at
+          AND l.created_at <= v_cycle.end_at
+        GROUP BY l.user_id
+      ) sub
+      GROUP BY user_id
+    ) u ON p.id = u.user_id
     CROSS JOIN public.leaderboard_settings s
-    WHERE s.id = 1 AND c.status = 'completed'
-      AND c.completed_at >= v_cycle.start_at
-      AND c.completed_at <= v_cycle.end_at
-    GROUP BY p.id, p.username, s.offerwall_rewards
-    HAVING SUM(c.points_reward) > 0
-    ORDER BY total_points DESC, MAX(c.completed_at) ASC
+    WHERE s.id = 1 AND u.total_points > 0
+    ORDER BY total_points DESC, u.last_activity_at ASC
     LIMIT (SELECT offerwall_limit FROM public.leaderboard_settings WHERE id = 1)
   ) t;
 
@@ -498,16 +560,45 @@ BEGIN
     INTO v_user_offerwall_score, v_user_offerwall_claims, v_user_offerwall_rank
     FROM (
       SELECT 
-        p.id AS user_id,
-        COALESCE(SUM(c.points_reward), 0)::INT AS total_points,
-        COUNT(c.id)::INT AS total_claims,
-        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_reward), 0) DESC, MAX(c.completed_at) ASC)::INT AS rank
-      FROM public.profiles p
-      JOIN public.offerwall_claims c ON p.id = c.user_id
-      WHERE c.status = 'completed'
-        AND c.completed_at >= v_cycle.start_at
-        AND c.completed_at <= v_cycle.end_at
-      GROUP BY p.id
+        user_id,
+        total_points,
+        total_claims,
+        ROW_NUMBER() OVER (
+          ORDER BY total_points DESC, 
+          last_activity_at ASC
+        )::INT AS rank
+      FROM (
+        SELECT 
+          user_id,
+          SUM(points)::INT AS total_points,
+          SUM(claims)::INT AS total_claims,
+          MAX(last_activity_at) AS last_activity_at
+        FROM (
+          SELECT 
+            c.user_id,
+            SUM(c.points_reward - COALESCE(c.boost_points_added, 0))::INT AS points,
+            COUNT(c.id)::INT AS claims,
+            MAX(c.completed_at) AS last_activity_at
+          FROM public.offerwall_claims c
+          WHERE c.status = 'completed'
+            AND c.completed_at >= v_cycle.start_at
+            AND c.completed_at <= v_cycle.end_at
+          GROUP BY c.user_id
+          
+          UNION ALL
+          
+          SELECT 
+            l.user_id,
+            SUM(l.points_boosted)::INT AS points,
+            0::INT AS claims,
+            MAX(l.created_at) AS last_activity_at
+          FROM public.offerwall_booster_logs l
+          WHERE l.created_at >= v_cycle.start_at
+            AND l.created_at <= v_cycle.end_at
+          GROUP BY l.user_id
+        ) sub2
+        GROUP BY user_id
+      ) sub
     ) r
     WHERE user_id = p_user_id;
   END IF;
