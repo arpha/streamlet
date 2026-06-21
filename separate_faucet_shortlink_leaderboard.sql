@@ -90,6 +90,37 @@ BEGIN
 END;
 $$;
 
+-- 4.5. Buat RPC fungsi untuk mendapatkan atau membuat siklus aktif dengan durasi 7 hari
+CREATE OR REPLACE FUNCTION public.get_or_create_active_leaderboard_cycle()
+RETURNS public.leaderboard_cycles
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_active_cycle public.leaderboard_cycles;
+  v_now TIMESTAMP WITH TIME ZONE;
+BEGIN
+  v_now := now();
+
+  -- Ambil siklus yang aktif saat ini
+  SELECT * INTO v_active_cycle
+  FROM public.leaderboard_cycles
+  WHERE status = 'active'
+  ORDER BY start_at DESC
+  LIMIT 1;
+
+  -- Jika belum ada siklus sama sekali, buat siklus pertama (berlaku 7 hari ke depan)
+  IF v_active_cycle.id IS NULL THEN
+    INSERT INTO public.leaderboard_cycles (start_at, end_at, status)
+    VALUES (v_now, v_now + INTERVAL '7 days', 'active')
+    RETURNING * INTO v_active_cycle;
+  END IF;
+
+  RETURN v_active_cycle;
+END;
+$$;
+
 -- 5. Buat RPC fungsi baru untuk melakukan reset siklus secara manual oleh Admin (mengarsipkan terpisah)
 CREATE OR REPLACE FUNCTION public.admin_reset_leaderboard_cycle(p_admin_id UUID)
 RETURNS JSON
@@ -261,7 +292,7 @@ BEGIN
 
   -- Buat siklus baru mulai dari sekarang
   INSERT INTO public.leaderboard_cycles (start_at, end_at, status)
-  VALUES (v_now, v_now + INTERVAL '30 days', 'active')
+  VALUES (v_now, v_now + INTERVAL '7 days', 'active')
   RETURNING * INTO v_new_cycle;
 
   RETURN json_build_object(
@@ -753,3 +784,8 @@ BEGIN
   );
 END;
 $$;
+
+-- 8. Koreksi durasi siklus aktif yang saat ini berjalan di database agar berakhir tepat 7 hari setelah waktu start_at
+UPDATE public.leaderboard_cycles
+SET end_at = start_at + INTERVAL '7 days'
+WHERE status = 'active';
