@@ -378,6 +378,15 @@ function FaucetContent() {
       document.body.appendChild(script)
     }
 
+    // Open smartlink in a new tab
+    if (typeof window !== "undefined") {
+      try {
+        window.open("https://www.effectivecpmnetwork.com/atsmtb8qdf?key=87732ebdc94c9666ab6e272316e7adb2", "_blank")
+      } catch (err) {
+        console.error("Smartlink popup blocked:", err)
+      }
+    }
+
     setIsClaiming(true)
     setClaimProgress(0)
     setProgressText("Securing session...")
