@@ -213,6 +213,15 @@ export default function MiningPage() {
   }
 
   const handleClaim = async (id: string) => {
+    // Open smartlink in a new tab
+    if (typeof window !== "undefined") {
+      try {
+        window.open("https://www.effectivecpmnetwork.com/atsmtb8qdf?key=87732ebdc94c9666ab6e272316e7adb2", "_blank")
+      } catch (err) {
+        console.error("Smartlink popup blocked:", err)
+      }
+    }
+
     setClaimingId(id)
     const { toast } = await import("sonner")
 
@@ -240,6 +249,15 @@ export default function MiningPage() {
   }
 
   const handleRecharge = async (id: string) => {
+    // Open smartlink in a new tab
+    if (typeof window !== "undefined") {
+      try {
+        window.open("https://www.effectivecpmnetwork.com/atsmtb8qdf?key=87732ebdc94c9666ab6e272316e7adb2", "_blank")
+      } catch (err) {
+        console.error("Smartlink popup blocked:", err)
+      }
+    }
+
     setRechargingId(id)
     const { toast } = await import("sonner")
 
@@ -284,6 +302,15 @@ export default function MiningPage() {
   }
 
   const handleClaimAll = async () => {
+    // Open smartlink in a new tab
+    if (typeof window !== "undefined") {
+      try {
+        window.open("https://www.effectivecpmnetwork.com/atsmtb8qdf?key=87732ebdc94c9666ab6e272316e7adb2", "_blank")
+      } catch (err) {
+        console.error("Smartlink popup blocked:", err)
+      }
+    }
+
     setClaimingAll(true)
     const { toast } = await import("sonner")
 
@@ -310,6 +337,15 @@ export default function MiningPage() {
   }
 
   const handleRechargeAll = async () => {
+    // Open smartlink in a new tab
+    if (typeof window !== "undefined") {
+      try {
+        window.open("https://www.effectivecpmnetwork.com/atsmtb8qdf?key=87732ebdc94c9666ab6e272316e7adb2", "_blank")
+      } catch (err) {
+        console.error("Smartlink popup blocked:", err)
+      }
+    }
+
     setRechargingAll(true)
     const { toast } = await import("sonner")
 
