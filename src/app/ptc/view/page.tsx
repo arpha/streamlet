@@ -597,7 +597,7 @@ function PTCViewContent() {
               }}
             >
               <AlertCircle className="w-3.5 h-3.5 mr-1 text-yellow-500" />
-              Situs tidak terbuka?
+              Site not opening?
             </Button>
           )}
         </div>
@@ -617,7 +617,7 @@ function PTCViewContent() {
               {!isVideoPlaying && timeLeft !== null && timeLeft > 0 && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 rounded-full bg-rose-500/90 border border-rose-600 text-white text-xs font-bold font-mono shadow-lg animate-bounce flex items-center gap-1.5 pointer-events-none">
                   <AlertCircle className="w-4 h-4" />
-                  Silakan tekan tombol PUTAR (Play) pada video untuk memulai timer!
+                  Please press the PLAY button on the video to start the timer!
                 </div>
               )}
             </div>
@@ -631,12 +631,12 @@ function PTCViewContent() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-bold text-white uppercase tracking-wide">
-                    {!isAdWindowOpen ? "Timer Paused! Ad Closed" : "Situs Dibuka di Jendela Baru"}
+                    {!isAdWindowOpen ? "Timer Paused! Ad Closed" : "Site Opened in a New Window"}
                   </h3>
                   <p className="text-xs text-zinc-400 leading-relaxed font-mono">
                     {!isAdWindowOpen
                       ? "The ad page was closed or blocked. Please click the button below to re-open the advertiser's site and resume the timer."
-                      : "Situs pengiklan telah dibuka di tab baru Anda. Harap tunggu hingga timer di atas selesai untuk mengklaim reward Anda."}
+                      : "The advertiser's site has been opened in a new tab/window. Please wait until the timer above finishes to claim your reward."}
                   </p>
                 </div>
                 
@@ -651,10 +651,10 @@ function PTCViewContent() {
                     }}
                     className="w-full neon-glow font-bold text-xs gap-2 py-5"
                   >
-                    <ExternalLink className="w-4 h-4" /> Buka Kembali Situs
+                    <ExternalLink className="w-4 h-4" /> Re-open Site
                   </Button>
                   <p className="text-[10px] text-zinc-500 font-mono">
-                    Jika situs tidak otomatis terbuka, kemungkinan terblokir oleh pemblokir iklan (popup blocker).
+                    If the site did not open automatically, it might be blocked by an ad blocker (popup blocker).
                   </p>
                 </div>
               </div>
@@ -678,14 +678,14 @@ function PTCViewContent() {
               </div>
               <h3 className="text-xl font-bold text-white">Timer Paused!</h3>
               <p className="text-sm text-zinc-400 leading-relaxed font-mono">
-                Sistem mendeteksi Anda meninggalkan tab iklan. Silakan **pindah fokus/klik** kembali ke halaman ini agar timer berjalan kembali.
+                The system detected that you left the ad tab. Please **focus or click** back on this page to resume the timer.
               </p>
               <div className="text-3xl font-black font-mono text-rose-500">
                 {timeLeft}s Remaining
               </div>
               <div className="flex justify-center pt-2">
                 <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
-                  Harap tetap fokus di tab ini untuk melanjutkan klaim.
+                  Please stay focused on this tab to continue claiming your reward.
                 </span>
               </div>
             </div>
@@ -704,7 +704,7 @@ function PTCViewContent() {
                 </div>
                 <CardTitle className="text-lg font-bold text-white font-mono">Security Verification</CardTitle>
                 <CardDescription className="text-xs text-zinc-400">
-                  Selesaikan kedua captcha di bawah untuk mengklaim reward Anda.
+                  Complete both security verifications below to claim your reward.
                 </CardDescription>
               </CardHeader>
 
