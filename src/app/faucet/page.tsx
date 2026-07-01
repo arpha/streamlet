@@ -566,6 +566,20 @@ function FaucetContent() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
                   >
+                    {/* Native Banner Ad */}
+                    <div className="w-full flex justify-center py-2">
+                      <div id="container-ceac1e75d0056bbfc57cc655d2b8315f" ref={(el) => {
+                        if (el && !el.dataset.adLoaded) {
+                          el.dataset.adLoaded = "true"
+                          const adScript = document.createElement("script")
+                          adScript.src = "https://pl29698488.effectivecpmnetwork.com/ceac1e75d0056bbfc57cc655d2b8315f/invoke.js"
+                          adScript.async = true
+                          adScript.setAttribute("data-cfasync", "false")
+                          el.appendChild(adScript)
+                        }
+                      }} className="max-w-full overflow-hidden" />
+                    </div>
+
                     <div className="flex flex-col items-center justify-center gap-6 max-w-md mx-auto w-full">
                       {/* Security Check 1: Turnstile */}
                       <div className={`w-full p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col items-center gap-3 ${captchaType === 'turnstile' ? '' : 'hidden'}`}>
