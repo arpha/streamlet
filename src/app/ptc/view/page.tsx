@@ -589,7 +589,7 @@ function PTCViewContent() {
               size="sm"
               className="text-[11px] h-8 font-semibold border-white/10 hover:bg-white/5 bg-transparent text-zinc-400 hover:text-white"
               onClick={() => {
-                const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+                const adWin = window.open(campaign.url, "_blank")
                 if (typeof window !== "undefined") {
                   (window as any).adWindow = adWin
                   setIsAdWindowOpen(true)
@@ -643,7 +643,7 @@ function PTCViewContent() {
                 <div className="flex flex-col gap-2 pt-2">
                   <Button
                     onClick={() => {
-                      const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+                      const adWin = window.open(campaign.url, "_blank")
                       if (typeof window !== "undefined") {
                         (window as any).adWindow = adWin
                         setIsAdWindowOpen(true)

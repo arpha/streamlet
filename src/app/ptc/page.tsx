@@ -87,7 +87,7 @@ export default function PTCPage() {
       router.push(`/ptc/view?id=${campaign.id}`)
     } else {
       // Open the advertiser URL in a new window/tab
-      const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+      const adWin = window.open(campaign.url, "_blank")
       if (typeof window !== "undefined") {
         (window as any).adWindow = adWin
       }
