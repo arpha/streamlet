@@ -117,6 +117,30 @@ function PTCViewContent() {
   // Claim State
   const [isClaiming, setIsClaiming] = useState(false)
   const [isTabActive, setIsTabActive] = useState(true)
+  const [isAdWindowOpen, setIsAdWindowOpen] = useState(true)
+
+  // Poll state of the opened ad window to pause timer if closed/blocked
+  useEffect(() => {
+    if (isYoutubeAd) return
+
+    const checkAdWindow = () => {
+      const adWin = (window as any).adWindow
+      if (adWin) {
+        if (adWin.closed) {
+          setIsAdWindowOpen(false)
+        } else {
+          setIsAdWindowOpen(true)
+        }
+      } else {
+        setIsAdWindowOpen(false)
+      }
+    }
+
+    checkAdWindow()
+
+    const interval = setInterval(checkAdWindow, 500)
+    return () => clearInterval(interval)
+  }, [isYoutubeAd])
 
   // Listen to visibility and focus events to pause/resume timer
   useEffect(() => {
@@ -299,6 +323,12 @@ function PTCViewContent() {
       return
     }
 
+    // Pause timer if standard ad page is closed/blocked
+    if (!isYoutubeAd && !isAdWindowOpen) {
+      document.title = `[PAUSED - AD CLOSED] (${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
+      return
+    }
+
     document.title = `(${timeLeft}s) ${campaign?.title || "Viewing Ad"} | Streamlet`
 
     const timer = setInterval(() => {
@@ -312,7 +342,7 @@ function PTCViewContent() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeLeft, timerStarted, campaign, isTabActive, isYoutubeAd, isVideoPlaying])
+  }, [timeLeft, timerStarted, campaign, isTabActive, isYoutubeAd, isVideoPlaying, isAdWindowOpen])
 
   // Fetch Captcha Signed Payload when timer hits 0
   useEffect(() => {
@@ -517,15 +547,29 @@ function PTCViewContent() {
             <>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-zinc-500 font-bold tracking-widest font-mono uppercase">
-                  {!isTabActive ? "PAUSED" : "VIEWING AD"}
+                  {!isYoutubeAd && !isAdWindowOpen
+                    ? "PAUSED (AD CLOSED)"
+                    : (isYoutubeAd && !isTabActive
+                      ? "PAUSED"
+                      : (isYoutubeAd && !isVideoPlaying
+                        ? "PAUSED (VIDEO)"
+                        : "VIEWING AD"))}
                 </span>
-                <span className={`text-xl font-black font-mono tracking-tight transition-colors ${!isTabActive ? "text-rose-500" : "text-primary animate-pulse"}`}>
+                <span className={`text-xl font-black font-mono tracking-tight transition-colors ${
+                  (!isYoutubeAd && !isAdWindowOpen) || (isYoutubeAd && (!isTabActive || !isVideoPlaying))
+                    ? "text-rose-500"
+                    : "text-primary animate-pulse"
+                }`}>
                   {timeLeft}s
                 </span>
               </div>
               <div className="w-full bg-zinc-900 border border-white/5 h-2 rounded-full overflow-hidden p-0.5">
                 <div 
-                  className={`h-full rounded-full transition-all duration-1000 ease-linear ${!isTabActive ? "bg-zinc-700" : "bg-gradient-to-r from-primary via-fuchsia-500 to-primary"}`}
+                  className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                    (!isYoutubeAd && !isAdWindowOpen) || (isYoutubeAd && (!isTabActive || !isVideoPlaying))
+                      ? "bg-zinc-700"
+                      : "bg-gradient-to-r from-primary via-fuchsia-500 to-primary"
+                  }`}
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -544,7 +588,13 @@ function PTCViewContent() {
               variant="outline"
               size="sm"
               className="text-[11px] h-8 font-semibold border-white/10 hover:bg-white/5 bg-transparent text-zinc-400 hover:text-white"
-              onClick={() => window.open(campaign.url, "_blank", "noopener,noreferrer")}
+              onClick={() => {
+                const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+                if (typeof window !== "undefined") {
+                  (window as any).adWindow = adWin
+                  setIsAdWindowOpen(true)
+                }
+              }}
             >
               <AlertCircle className="w-3.5 h-3.5 mr-1 text-yellow-500" />
               Situs tidak terbuka?
@@ -580,15 +630,25 @@ function PTCViewContent() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-white uppercase tracking-wide">Situs Dibuka di Jendela Baru</h3>
+                  <h3 className="text-xl font-bold text-white uppercase tracking-wide">
+                    {!isAdWindowOpen ? "Timer Paused! Ad Closed" : "Situs Dibuka di Jendela Baru"}
+                  </h3>
                   <p className="text-xs text-zinc-400 leading-relaxed font-mono">
-                    Situs pengiklan telah dibuka di tab baru Anda. Harap tunggu hingga timer di atas selesai untuk mengklaim reward Anda.
+                    {!isAdWindowOpen
+                      ? "The ad page was closed or blocked. Please click the button below to re-open the advertiser's site and resume the timer."
+                      : "Situs pengiklan telah dibuka di tab baru Anda. Harap tunggu hingga timer di atas selesai untuk mengklaim reward Anda."}
                   </p>
                 </div>
                 
                 <div className="flex flex-col gap-2 pt-2">
                   <Button
-                    onClick={() => window.open(campaign.url, "_blank", "noopener,noreferrer")}
+                    onClick={() => {
+                      const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+                      if (typeof window !== "undefined") {
+                        (window as any).adWindow = adWin
+                        setIsAdWindowOpen(true)
+                      }
+                    }}
                     className="w-full neon-glow font-bold text-xs gap-2 py-5"
                   >
                     <ExternalLink className="w-4 h-4" /> Buka Kembali Situs

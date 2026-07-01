@@ -87,7 +87,10 @@ export default function PTCPage() {
       router.push(`/ptc/view?id=${campaign.id}`)
     } else {
       // Open the advertiser URL in a new window/tab
-      window.open(campaign.url, "_blank", "noopener,noreferrer")
+      const adWin = window.open(campaign.url, "_blank", "noopener,noreferrer")
+      if (typeof window !== "undefined") {
+        (window as any).adWindow = adWin
+      }
       // Redirect current page to the timer verification page
       router.push(`/ptc/view?id=${campaign.id}`)
     }
